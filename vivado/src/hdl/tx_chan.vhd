@@ -1,0 +1,178 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+library work;
+use work.common.all;
+
+-- tx_chan:  single UART TX channel
+--
+-- this is a wrapper for the (known to work) uart_tx which is
+-- preserved from the legacy firmware.  I plan to update the uart_tx
+-- once I have solid ASIC testing regimen, so comments are limited for
+-- this version.
+
+entity tx_chan is
+  port (
+    --clock and active-high reset:
+    CLK_I         : in  std_logic;
+    RST_I         : in  std_logic;
+
+    UCLK_I        : in  std_logic;
+    CONFIG_I      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    STATUS_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    DATA_I        : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+    VALID_I       : in  std_logic;
+    READY_O       : out std_logic;
+    TX_O          : out std_logic;
+    --
+    DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+  );
+end;
+
+architecture behavioral of tx_chan is
+  component uart_tx is
+    port (
+      CLK          : IN  STD_LOGIC;
+      RST          : IN  STD_LOGIC;
+      CLKOUT_RATIO : IN  STD_LOGIC_VECTOR (7 downto 0);
+      CLKOUT_PHASE : IN  STD_LOGIC_VECTOR (3 downto 0);
+      -- UART TX
+      MCLK        : IN  STD_LOGIC;
+      TX          : OUT STD_LOGIC;
+      -- received data
+      DATA        : IN  STD_LOGIC_VECTOR (C_UART_DATA_WIDTH-1 DOWNTO 0);
+      DATA_UPDATE : IN  STD_LOGIC; -- must be held high until busy goes high
+      BUSY        : OUT STD_LOGIC
+    );
+  end component uart_tx;
+
+  signal clk         : std_logic;
+  signal rst         : std_logic;
+
+  signal config      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal status      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal status_z    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+
+  signal valid       : std_logic;
+  signal ready       : std_logic := '0';
+  signal busy        : std_logic;
+  signal busy_z      : std_logic;
+  signal start       : std_logic;
+
+  signal tx          : std_logic := '0';
+
+  -- STATES:
+  signal rested      : std_logic;
+
+begin
+  uart0: uart_tx port map(
+    CLK=>clk,
+    RST=>rst,
+    CLKOUT_RATIO=>config(7 downto 0),
+    CLKOUT_PHASE=>config(11 downto 8),
+    MCLK=>UCLK_I,
+    TX=>tx,
+    DATA=>DATA_I,
+    DATA_UPDATE=>valid,
+    BUSY=>busy
+  );
+
+  clk <= CLK_I;
+  rst   <= RST_I;
+
+  config <= CONFIG_I;
+
+  STATUS_O <= status_z;
+  READY_O  <= ready;
+  TX_O     <= tx;
+
+  process(clk,rst)
+    variable delay  : integer range 0 to 16#FFFF# := 0;
+    variable rests  : integer range 0 to 16#FFFF# := 0;
+  begin
+    if (rst='1') then
+      delay  := 0;
+      rests  := 0;
+      rested <= '0';
+      valid  <= '0';
+    else
+      if (rising_edge(clk)) then
+        delay := to_integer(unsigned(config(31 downto 16)));
+        if (busy='1') then
+          rests := 0;
+        elsif (rests < delay) then
+          rests := rests + 1;
+        end if;
+
+        if (rests >= delay) then
+          rested <= '1';
+        else
+          rested <= '0';
+        end if;
+
+        if (VALID_I = '0') then
+          valid <= '0';
+        elsif (rests >= delay) then
+          valid <= VALID_I;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  process(clk,rst)
+    variable mode   : integer range 0 to 3 := 0;
+  begin
+    if (rst='1') then
+      mode   := 0;
+      ready <= '0';
+      busy_z <= '0';
+    elsif (rising_edge(clk)) then
+      mode  := to_integer(unsigned(config(13 downto 12)));
+      busy_z <= busy;
+      if (mode=0) then
+        ready <= '1';
+      elsif (mode=1) then
+        if (valid='1' and busy='1' and busy_z='0') then
+          ready <= '1';
+        else
+          ready <= '0';
+        end if;
+      else
+        ready <= '0';
+      end if;
+    end if;
+  end process;
+
+  -- provide non-delayed status for convenient debugging
+  DEBUG_O  <= status;
+
+  status(0) <= busy;
+  status(1) <= VALID_I;
+  status(2) <= ready;
+  status(3) <= start;
+  status(8) <= valid;
+  status(9) <= rested;
+
+  process(clk,rst)
+  begin
+    if (rst='1') then
+      status_z <= (others => '0');
+    elsif (rising_edge(clk)) then
+      status_z <= status;
+    end if;
+  end process;
+
+  process(clk,rst)
+  begin
+    if (rst='1') then
+      start <= '0';
+    elsif (rising_edge(clk)) then
+      if (busy_z='0') and (busy='1') then
+        start <= '1';
+      else
+        start <= '0';
+      end if;
+    end if;
+  end process;
+
+end;
