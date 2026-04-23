@@ -1,0 +1,13 @@
+*.xsa
+*.bit
+*.h
+*.c
+*.tcl
+*.html
+*.elf
+*.mmi
+sysdef.xml
+xsa.json
+xsa.xml
+zsys.bda
+zsys.hwh

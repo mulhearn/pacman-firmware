@@ -1,0 +1,10 @@
+.svn/
+/.Xil
+vivado/pacman-fw
+vivado/trenz-fw
+vivado*.jou
+vivado*.log
+*.aux
+*~
+
+
