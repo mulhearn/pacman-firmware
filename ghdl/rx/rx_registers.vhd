@@ -65,8 +65,10 @@ entity rx_registers is
     WORD_TYPE_LUT_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
     -- headers for additional non-UART words:
-    HEARTBEAT_HEADER_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    ROLLOVER_HEADER_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    HEADER_A_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    HEADER_B_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    HEADER_C_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    HEADER_D_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     EOP_HEADER_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
     -- look feature:
@@ -103,8 +105,10 @@ architecture behavioral of rx_registers is
   signal benables         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal pacman           : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal wlut             : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
-  signal heartbeat_header : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
-  signal rollover_header  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal header_a         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal header_b         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal header_c         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal header_d         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal eop_header       : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal look_select      : std_logic_vector(C_SELECT_WIDTH-1 downto 0)  := (others => '0');
 
@@ -173,17 +177,25 @@ begin
   LOOK_SELECT_O           <= look_select;
 
   -- splice PACMAN ID field into the headers:
-  HEARTBEAT_HEADER_O(7 downto 0)   <= heartbeat_header(7 downto 0);
-  HEARTBEAT_HEADER_O(15 downto 8)  <= pacman(7 downto 0);
-  HEARTBEAT_HEADER_O(31 downto 16) <= heartbeat_header(31 downto 16);
+  HEADER_A_O(7 downto 0)   <= header_a(7 downto 0);
+  HEADER_A_O(15 downto 8)  <= pacman(7 downto 0);
+  HEADER_A_O(31 downto 16) <= header_a(31 downto 16);
 
-  ROLLOVER_HEADER_O(7 downto 0)    <= rollover_header(7 downto 0);
-  ROLLOVER_HEADER_O(15 downto 8)   <= pacman(7 downto 0);
-  ROLLOVER_HEADER_O(31 downto 16)  <= rollover_header(31 downto 16);
+  HEADER_B_O(7 downto 0)   <= header_b(7 downto 0);
+  HEADER_B_O(15 downto 8)  <= pacman(7 downto 0);
+  HEADER_B_O(31 downto 16) <= header_b(31 downto 16);
 
-  EOP_HEADER_O(7 downto 0)         <= eop_header(7 downto 0);
-  EOP_HEADER_O(15 downto 8)        <= pacman(7 downto 0);
-  EOP_HEADER_O(31 downto 16)       <= eop_header(31 downto 16);
+  HEADER_C_O(7 downto 0)   <= header_c(7 downto 0);
+  HEADER_C_O(15 downto 8)  <= pacman(7 downto 0);
+  HEADER_C_O(31 downto 16) <= header_c(31 downto 16);
+
+  HEADER_D_O(7 downto 0)   <= header_d(7 downto 0);
+  HEADER_D_O(15 downto 8)  <= pacman(7 downto 0);
+  HEADER_D_O(31 downto 16) <= header_d(31 downto 16);
+
+  EOP_HEADER_O(7 downto 0)   <= eop_header(7 downto 0);
+  EOP_HEADER_O(15 downto 8)  <= pacman(7 downto 0);
+  EOP_HEADER_O(31 downto 16) <= eop_header(31 downto 16);
   -- register input data:
   process(clk, rst)
   begin
@@ -287,11 +299,17 @@ begin
               elsif (reg=C_ADDR_RX_ROLLOVER_CONFIG) then
                 rdata <= rollover_config;
                 rack  <= '1';
-              elsif (reg=C_ADDR_RX_HEARTBEAT_HEADER) then
-                rdata <= heartbeat_header;
+              elsif (reg=C_ADDR_RX_HEADER_A) then
+                rdata <= header_a;
                 rack  <= '1';
-              elsif (reg=C_ADDR_RX_ROLLOVER_HEADER) then
-                rdata <= rollover_header;
+              elsif (reg=C_ADDR_RX_HEADER_B) then
+                rdata <= header_b;
+                rack  <= '1';
+              elsif (reg=C_ADDR_RX_HEADER_C) then
+                rdata <= header_c;
+                rack  <= '1';
+              elsif (reg=C_ADDR_RX_HEADER_D) then
+                rdata <= header_d;
                 rack  <= '1';
               elsif (reg=C_ADDR_RX_EOP_HEADER) then
                 rdata <= eop_header;
@@ -342,8 +360,9 @@ begin
       wlut                   <= std_logic_vector(to_unsigned(C_DEFAULT_RX_WORD_TYPE_LUT,    C_RB_DATA_WIDTH));
       heartbeat_config       <= std_logic_vector(to_unsigned(C_DEFAULT_RX_HEARTBEAT_CONFIG, C_RB_DATA_WIDTH));
       rollover_config        <= std_logic_vector(to_unsigned(C_DEFAULT_RX_ROLLOVER_CONFIG,  C_RB_DATA_WIDTH));
-      heartbeat_header       <= std_logic_vector(to_unsigned(C_DEFAULT_RX_HEARTBEAT_HEADER,  C_RB_DATA_WIDTH));
-      rollover_header        <= std_logic_vector(to_unsigned(C_DEFAULT_RX_ROLLOVER_HEADER,  C_RB_DATA_WIDTH));
+      header_a               <= std_logic_vector(to_unsigned(C_DEFAULT_RX_HEARTBEAT_HEADER, C_RB_DATA_WIDTH));
+      header_b               <= std_logic_vector(to_unsigned(C_DEFAULT_RX_ROLLOVER_HEADER,  C_RB_DATA_WIDTH));
+      header_c               <= std_logic_vector(to_unsigned(C_DEFAULT_RX_TRIGGER_HEADER,   C_RB_DATA_WIDTH));
       eop_header             <= std_logic_vector(to_unsigned(C_DEFAULT_RX_EOP_HEADER,       C_RB_DATA_WIDTH));
       zero_counters <= '0';
       look_select <= (others => '0');
@@ -397,11 +416,17 @@ begin
             elsif (reg=C_ADDR_RX_ROLLOVER_CONFIG) then
               rollover_config <= wdata;
               wack  <= '1';
-            elsif (reg=C_ADDR_RX_HEARTBEAT_HEADER) then
-              heartbeat_header <= wdata;
+            elsif (reg=C_ADDR_RX_HEADER_A) then
+              header_a <= wdata;
               wack  <= '1';
-            elsif (reg=C_ADDR_RX_ROLLOVER_HEADER) then
-              rollover_header <= wdata;
+            elsif (reg=C_ADDR_RX_HEADER_B) then
+              header_b <= wdata;
+              wack  <= '1';
+            elsif (reg=C_ADDR_RX_HEADER_C) then
+              header_c <= wdata;
+              wack  <= '1';
+            elsif (reg=C_ADDR_RX_HEADER_D) then
+              header_d <= wdata;
               wack  <= '1';
             elsif (reg=C_ADDR_RX_EOP_HEADER) then
               eop_header <= wdata;

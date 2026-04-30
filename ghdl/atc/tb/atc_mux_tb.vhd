@@ -37,6 +37,7 @@ architecture behaviour of atc_mux_tb is
     DST_LOGIC_F_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     G_O            : out std_logic_vector(9 downto 0) := (others => '0');
     H_O            : out std_logic_vector(9 downto 0) := (others => '0');
+    M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0');
     T_O            : out std_logic
   );
   end component;
@@ -56,6 +57,7 @@ architecture behaviour of atc_mux_tb is
   -- mux outputs:
   signal   h   :  std_logic_vector(9 downto 0) := (others => '0');
   signal   g   :  std_logic_vector(9 downto 0) := (others => '0');
+  signal   m   :  std_logic_vector(3 downto 0) := (others => '0');
   signal   t  :  std_logic;
 
 
@@ -72,14 +74,15 @@ begin
     MASK_D_I      =>   "1111110111",
     LOGIC_E_I	  =>    '0' ,
     LOGIC_F_I	  =>    '0' ,
-    DST_LEMO_A_I  =>  x"02FF0601",
-    DST_LEMO_B_I  =>  x"02FF0501",
-    DST_POKE_C_I  =>  x"00FF0022",
+    DST_LEMO_A_I  => x"02FF0601",
+    DST_LEMO_B_I  => x"02FF0501",
+    DST_POKE_C_I  => x"F0000008",
     DST_POKE_D_I  => x"03FF0101",
     DST_LOGIC_E_I => x"00FF0304",
     DST_LOGIC_F_I => x"00FF0404",
     G_O           => g,
     H_O           => h,
+    M_O           => m,
     T_O           => t
   );
 
@@ -167,21 +170,23 @@ begin
       write  (l, String'(" uclk: "));
       write  (l, clk);
 
-      write  (l, String'("| lemo_a: "));
+      write  (l, String'("| lemo a: "));
       write  (l, update_lemo_a);
-      write  (l, String'(" lemo_b: "));
+      write  (l, String'(" b: "));
       write  (l, update_lemo_b);
-      write  (l, String'(" poke_c: "));
+      write  (l, String'("| poke c: "));
       write  (l, update_poke_c);
-      write  (l, String'(" poke_d: "));
+      write  (l, String'(" d: "));
       write  (l, update_poke_d);
 
-      write  (l, String'("| output_g: "));
+      write  (l, String'("| output g: "));
       write  (l, g);
 
-      write  (l, String'(" output_h: "));
+      write  (l, String'(" h: "));
       write  (l, h);
-      write  (l, String'(" output_t: "));
+      write  (l, String'(" m: "));
+      write  (l, m);
+      write  (l, String'(" t: "));
       write  (l, t);
 
       if (rst = '1') then

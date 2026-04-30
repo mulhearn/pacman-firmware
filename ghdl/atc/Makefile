@@ -81,7 +81,8 @@ run-unit-testbench: all
 	ghdl -r -fsynopsys atc_unit_tb --stop-time=3500ns
 
 run-dev: all
-	ghdl -r -fsynopsys atc_unit_tb --stop-time=3500ns
+#	ghdl -r -fsynopsys atc_mux_tb --stop-time=1000ns
+	ghdl -r -fsynopsys atc_bridge_tb --stop-time=1000ns
 
 
 

@@ -12,6 +12,7 @@ modules-a:
 	ghdl -a rx_chan.vhd
 	ghdl -a heartbeat.vhd
 	ghdl -a rollover.vhd
+	ghdl -a marker.vhd
 	ghdl -a rx_buffer.vhd
 	ghdl -a rx_unit.vhd
 modules-e:
@@ -23,6 +24,7 @@ modules-e:
 	ghdl -e rx_chan
 	ghdl -e heartbeat
 	ghdl -e rollover
+	ghdl -e marker
 	ghdl -e rx_buffer
 	ghdl -e rx_unit
 testbenches:
@@ -40,6 +42,8 @@ testbenches:
 	ghdl -e -fsynopsys heartbeat_tb
 	ghdl -a -fsynopsys tb/rollover_tb.vhd
 	ghdl -e -fsynopsys rollover_tb
+	ghdl -a -fsynopsys tb/marker_tb.vhd
+	ghdl -e -fsynopsys marker_tb
 	ghdl -a -fsynopsys tb/rx_buffer_tb.vhd
 	ghdl -e -fsynopsys rx_buffer_tb
 	ghdl -a -fsynopsys tb/rx_unit_tb.vhd
@@ -47,6 +51,7 @@ testbenches:
 
 run-testbenches: all
 	ghdl -r -fsynopsys heartbeat_tb --stop-time=30us
+	ghdl -r -fsynopsys marker_tb --stop-time=30us
 	ghdl -r -fsynopsys rx_chan_tb --stop-time=30us
 	ghdl -r -fsynopsys rollover_tb --stop-time=30us
 	ghdl -r -fsynopsys rx_registers_tb --stop-time=600ns
@@ -58,4 +63,4 @@ run-testbenches: all
 run-unit-testbench: all
 	ghdl -r -fsynopsys rx_unit_tb --stop-time=30us
 run-dev: all
-	ghdl -r -fsynopsys rx_buffer_tb --stop-time=3us
+	ghdl -r -fsynopsys rx_registers_tb --stop-time=4us

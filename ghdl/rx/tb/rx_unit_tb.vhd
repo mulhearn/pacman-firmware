@@ -32,6 +32,8 @@ architecture behaviour of rx_unit_tb is
       S_REGBUS_RB_WACK       : out std_logic;
 
       TIMESTAMP_I            : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      RX_MARKER_I            : in std_logic_vector(C_NUM_MARKER-1 downto 0);
+
       FIFO_COUNT_I           : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
       PISO_I                 : in  std_logic_vector(C_NUM_UART-1 downto 0);
@@ -86,6 +88,7 @@ begin
     S_REGBUS_RB_WDATA   => wdata,
     S_REGBUS_RB_WACK    => wack,
     TIMESTAMP_I         => timestamp,
+    RX_MARKER_I         => x"0",
     FIFO_COUNT_I        => x"CCCCCCCC",
     PISO_I              => piso,
     LOOPBACK_I          => (others => '1')
@@ -216,8 +219,9 @@ begin
     wait for 10 ns;
     -- setting buffer enables:
     waddr   <= x"7FB8";
+    wdata   <= x"00000004";
     --wdata   <= x"00000003";
-    wdata   <= x"00000000";
+    --wdata   <= x"00000000";
     wupdate <= '1';
     wait for 10 ns;
     waddr   <= x"7FBC";

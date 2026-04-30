@@ -30,6 +30,9 @@ architecture behaviour of atc_bridge_tb is
   signal poke_d     : std_logic;
   signal mask_d     : std_logic_vector(C_NUM_TILE-1 downto 0);
 
+  signal marker_src : std_logic_vector(C_NUM_MARKER-1 downto 0);
+  signal marker_out : std_logic_vector(C_NUM_MARKER-1 downto 0);
+
   signal cnt_req    : std_logic;
   signal cnt_up     : std_logic;
   signal cnt_cmd    : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
@@ -56,6 +59,7 @@ architecture behaviour of atc_bridge_tb is
       COUNT_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       STATUS_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       TIMESTAMP_O   : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      MARKER_O      : out std_logic_vector(C_NUM_MARKER-1 downto 0);
 
       CLK_B_I       : in  std_logic;
       RST_B_I       : in  std_logic;
@@ -68,7 +72,9 @@ architecture behaviour of atc_bridge_tb is
       COUNT_CMD_O   : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
       COUNT_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       TIMESTAMP_TOGGLE_I : in std_logic;
-      TIMESTAMP_TSYNC_I  : in std_logic
+      TIMESTAMP_TSYNC_I  : in std_logic;
+      MARKER_I      : in std_logic_vector(C_NUM_MARKER-1 downto 0)
+
     );
   end component;
 
@@ -88,6 +94,7 @@ begin
     COUNT_O          => cnt_out,
     STATUS_O         => status,
     TIMESTAMP_O      => timestamp,
+    MARKER_O         => marker_out,
     CLK_B_I          => uclk,
     RST_B_I          => rst,
     CONFIG_O         => shadow,
@@ -99,7 +106,8 @@ begin
     COUNT_CMD_O      => cnt_cmd,
     COUNT_I          => cnt_src,
     TIMESTAMP_TOGGLE_I => '0',
-    TIMESTAMP_TSYNC_I  => '0'
+    TIMESTAMP_TSYNC_I  => '0',
+    MARKER_I          => marker_src
     );
 
   update_process : process
@@ -127,6 +135,16 @@ begin
     wait for 10 ns;
     cnt_req    <= '0';
     poke_c_req <= '0';
+    wait;
+  end process;
+
+  update_marker : process
+  begin
+    marker_src <= (others => '0');
+    wait for 100 ns;
+    marker_src <= (others => '1');
+    wait for 100 ns;
+    marker_src <= (others => '0');
     wait;
   end process;
 
@@ -206,7 +224,10 @@ begin
       write (l, String'(" cnt: 0x"));
       hwrite (l, cnt_out);
 
-
+      write (l, String'(" m: 0x"));
+      hwrite (l, marker_src);
+      write (l, String'(" "));
+      hwrite (l, marker_out);
 
       if (rst = '1') then
         write (l, String'(" (RESET)"));

@@ -114,10 +114,12 @@ package register_map is
   -- LUT mapping 2-bit packet descriptor to one byte header field:
   constant C_ADDR_RX_WORD_TYPE_LUT    : integer := 16#C8#;
 
-  constant C_ADDR_RX_HEARTBEAT_HEADER : integer := 16#D0#;
-  constant C_ADDR_RX_ROLLOVER_HEADER  : integer := 16#D4#;
-  constant C_ADDR_RX_TRIG_HEADER      : integer := 16#D8#; -- not yet implemented
-  constant C_ADDR_RX_EOP_HEADER       : integer := 16#DC#;
+  constant C_ADDR_RX_HEADER_A         : integer := 16#D0#;
+  constant C_ADDR_RX_HEADER_B         : integer := 16#D4#;
+  constant C_ADDR_RX_HEADER_C         : integer := 16#D8#;
+  constant C_ADDR_RX_HEADER_D         : integer := 16#DC#;
+
+  constant C_ADDR_RX_EOP_HEADER       : integer := 16#E0#;
 
   -- Registers with SCOPE=ADC
   constant C_ADDR_ADC_STATUS          : integer := 16#000#;

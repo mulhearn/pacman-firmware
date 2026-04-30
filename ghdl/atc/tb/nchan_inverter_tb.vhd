@@ -15,7 +15,7 @@ architecture behaviour of nchan_inverter_tb is
       CLK_I      : in  std_logic;
       RST_I      : in  std_logic;
       SIG_I      : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      POLARITY_I : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      INVERT_I : in  std_logic_vector(C_NUM_TILE-1 downto 0);
       SIG_O      : out std_logic_vector(C_NUM_TILE-1 downto 0)
       );
   end component;
@@ -34,7 +34,7 @@ begin
     CLK_I	=> clk,
     RST_I 	=> rst,
     SIG_I	=> sig_in,
-    POLARITY_I  => polarity,
+    INVERT_I  => polarity,
     SIG_O	=> sig_out
   );
 

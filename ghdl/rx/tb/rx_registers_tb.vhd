@@ -38,8 +38,10 @@ architecture behaviour of rx_registers_tb is
       HEARTBEAT_CONFIG_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       ROLLOVER_CONFIG_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       WORD_TYPE_LUT_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEARTBEAT_HEADER_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      ROLLOVER_HEADER_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_A_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_B_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_C_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_D_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       EOP_HEADER_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
       LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
@@ -246,7 +248,13 @@ begin
     raddr   <= x"7FD4";
     rupdate <= '1';
     wait for 10 ns;
+    raddr   <= x"7FD8";
+    rupdate <= '1';
+    wait for 10 ns;
     raddr   <= x"7FDC";
+    rupdate <= '1';
+    wait for 10 ns;
+    raddr   <= x"7FE0";
     rupdate <= '1';
     wait for 10 ns;
     raddr   <= x"0000";
@@ -306,7 +314,7 @@ begin
   show_output_process : process
   begin
     show_output<='1';
-    wait until (count=53);
+    wait until (count=56);
     wait for 10 ns;
     show_output<='0';
     wait;

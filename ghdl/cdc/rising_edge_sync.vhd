@@ -18,8 +18,8 @@ entity rising_edge_sync is
     --asynchronous signal in
     ASYNC_SIGNAL_I : in std_logic;  --CDC
 
-    --polarity of input signal (0 means active high, 1 is active low)
-    POLARITY_I     : in std_logic;
+    --invert input signal (0 means rising edge, 1 means falling edge)
+    INVERT_I     : in std_logic;
 
     --a rising edge (from low to high) on the inputs causes UPDATE_O to go high
     --for one clock cycle.
@@ -59,7 +59,7 @@ begin
       signal_sync <= '1';
       signal_pipe <= (others => '1');
     elsif (rising_edge(clk)) then
-      signal_meta    <= ASYNC_SIGNAL_I;
+      signal_meta    <= ASYNC_SIGNAL_I xor INVERT_I;
       signal_sync    <= signal_meta;
       signal_pipe(0) <= signal_sync;
       signal_pipe(1) <= signal_pipe(0);

@@ -31,6 +31,8 @@ architecture behaviour of atc_unit_tb is
     LEMO_B_I              : in std_logic;
 
     TIMESTAMP_O           : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+    RX_MARKER_O           : out std_logic_vector(C_NUM_MARKER-1 downto 0);
+
     UCLK_O                : out std_logic;
     G_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0);
     H_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0)
@@ -58,6 +60,7 @@ architecture behaviour of atc_unit_tb is
 
   -- dut outputs
   signal timestamp  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+  signal rx_marker  : std_logic_vector(C_NUM_MARKER-1 downto 0);
   signal atc_h      :  std_logic_vector(9 downto 0) := (others => '0');
   signal atc_g      :  std_logic_vector(9 downto 0) := (others => '0');
 
@@ -78,6 +81,7 @@ begin
     LEMO_A_I            => lemo_a,
     LEMO_B_I            => lemo_b,
     TIMESTAMP_O         => timestamp,
+    RX_MARKER_O         => rx_marker,
     G_O                 => atc_g,
     H_O                 => atc_h
   );
@@ -143,22 +147,22 @@ begin
     wait for 20 ns;
     -- polarity configuration
     waddr   <= x"E108";
-    wdata   <= x"03FF0000";
+    wdata   <= x"00000000";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for LEMO A
     waddr   <= x"E110";
-    wdata   <= x"03FF0031";
+    wdata   <= x"03FF0011";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for LEMO B
     waddr   <= x"E114";
-    wdata   <= x"00000000";
+    wdata   <= x"03FF0022";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for POKE C
     waddr   <= x"E118";
-    wdata   <= x"03FF0012";
+    wdata   <= x"F0000008";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for POKE D
@@ -174,7 +178,7 @@ begin
     waddr   <= x"0000";
     wdata   <= x"00000000";
     wupdate <= '0';
-    wait for 500 ns;
+    wait until (count=80);
     waddr   <= x"E0C0";
     wdata   <= x"0000000F";
     wupdate <= '1';
@@ -234,6 +238,8 @@ begin
       write (l, atc_g);
       write (l, String'("  H: "));
       write (l, atc_h);
+      write (l, String'(" | M: "));
+      hwrite (l, rx_marker);
       if (rst = '1') then
         write (l, String'(" (RESET)"));
       end if;

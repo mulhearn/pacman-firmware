@@ -29,6 +29,8 @@ entity atc_unit is
     LEMO_B_I              : in std_logic;
 
     TIMESTAMP_O           : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+    RX_MARKER_O           : out std_logic_vector(C_NUM_MARKER-1 downto 0);
+
     UCLK_O                : out std_logic;
     G_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0);
     H_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0)
@@ -86,6 +88,7 @@ architecture behaviour of atc_unit is
       COUNT_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       STATUS_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       TIMESTAMP_O   : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      MARKER_O      : out std_logic_vector(C_NUM_MARKER-1 downto 0);
 
       CLK_B_I       : in  std_logic;
       RST_B_I       : in  std_logic;
@@ -98,7 +101,8 @@ architecture behaviour of atc_unit is
       COUNT_CMD_O   : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
       COUNT_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       TIMESTAMP_TOGGLE_I : in std_logic;
-      TIMESTAMP_TSYNC_I  : in std_logic
+      TIMESTAMP_TSYNC_I  : in std_logic;
+      MARKER_I      : in std_logic_vector(C_NUM_MARKER-1 downto 0)
       );
   end component;
 
@@ -109,7 +113,7 @@ architecture behaviour of atc_unit is
       RST_I  : in  std_logic;
 
       ASYNC_SIGNAL_I : in std_logic;
-      POLARITY_I     : in std_logic;
+      INVERT_I     : in std_logic;
       UPDATE_O       : out std_logic
       );
   end component;
@@ -133,8 +137,9 @@ architecture behaviour of atc_unit is
       DST_POKE_D_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DST_LOGIC_E_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DST_LOGIC_F_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      G_O            : out std_logic_vector(9 downto 0) := (others => '0');
-      H_O            : out std_logic_vector(9 downto 0) := (others => '0');
+      G_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      H_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0);
       T_O            : out std_logic
       );
   end component;
@@ -170,7 +175,7 @@ architecture behaviour of atc_unit is
       CLK_I      : in  std_logic;
       RST_I      : in  std_logic;
       SIG_I      : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      POLARITY_I : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      INVERT_I : in  std_logic_vector(C_NUM_TILE-1 downto 0);
       SIG_O      : out std_logic_vector(C_NUM_TILE-1 downto 0)
       );
   end component;
@@ -214,10 +219,10 @@ architecture behaviour of atc_unit is
   signal det_toggle     : std_logic;
   signal det_tsync      : std_logic;
 
-  signal det_g          : std_logic_vector(9 downto 0) := (others => '0');
-  signal det_h          : std_logic_vector(9 downto 0) := (others => '0');
-  signal det_t         : std_logic;
-
+  signal det_g          : std_logic_vector(C_NUM_TILE-1 downto 0) := (others => '0');
+  signal det_h          : std_logic_vector(C_NUM_TILE-1 downto 0) := (others => '0');
+  signal det_t          : std_logic := '0';
+  signal det_m          : std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0');
 begin
   sys_clk <= ACLK;
   sys_rst <= RST_I;
@@ -271,6 +276,7 @@ begin
     COUNT_O          => sys_cnt,
     STATUS_O         => sys_status,
     TIMESTAMP_O      => sys_timestamp,
+    MARKER_O         => RX_MARKER_O,
     CLK_B_I          => det_clk,
     RST_B_I          => det_rst,
     CONFIG_O         => det_cfg,
@@ -282,8 +288,10 @@ begin
     COUNT_CMD_O      => det_cnt_cmd,
     COUNT_I          => det_cnt,
     TIMESTAMP_TOGGLE_I => det_toggle,
-    TIMESTAMP_TSYNC_I  => det_tsync
+    TIMESTAMP_TSYNC_I  => det_tsync,
+    MARKER_I         => det_m
   );
+
 
  lemoa0: rising_edge_sync
    generic map(
@@ -294,7 +302,7 @@ begin
      CLK_I  => det_clk,
      RST_I  => det_rst,
      ASYNC_SIGNAL_I => LEMO_A_I,
-     POLARITY_I => det_cfg.polarity(0),
+     INVERT_I => det_cfg.polarity(0),
      UPDATE_O => det_lemo_a
    );
 
@@ -306,7 +314,7 @@ begin
      CLK_I  => det_clk,
      RST_I  => det_rst,
      ASYNC_SIGNAL_I => LEMO_B_I,
-     POLARITY_I => det_cfg.polarity(1),
+     INVERT_I => det_cfg.polarity(1),
      UPDATE_O => det_lemo_b
    );
 
@@ -329,8 +337,10 @@ begin
     DST_LOGIC_F_I => det_cfg.dst_logic_f,
     G_O           => det_g,
     H_O           => det_h,
-    T_O           => det_t
+    T_O           => det_t,
+    M_O           => det_m
   );
+
 
   atccnt0: atc_counter port map (
     CLK_I	     => det_clk,
@@ -360,7 +370,7 @@ begin
     CLK_I	=> det_clk,
     RST_I 	=> det_rst,
     SIG_I	=> det_g,
-    POLARITY_I  => det_cfg.polarity(13 downto 4),
+    INVERT_I    => det_cfg.polarity(13 downto 4),
     SIG_O	=> G_O
   );
 
@@ -368,7 +378,7 @@ begin
     CLK_I	=> det_clk,
     RST_I 	=> det_rst,
     SIG_I	=> det_h,
-    POLARITY_I  => det_cfg.polarity(25 downto 16),
+    INVERT_I    => det_cfg.polarity(25 downto 16),
     SIG_O	=> H_O
   );
 

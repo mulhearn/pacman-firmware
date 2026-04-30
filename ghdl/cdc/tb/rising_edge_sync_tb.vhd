@@ -19,7 +19,7 @@ architecture behaviour of rising_edge_sync_tb is
       RST_I  : in  std_logic;
 
       ASYNC_SIGNAL_I : in std_logic;
-      POLARITY_I     : in std_logic;
+      INVERT_I     : in std_logic;
       UPDATE_O       : out std_logic
       );
   end component;
@@ -47,7 +47,7 @@ begin
       CLK_I  => uclk,
       RST_I  => rst,
       ASYNC_SIGNAL_I => asig,
-      POLARITY_I => '0',
+      INVERT_I => '0',
       UPDATE_O => update
     );
 
