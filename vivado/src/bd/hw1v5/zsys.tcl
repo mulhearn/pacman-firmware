@@ -731,6 +731,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net SC0720_0_PL_pin_N22 [get_bd_pins SC0720_0/PL_pin_N22] [get_bd_ports PL_pin_N22]
   connect_bd_net -net atc_unit_0_G_O [get_bd_pins atc_unit_0/G_O] [get_bd_ports SYNC_O_0]
   connect_bd_net -net atc_unit_0_H_O [get_bd_pins atc_unit_0/H_O] [get_bd_ports TRIG_O_0]
+  connect_bd_net -net atc_unit_0_RX_MARKER_O [get_bd_pins atc_unit_0/RX_MARKER_O] [get_bd_pins rx_unit_0/RX_MARKER_I]
   connect_bd_net -net atc_unit_0_TIMESTAMP_O [get_bd_pins atc_unit_0/TIMESTAMP_O] [get_bd_pins rx_unit_0/TIMESTAMP_I]
   connect_bd_net -net atc_unit_0_UCLK_O [get_bd_pins atc_unit_0/UCLK_O] [get_bd_ports GLB_CLK_O_0]
   connect_bd_net -net axis_data_fifo_0_axis_rd_data_count [get_bd_pins axis_data_fifo_0/axis_rd_data_count] [get_bd_pins rx_unit_0/FIFO_COUNT_I]

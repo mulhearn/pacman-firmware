@@ -32,10 +32,11 @@ entity atc_mux is
 
     --Configuration:  each stimuli has a destination configuration, detailing
     -- how and where it should be forwarded:
-    -- MSB: 0XMMM DDDO LSB O=output enables, D=duration, M=output mask
-    -- O(0)= enable G, O(1) = enable H, O(2) = enable T O(3) = RESERVED
+    -- MSB: MTTT DDDO LSB O=output enables, D=duration, T=tile mask M=marker mask
+    -- O(0)= enable G, O(1) = enable H, O(2) = enable T O(3) = enable M
     -- D(0-11) pulse duration (maximum is 4095 clock cycles)
-    -- M(0-9) tile mask for G/H outputs, e.g. M(0) = TILE 1, M(1) = TILE 2, ...
+    -- T(0-9) tile mask for G/H outputs, e.g. M(0) = TILE 1, M(1) = TILE 2, ...
+    -- M(0-3) bit mask for M output
     DST_LEMO_A_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     DST_LEMO_B_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     DST_POKE_C_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -46,6 +47,7 @@ entity atc_mux is
     --output
     G_O     : out std_logic_vector(9 downto 0) := (others => '0');
     H_O     : out std_logic_vector(9 downto 0) := (others => '0');
+    M_O     : out std_logic_vector(C_NUM_MARKER-1 downto 0);
     T_O     : out std_logic
   );
 end;
@@ -57,10 +59,12 @@ architecture behavioral of atc_mux is
   signal rst             : std_logic;
   signal output_g        : std_logic_vector(9 downto 0);
   signal output_h        : std_logic_vector(9 downto 0);
+  signal output_m        : std_logic_vector(C_NUM_MARKER-1 downto 0);
   signal output_t        : std_logic;
   signal sel_g           : std_logic_vector(5 downto 0);
   signal sel_h           : std_logic_vector(5 downto 0);
   signal sel_t           : std_logic_vector(5 downto 0);
+  signal sel_m           : std_logic_vector(5 downto 0);
 
   signal config          : config_arr;
 
@@ -74,12 +78,12 @@ begin
   rst            <= RST_I;
 
   update_vec <= (
-  0 => LEMO_A_I,
-  1 => LEMO_B_I,
-  2 => POKE_C_I,
-  3 => POKE_D_I,
-  4 => LOGIC_E_I,
-  5 => LOGIC_F_I
+    0 => LEMO_A_I,
+    1 => LEMO_B_I,
+    2 => POKE_C_I,
+    3 => POKE_D_I,
+    4 => LOGIC_E_I,
+    5 => LOGIC_F_I
   );
 
   config   <= (
@@ -94,12 +98,11 @@ begin
   --determine the enabled output ports for each stimuli:
   gen_port : for i in 0 to 5 generate
   begin
-    sel_g(i)  <= config(i)(0);
-    sel_h(i)  <= config(i)(1);
+    sel_g(i) <= config(i)(0);
+    sel_h(i) <= config(i)(1);
     sel_t(i) <= config(i)(2);
+    sel_m(i) <= config(i)(3);
   end generate;
-
-
 
   -- extend input signal
   gen_input_ext : for j in 0 to 5 generate
@@ -123,7 +126,6 @@ begin
         mask_d        <= MASK_D_I;
       end if;
       for j in 0 to 5 loop
-
         if update_vec(j) = '1' then
           cnt(j) <= unsigned( config(j)(15 downto 4) );
         elsif cnt(j) > 0 then
@@ -155,13 +157,24 @@ begin
       (sel_h(5) and input_ext(5) and config(5)(16+i));
   end generate;
 
+  gen_m : for i in 0 to C_NUM_MARKER-1 generate
+  begin
+    output_m(i) <=
+      (sel_m(0) and update_vec(0) and config(0)(28+i)) or
+      (sel_m(1) and update_vec(1) and config(1)(28+i)) or
+      (sel_m(2) and update_vec(2) and config(2)(28+i)) or
+      (sel_m(3) and update_vec(3) and config(3)(28+i)) or
+      (sel_m(4) and update_vec(4) and config(4)(28+i)) or
+      (sel_m(5) and update_vec(5) and config(5)(28+i));
+  end generate;
+
   output_t <=
-    ( sel_t(0) and input_ext(0) ) or
-    ( sel_t(1) and input_ext(1) ) or
-    ( sel_t(2) and input_ext(2) ) or
-    ( sel_t(3) and input_ext(3) ) or
-    ( sel_t(4) and input_ext(4) ) or
-    ( sel_t(5) and input_ext(5) );
+    ( sel_t(0) and update_vec(0) ) or
+    ( sel_t(1) and update_vec(1) ) or
+    ( sel_t(2) and update_vec(2) ) or
+    ( sel_t(3) and update_vec(3) ) or
+    ( sel_t(4) and update_vec(4) ) or
+    ( sel_t(5) and update_vec(5) );
 
   process(clk,rst)
   begin
@@ -169,10 +182,12 @@ begin
       G_O  <= (others => '0');
       H_O  <= (others => '0');
       T_O  <=  '0';
+      M_O  <= (others => '0');
     elsif (rising_edge(clk)) then
       G_O  <= output_g;
       H_O  <= output_h;
       T_O  <= output_t;
+      M_O  <= output_m;
     end if;
   end process;
 

@@ -39,6 +39,8 @@ entity rx_unit is
 
     -- timestamp from timing unit
     TIMESTAMP_I            : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+    RX_MARKER_I            : in std_logic_vector(C_NUM_MARKER-1 downto 0);
+
     -- RX FIFO word count
     FIFO_COUNT_I           : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
@@ -47,7 +49,7 @@ entity rx_unit is
 
     -- TX output (POSI) from TX unit for loopback option:
     LOOPBACK_I             : in  std_logic_vector(C_NUM_UART-1 downto 0)
-    );
+     );
 end rx_unit;
 
 -- This integration module contains submodules rx_registers,
@@ -80,8 +82,10 @@ architecture behaviour of rx_unit is
   signal rollover_config    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal pacman             : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal word_type_lut      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-  signal heartbeat_header   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-  signal rollover_header    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal header_a           : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal header_b           : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal header_c           : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal header_d           : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal eop_header         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal look_chan_select   : std_logic_vector(C_SELECT_WIDTH-1 downto 0);
   signal look_uart_data     : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
@@ -136,8 +140,10 @@ architecture behaviour of rx_unit is
       HEARTBEAT_CONFIG_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       ROLLOVER_CONFIG_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       WORD_TYPE_LUT_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEARTBEAT_HEADER_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      ROLLOVER_HEADER_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_A_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_B_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_C_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      HEADER_D_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       EOP_HEADER_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
       LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
@@ -230,6 +236,20 @@ architecture behaviour of rx_unit is
       );
   end component;
 
+  component marker is
+    port (
+      CLK_I         : in  std_logic;
+      RST_I         : in  std_logic;
+      EN_I          : in  std_logic;
+      TIMESTAMP_O   : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      VALID_O       : out std_logic;
+      READY_I       : in  std_logic;
+      TIMESTAMP_I   : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      MARKER_I       : in  std_logic;
+      DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+    );
+  end component;
+
 begin
   clk <= ACLK;
   rst <= RST_I;
@@ -275,8 +295,10 @@ begin
     HEARTBEAT_CONFIG_O  => heartbeat_config,
     ROLLOVER_CONFIG_O   => rollover_config,
     WORD_TYPE_LUT_O     => word_type_lut,
-    HEARTBEAT_HEADER_O  => heartbeat_header,
-    ROLLOVER_HEADER_O   => rollover_header,
+    HEADER_A_O          => header_a,
+    HEADER_B_O          => header_b,
+    HEADER_C_O          => header_c,
+    HEADER_D_O          => header_d,
     EOP_HEADER_O        => eop_header,
     LOOK_SELECT_O       => look_chan_select,
     LOOK_UART_DATA_I    => look_uart_data
@@ -304,10 +326,10 @@ begin
     RST_I      => rst,
     SEL_I      => buffer_chan_select,
     WTYPE_I    => word_type,
-    HEADER_A_I => heartbeat_header,
-    HEADER_B_I => rollover_header,
-    HEADER_C_I => (others => '0'),
-    HEADER_D_I => (others => '0'),
+    HEADER_A_I => header_a,
+    HEADER_B_I => header_b,
+    HEADER_C_I => header_c,
+    HEADER_D_I => header_d,
     PACMAN_I   => pacman,
     CHAN_I     => uart_chans,
     HEADER_O   => buffer_header
@@ -354,6 +376,29 @@ begin
     READY_I       => ready(41),
     TIMESTAMP_I   => TIMESTAMP_I
     );
+
+  m0: marker port map (
+    CLK_I         => clk,
+    RST_I         => rst,
+    EN_I          => buffer_enables(2),
+    TIMESTAMP_O   => timestamp(42),
+    VALID_O       => valid(42),
+    READY_I       => ready(42),
+    TIMESTAMP_I   => TIMESTAMP_I,
+    MARKER_I      => RX_MARKER_I(2)
+    );
+
+  m1: marker port map (
+    CLK_I         => clk,
+    RST_I         => rst,
+    EN_I          => buffer_enables(3),
+    TIMESTAMP_O   => timestamp(43),
+    VALID_O       => valid(43),
+    READY_I       => ready(43),
+    TIMESTAMP_I   => TIMESTAMP_I,
+    MARKER_I      => RX_MARKER_I(3)
+    );
+
 
 
 end behaviour;

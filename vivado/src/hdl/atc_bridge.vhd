@@ -27,6 +27,8 @@ entity atc_bridge is
 
     TIMESTAMP_O   : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
 
+    MARKER_O      : out std_logic_vector(C_NUM_MARKER-1 downto 0);
+
     -- Interface to clock domain B:  (asic_clk)
     CLK_B_I       : in  std_logic;
     RST_B_I       : in  std_logic;
@@ -43,7 +45,10 @@ entity atc_bridge is
     MASK_D_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
 
     TIMESTAMP_TOGGLE_I : in std_logic;
-    TIMESTAMP_TSYNC_I  : in std_logic
+    TIMESTAMP_TSYNC_I  : in std_logic;
+
+    MARKER_I      : in std_logic_vector(C_NUM_MARKER-1 downto 0)
+
   );
 end atc_bridge;
 
@@ -128,6 +133,18 @@ architecture behaviour of atc_bridge is
       );
   end component;
 
+  component rising_edge_sync is
+    generic ( DEBOUNCE_CYCLES : integer);
+
+    port (
+      CLK_I  : in  std_logic;
+      RST_I  : in  std_logic;
+
+      ASYNC_SIGNAL_I : in std_logic;
+      INVERT_I       : in std_logic;
+      UPDATE_O       : out std_logic
+      );
+  end component;
 
 
 begin
@@ -240,8 +257,22 @@ begin
     TSYNC_A            => TIMESTAMP_TSYNC_I
   );
 
-  -- status register:
+  gen_markers : for i in 0 to 3 generate
+    marker_sync : rising_edge_sync
+      generic map(
+        DEBOUNCE_CYCLES => 4
+        )
+      port map (
+        CLK_I          => clk_a,
+        RST_I          => rst_a,
+        ASYNC_SIGNAL_I => MARKER_I(i),
+        INVERT_I       => '0',
+        UPDATE_O       => MARKER_O(i)
+      );
+  end generate;
 
+
+  -- status register:
   status(0) <= cfg_busy;
   status(1) <= pkc_busy;
   status(2) <= pkd_busy;

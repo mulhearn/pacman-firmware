@@ -33,7 +33,8 @@ package common is
   constant C_NUM_LED             : integer  := 2;
   -- number bits needed for UART channel selection:
   constant C_UART_SELECT_WIDTH   : integer  := 6;
-
+  -- number of marker bits sent from ATC to RX
+  constant C_NUM_MARKER          : integer  := 4;
 
   --arrays of std_logic_vectors with array length the number of uart channels:
   type uart_reg_array_t       is array (0 to C_NUM_UART-1) of std_logic_vector (C_RB_DATA_WIDTH-1 downto 0);
@@ -83,6 +84,7 @@ package common is
   constant C_DEFAULT_RX_HEARTBEAT_HEADER  : integer := 16#00480053#;
   constant C_DEFAULT_RX_ROLLOVER_CONFIG   : integer := 16#1#;
   constant C_DEFAULT_RX_ROLLOVER_HEADER   : integer := 16#00530053#;
+  constant C_DEFAULT_RX_TRIGGER_HEADER    : integer := 16#00000054#;
   constant C_DEFAULT_RX_EOP_HEADER        : integer := 16#0000004C#;
 
 
