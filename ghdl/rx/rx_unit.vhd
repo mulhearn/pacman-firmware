@@ -360,9 +360,9 @@ begin
     RST_I         => rst,
     EN_I          => buffer_enables(0),
     CONFIG_I      => heartbeat_config,
-    TIMESTAMP_O   => timestamp(40),
-    VALID_O       => valid(40),
-    READY_I       => ready(40),
+    TIMESTAMP_O   => timestamp(C_NUM_UART+0),
+    VALID_O       => valid(C_NUM_UART+0),
+    READY_I       => ready(C_NUM_UART+0),
     TIMESTAMP_I   => TIMESTAMP_I
     );
 
@@ -371,9 +371,9 @@ begin
     RST_I         => rst,
     EN_I          => buffer_enables(1),
     CONFIG_I      => rollover_config,
-    TIMESTAMP_O   => timestamp(41),
-    VALID_O       => valid(41),
-    READY_I       => ready(41),
+    TIMESTAMP_O   => timestamp(C_NUM_UART+1),
+    VALID_O       => valid(C_NUM_UART+1),
+    READY_I       => ready(C_NUM_UART+1),
     TIMESTAMP_I   => TIMESTAMP_I
     );
 
@@ -381,9 +381,9 @@ begin
     CLK_I         => clk,
     RST_I         => rst,
     EN_I          => buffer_enables(2),
-    TIMESTAMP_O   => timestamp(42),
-    VALID_O       => valid(42),
-    READY_I       => ready(42),
+    TIMESTAMP_O   => timestamp(C_NUM_UART+2),
+    VALID_O       => valid(C_NUM_UART+2),
+    READY_I       => ready(C_NUM_UART+2),
     TIMESTAMP_I   => TIMESTAMP_I,
     MARKER_I      => RX_MARKER_I(2)
     );
@@ -392,9 +392,9 @@ begin
     CLK_I         => clk,
     RST_I         => rst,
     EN_I          => buffer_enables(3),
-    TIMESTAMP_O   => timestamp(43),
-    VALID_O       => valid(43),
-    READY_I       => ready(43),
+    TIMESTAMP_O   => timestamp(C_NUM_UART+3),
+    VALID_O       => valid(C_NUM_UART+3),
+    READY_I       => ready(C_NUM_UART+3),
     TIMESTAMP_I   => TIMESTAMP_I,
     MARKER_I      => RX_MARKER_I(3)
     );
