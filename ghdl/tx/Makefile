@@ -1,4 +1,4 @@
-all: modules-a modules-e testbenches
+all: modules-a modules-e
 
 modules-a:
 	ghdl -a ../integration/common.vhd

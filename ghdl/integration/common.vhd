@@ -28,7 +28,7 @@ package common is
   -- maximum number of tile cards supported by firmware:
   constant C_NUM_TILE            : integer  := 10;
   -- maximum number of UART channels supported:
-  constant C_NUM_UART            : integer  := 40;
+  constant C_NUM_UART            : integer  := 4;
   -- maximum number of LEDSs supported:
   constant C_NUM_LED             : integer  := 2;
   -- number bits needed for UART channel selection:
