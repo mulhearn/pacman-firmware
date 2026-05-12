@@ -4,7 +4,7 @@ modules-a:
 	ghdl -a ../integration/common.vhd
 	ghdl -a ../integration/register_map.vhd
 	ghdl -a ../axi/axis_read.vhd
-	ghdl -a uart_tx.vhd
+	ghdl -a tx_uart.vhd
 	ghdl -a tx_chan.vhd
 	ghdl -a tx_registers.vhd
 	ghdl -a tx_buffer.vhd
@@ -12,7 +12,7 @@ modules-a:
 	ghdl -a tx_unit.vhd
 modules-e:
 	ghdl -e axis_read
-	ghdl -e uart_tx
+	ghdl -e tx_uart
 	ghdl -e tx_chan
 	ghdl -e tx_registers
 	ghdl -e tx_buffer

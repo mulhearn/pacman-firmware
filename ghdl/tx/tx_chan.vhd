@@ -6,8 +6,8 @@ use work.common.all;
 
 -- tx_chan:  single UART TX channel
 --
--- this is a wrapper for the (known to work) uart_tx which is
--- preserved from the legacy firmware.  I plan to update the uart_tx
+-- this is a wrapper for the (known to work) tx_uart which is
+-- preserved from the legacy firmware.  I plan to update the tx_uart
 -- once I have solid ASIC testing regimen, so comments are limited for
 -- this version.
 
@@ -30,7 +30,7 @@ entity tx_chan is
 end;
 
 architecture behavioral of tx_chan is
-  component uart_tx is
+  component tx_uart is
     port (
       CLK          : IN  STD_LOGIC;
       RST          : IN  STD_LOGIC;
@@ -44,7 +44,7 @@ architecture behavioral of tx_chan is
       DATA_UPDATE : IN  STD_LOGIC; -- must be held high until busy goes high
       BUSY        : OUT STD_LOGIC
     );
-  end component uart_tx;
+  end component tx_uart;
 
   signal clk         : std_logic;
   signal rst         : std_logic;
@@ -65,7 +65,7 @@ architecture behavioral of tx_chan is
   signal rested      : std_logic;
 
 begin
-  uart0: uart_tx port map(
+  uart0: tx_uart port map(
     CLK=>clk,
     RST=>rst,
     CLKOUT_RATIO=>config(7 downto 0),

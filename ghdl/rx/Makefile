@@ -1,10 +1,10 @@
-all: modules-a modules-e 
+all: modules-a modules-e
 
 modules-a:
 	ghdl -a ../integration/common.vhd
 	ghdl -a ../integration/register_map.vhd
 	ghdl -a ../axi/axis_write.vhd
-	ghdl -a uart_rx.vhd
+	ghdl -a rx_uart.vhd
 	ghdl -a rx_data_mux.vhd
 	ghdl -a rx_timestamp_mux.vhd
 	ghdl -a rx_header.vhd
@@ -16,7 +16,7 @@ modules-a:
 	ghdl -a rx_buffer.vhd
 	ghdl -a rx_unit.vhd
 modules-e:
-	ghdl -e uart_rx
+	ghdl -e rx_uart
 	ghdl -e rx_data_mux
 	ghdl -e rx_timestamp_mux
 	ghdl -e rx_header
