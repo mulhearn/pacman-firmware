@@ -64,6 +64,38 @@ foreach file [glob src/hdl/*.vhd src/hdl/$hw_version/*.vhd] {lappend files [file
 puts "HDL files:  $files"
 add_files -norecurse -fileset sources_1 $files
 
+# ASIC emulation core: include any RTL present in external/larpix_v3c/
+set asic_dir [file normalize $origin_dir/src/external/larpix_v3c]
+set asic_src_dir $asic_dir/src
+set asic_files [glob -nocomplain $asic_src_dir/*.sv]
+if {[llength $asic_files] > 0} {
+    puts "INFO: ASIC RTL: including [llength $asic_files] file(s) from $asic_src_dir"
+    add_files -norecurse -fileset sources_1 $asic_files
+    set asic_file_objs [get_files -of_objects [get_filesets sources_1] $asic_src_dir/*.sv]
+    set_property file_type SystemVerilog $asic_file_objs
+    # These files are include fragments, not standalone modules
+    set header_files {larpix_constants.sv config_regfile_assign.sv priority_onehot.sv}
+    foreach hf $header_files {
+        set fobj [get_files $asic_src_dir/$hf]
+        if {$fobj ne ""} {
+            set_property file_type {Verilog Header} $fobj
+            puts "INFO: ASIC RTL: marked $hf as Verilog Header"
+        }
+    }
+    set_property include_dirs $asic_src_dir [get_filesets sources_1]
+} else {
+    puts "INFO: ASIC RTL: no files found in $asic_src_dir, skipping"
+}
+
+# VHDL wrappers around LBNL ASIC modules (BD-compatible)
+set wrappers_dir [file normalize $origin_dir/src/external/wrappers]
+set wrapper_files [glob -nocomplain $wrappers_dir/*.vhd]
+if {[llength $wrapper_files] > 0} {
+    puts "INFO: ASIC wrappers: including [llength $wrapper_files] file(s) from $wrappers_dir"
+    add_files -norecurse -fileset sources_1 $wrapper_files
+} else {
+    puts "INFO: ASIC wrappers: no files found in $wrappers_dir, skipping"
+}
 source $origin_dir/tcl/version_info.tcl
 add_files -fileset sources_1 gen/hdl/version_info_pkg.vhd
 
