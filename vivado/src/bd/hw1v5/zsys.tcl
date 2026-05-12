@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# axil_to_regbus, tx_unit, rx_unit, regbus_mux, global_unit, adc_unit, atc_unit
+# axil_to_regbus, tx_unit, rx_unit, regbus_mux, global_unit, adc_unit, atc_unit, asic_emu_unit
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -175,6 +175,7 @@ regbus_mux\
 global_unit\
 adc_unit\
 atc_unit\
+asic_emu_unit\
 "
 
    set list_mods_missing ""
@@ -254,8 +255,6 @@ proc create_root_design { parentCell } {
   set PL_pin_P22 [ create_bd_port -dir I PL_pin_P22 ]
   set ANALOG_PWR_EN_O_0 [ create_bd_port -dir O ANALOG_PWR_EN_O_0 ]
   set TILE_EN_O_0 [ create_bd_port -dir O -from 9 -to 0 TILE_EN_O_0 ]
-  set POSI_O_0 [ create_bd_port -dir O -from 39 -to 0 POSI_O_0 ]
-  set PISO_I_0 [ create_bd_port -dir I -from 39 -to 0 PISO_I_0 ]
   set GLB_CLK_O_0 [ create_bd_port -dir O GLB_CLK_O_0 ]
   set TRIG_O_0 [ create_bd_port -dir O -from 9 -to 0 TRIG_O_0 ]
   set SYNC_O_0 [ create_bd_port -dir O -from 9 -to 0 SYNC_O_0 ]
@@ -689,6 +688,17 @@ proc create_root_design { parentCell } {
      return 1
    }
   
+  # Create instance: asic_emu_unit_0, and set properties
+  set block_name asic_emu_unit
+  set block_cell_name asic_emu_unit_0
+  if { [catch {set asic_emu_unit_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $asic_emu_unit_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create interface connections
   connect_bd_intf_net -intf_net axi_dma_0_M_AXIS_MM2S [get_bd_intf_pins axi_dma_0/M_AXIS_MM2S] [get_bd_intf_pins tx_unit_0/S_AXIS]
   connect_bd_intf_net -intf_net axi_dma_0_M_AXI_MM2S [get_bd_intf_pins axi_dma_0/M_AXI_MM2S] [get_bd_intf_pins axi_mem_intercon/S00_AXI]
@@ -716,7 +726,6 @@ proc create_root_design { parentCell } {
   connect_bd_net -net LEMO_A_0_1 [get_bd_ports LEMO_A_0] [get_bd_pins atc_unit_0/LEMO_A_I]
   connect_bd_net -net LEMO_B_0_1 [get_bd_ports LEMO_B_0] [get_bd_pins atc_unit_0/LEMO_B_I]
   connect_bd_net -net PHY_LEDs [get_bd_pins xlconcat_0/dout] [get_bd_pins vio_0/probe_in0]
-  connect_bd_net -net PISO_I_0_1 [get_bd_ports PISO_I_0] [get_bd_pins rx_unit_0/PISO_I]
   connect_bd_net -net PL_pin_K16_1 [get_bd_ports PL_pin_K16] [get_bd_pins SC0720_0/PL_pin_K16]
   connect_bd_net -net PL_pin_K19_1 [get_bd_ports PL_pin_K19] [get_bd_pins SC0720_0/PL_pin_K19]
   connect_bd_net -net PL_pin_M15_1 [get_bd_ports PL_pin_M15] [get_bd_pins SC0720_0/PL_pin_M15]
@@ -729,11 +738,12 @@ proc create_root_design { parentCell } {
   connect_bd_net -net SC0720_0_PL_pin_K20 [get_bd_pins SC0720_0/PL_pin_K20] [get_bd_ports PL_pin_K20]
   connect_bd_net -net SC0720_0_PL_pin_L16 [get_bd_pins SC0720_0/PL_pin_L16] [get_bd_ports PL_pin_L16]
   connect_bd_net -net SC0720_0_PL_pin_N22 [get_bd_pins SC0720_0/PL_pin_N22] [get_bd_ports PL_pin_N22]
-  connect_bd_net -net atc_unit_0_G_O [get_bd_pins atc_unit_0/G_O] [get_bd_ports SYNC_O_0]
-  connect_bd_net -net atc_unit_0_H_O [get_bd_pins atc_unit_0/H_O] [get_bd_ports TRIG_O_0]
+  connect_bd_net -net asic_emu_unit_0_PISO_O [get_bd_pins asic_emu_unit_0/PISO_O] [get_bd_pins rx_unit_0/PISO_I]
+  connect_bd_net -net atc_unit_0_G_O [get_bd_pins atc_unit_0/G_O] [get_bd_ports SYNC_O_0] [get_bd_pins asic_emu_unit_0/G_I]
+  connect_bd_net -net atc_unit_0_H_O [get_bd_pins atc_unit_0/H_O] [get_bd_ports TRIG_O_0] [get_bd_pins asic_emu_unit_0/H_I]
   connect_bd_net -net atc_unit_0_RX_MARKER_O [get_bd_pins atc_unit_0/RX_MARKER_O] [get_bd_pins rx_unit_0/RX_MARKER_I]
   connect_bd_net -net atc_unit_0_TIMESTAMP_O [get_bd_pins atc_unit_0/TIMESTAMP_O] [get_bd_pins rx_unit_0/TIMESTAMP_I]
-  connect_bd_net -net atc_unit_0_UCLK_O [get_bd_pins atc_unit_0/UCLK_O] [get_bd_ports GLB_CLK_O_0]
+  connect_bd_net -net atc_unit_0_UCLK_O [get_bd_pins atc_unit_0/UCLK_O] [get_bd_ports GLB_CLK_O_0] [get_bd_pins asic_emu_unit_0/UCLK_I]
   connect_bd_net -net axis_data_fifo_0_axis_rd_data_count [get_bd_pins axis_data_fifo_0/axis_rd_data_count] [get_bd_pins rx_unit_0/FIFO_COUNT_I]
   connect_bd_net -net global_unit_0_ADC_CLK_O [get_bd_pins adc_unit_0/ADC_CLK_O] [get_bd_ports ADC_CLK_O_0]
   connect_bd_net -net global_unit_0_ADC_EN_O [get_bd_pins adc_unit_0/ADC_EN_O] [get_bd_ports ADC_EN_O_0]
@@ -745,7 +755,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
   connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn1 [get_bd_pins rst_ps7_0_100M/peripheral_aresetn] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axil_to_regbus_0/S_AXI_ARESETN] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins axis_data_fifo_0/s_axis_aresetn] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins regbus_mux_0/ARESETN] [get_bd_pins axi_mem_intercon/S01_ARESETN] [get_bd_pins axi_mem_intercon/S02_ARESETN]
   connect_bd_net -net rst_ps7_0_100M_peripheral_reset [get_bd_pins rst_ps7_0_100M/peripheral_reset] [get_bd_pins tx_unit_0/RST_I] [get_bd_pins global_unit_0/RST_I] [get_bd_pins rx_unit_0/RST_I] [get_bd_pins adc_unit_0/RST_I] [get_bd_pins atc_unit_0/RST_I]
-  connect_bd_net -net tx_unit_0_POSI_O [get_bd_pins tx_unit_0/POSI_O] [get_bd_ports POSI_O_0] [get_bd_pins rx_unit_0/LOOPBACK_I]
+  connect_bd_net -net tx_unit_0_POSI_O [get_bd_pins tx_unit_0/POSI_O] [get_bd_pins asic_emu_unit_0/POSI_I] [get_bd_pins rx_unit_0/LOOPBACK_I]
 
   # Create address segments
   assign_bd_address -offset 0x40400000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_dma_0/S_AXI_LITE/Reg] -force
