@@ -7,7 +7,7 @@ LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
-ENTITY uart_tx IS
+ENTITY tx_uart IS
   GENERIC (
     CLK_HZ : INTEGER := 100000000;
     CLKOUT_HZ : INTEGER := 10000000;
@@ -28,9 +28,9 @@ ENTITY uart_tx IS
     -- test signals
     --TC          : OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
     );
-END ENTITY uart_tx;
+END ENTITY tx_uart;
 
-ARCHITECTURE uart_tx_arch OF uart_tx IS
+ARCHITECTURE tx_uart_arch OF tx_uart IS
   constant BIT_LEN : integer := CLK_HZ / CLKOUT_HZ;
 
   signal busy_out : std_logic;
@@ -53,7 +53,7 @@ ARCHITECTURE uart_tx_arch OF uart_tx IS
   attribute ASYNC_REG of mclk_meta: signal is "TRUE";
   attribute ASYNC_REG of mclk_sync: signal is "TRUE";
 
-BEGIN  -- ARCHITECTURE uart_tx_arch
+BEGIN  -- ARCHITECTURE tx_uart_arch
   -- IO
   TX <= tx_out;
   busy <= busy_out;
@@ -68,7 +68,7 @@ BEGIN  -- ARCHITECTURE uart_tx_arch
     end if;
   end process;
 
-  uart_tx_fsm : process (CLK, RST) is
+  tx_uart_fsm : process (CLK, RST) is
   begin
     if (RST = '1') then -- asynchronous reset (active high)
       state <= IDLE;
@@ -129,6 +129,6 @@ BEGIN  -- ARCHITECTURE uart_tx_arch
           state <= IDLE;
       end case;
     end if;
-    end process uart_tx_fsm;
+    end process tx_uart_fsm;
 
-END ARCHITECTURE uart_tx_arch;
+END ARCHITECTURE tx_uart_arch;

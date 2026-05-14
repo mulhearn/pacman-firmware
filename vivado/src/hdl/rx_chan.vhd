@@ -6,8 +6,8 @@ use work.common.all;
 
 -- rx_chan:  single UART RX channel
 --
--- this is a wrapper for the (known to work) uart_rx which is
--- preserved from the legacy firmware.  I plan to update the uart_rx
+-- this is a wrapper for the (known to work) rx_uart which is
+-- preserved from the legacy firmware.  I plan to update the rx_uart
 -- once I have solid ASIC testing regimen, so comments are limited for
 -- this version.
 
@@ -33,7 +33,7 @@ entity rx_chan is
 end;
 
 architecture behavioral of rx_chan is
-  component uart_rx is
+  component rx_uart is
    port (
       CLK         : in   std_logic;
       RST         : in   std_logic;
@@ -65,7 +65,7 @@ architecture behavioral of rx_chan is
   signal start      : std_logic:='0';
   signal lost       : std_logic:='0';
 begin
-  urx: uart_rx port map (
+  urx: rx_uart port map (
     CLK => clk,
     RST => rst,
     CLKIN_RATIO => CONFIG_I(7 downto 0),

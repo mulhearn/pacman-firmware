@@ -100,10 +100,10 @@ begin
     write(l, String'("INFO:  Releasing reset, holding POSI quiet"));
     writeline(output, l);
     wait until (count=4);
-    write(l, String'("INFO:  Walking 1 across POSI; expect PISO to mirror (loopback stub)"));
+    write(l, String'("INFO:  Walking 1 across POSI"));
     writeline(output, l);
     wait until (count=8);
-    write(l, String'("INFO:  All POSI lines high; expect PISO = 0xF"));
+    write(l, String'("INFO:  All POSI lines high"));
     writeline(output, l);
     wait;
   end process;

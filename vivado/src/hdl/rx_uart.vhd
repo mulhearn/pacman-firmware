@@ -7,7 +7,7 @@ LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
-ENTITY uart_rx IS
+ENTITY rx_uart IS
    GENERIC (
       CLK_HZ     : INTEGER := 100000000;
       CLKIN_HZ   : INTEGER := 10000000;
@@ -27,9 +27,9 @@ ENTITY uart_rx IS
       -- test signals
       --TC          : OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
       );
-END ENTITY uart_rx;
+END ENTITY rx_uart;
 
-ARCHITECTURE uart_rx_arch OF uart_rx IS
+ARCHITECTURE rx_uart_arch OF rx_uart IS
 
   CONSTANT CLK_LENGTH   : INTEGER := CLK_HZ / CLKIN_HZ;
   SIGNAL bit_length     : INTEGER RANGE CLK_LENGTH TO CLK_LENGTH * 255;
@@ -45,7 +45,7 @@ ARCHITECTURE uart_rx_arch OF uart_rx IS
 
   SIGNAL srg : STD_LOGIC_VECTOR (DATA_WIDTH+1 DOWNTO 0);
 
-BEGIN  -- ARCHITECTURE uart_rx_arch
+BEGIN  -- ARCHITECTURE rx_uart_arch
 
    -- filter glitched from input data
    RX_FILTER : PROCESS (CLK, RST) IS
@@ -59,8 +59,8 @@ BEGIN  -- ARCHITECTURE uart_rx_arch
       END IF;
    END PROCESS RX_FILTER;
 
-   UART_RX_FSM : PROCESS (CLK, RST) IS
-   BEGIN  -- PROCESS UART_RX_FSM
+   RX_UART_FSM : PROCESS (CLK, RST) IS
+   BEGIN  -- PROCESS RX_UART_FSM
       IF RST = '1' THEN  -- asynchronous reset (active high)
         state <= IDLE;
         busy <= '0';
@@ -123,8 +123,8 @@ BEGIN  -- ARCHITECTURE uart_rx_arch
                state <= IDLE;
          END CASE;
       END IF;
-   END PROCESS UART_RX_FSM;
+   END PROCESS RX_UART_FSM;
 
    --TC <= (OTHERS => '0');
 
-END ARCHITECTURE uart_rx_arch;
+END ARCHITECTURE rx_uart_arch;
