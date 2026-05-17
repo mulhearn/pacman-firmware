@@ -22,8 +22,10 @@ architecture behaviour of asic_emu_unit_tb is
   signal clk     : std_logic;
   signal g       : std_logic_vector(C_NUM_TILE-1 downto 0) := (others => '0');
   signal h       : std_logic_vector(C_NUM_TILE-1 downto 0) := (others => '0');
-  signal posi    : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');
+  signal posi    : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '1');  -- idle high
   signal piso    : std_logic_vector(C_NUM_UART-1 downto 0);
+  -- Test packet to send: a recognizable pattern
+  constant TEST_PACKET : std_logic_vector(63 downto 0) := x"3333FFFF00003333";
 begin
   uut0: asic_emu_unit port map (
     UCLK_I => clk,
@@ -50,24 +52,18 @@ begin
   end process;
   stimulus_process : process
   begin
-    -- Hold POSI quiet during reset
-    posi <= (others => '0');
-    wait for 30 ns;
-    -- Walk a 1 across the four UART receive lines.
-    -- With the loopback stub, PISO should mirror POSI immediately.
-    posi <= "0001";
+    -- Hold idle through reset
+    posi <= (others => '1');
+    wait for 40 ns;
+    -- Drive a UART packet on POSI_I(0): start bit + 64 data bits LSB-first
+    -- (other lines held idle high)
+    posi(0) <= '0';     -- start bit
     wait for 10 ns;
-    posi <= "0010";
-    wait for 10 ns;
-    posi <= "0100";
-    wait for 10 ns;
-    posi <= "1000";
-    wait for 10 ns;
-    -- All four high simultaneously
-    posi <= "1111";
-    wait for 10 ns;
-    -- Idle
-    posi <= (others => '0');
+    for i in 0 to 63 loop
+      posi(0) <= TEST_PACKET(i);
+      wait for 10 ns;
+    end loop;
+    posi(0) <= '1';     -- return to idle (stop bit / idle line)
     wait;
   end process;
 
@@ -77,10 +73,6 @@ begin
     wait for 10 ns;
     write (l, String'("c: "));
     write (l, count, left, 4);
-    write (l, String'(" | g0: "));
-    write (l, g(0));
-    write (l, String'(" h0: "));
-    write (l, h(0));
     write (l, String'(" | posi: 0x"));
     hwrite (l, posi);
     write (l, String'(" piso: 0x"));
@@ -94,16 +86,11 @@ begin
   comment_process : process
     variable l : line;
   begin
-    write(l, String'("INFO:  Resetting (G_I(0) low)"));
+    wait until (count=5);
+    write(l, String'("INFO:  Driving start bit on POSI_I(0)"));
     writeline(output, l);
-    wait until (count=3);
-    write(l, String'("INFO:  Releasing reset, holding POSI quiet"));
-    writeline(output, l);
-    wait until (count=4);
-    write(l, String'("INFO:  Walking 1 across POSI"));
-    writeline(output, l);
-    wait until (count=8);
-    write(l, String'("INFO:  All POSI lines high"));
+    wait until (count=6);
+    write(l, String'("INFO:  Sending test packet"));
     writeline(output, l);
     wait;
   end process;

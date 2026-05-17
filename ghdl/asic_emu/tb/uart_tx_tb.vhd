@@ -26,7 +26,7 @@ architecture behaviour of uart_tx_tb is
   signal count      : integer := 0;
   signal clk        : std_logic;
   signal reset_n    : std_logic := '0';
-  signal tx_data    : std_logic_vector(63 downto 0) := x"33335555FFFF3333";
+  signal tx_data    : std_logic_vector(63 downto 0) := x"3333FFFF00003333";
   signal ld_tx_data : std_logic := '0';
   signal tx_enable  : std_logic := '1';
   signal tx_out     : std_logic;
@@ -40,7 +40,8 @@ begin
     tx_enable  => tx_enable,
     clk        => clk,
     reset_n    => reset_n
-  );
+    );
+  
   reset_process : process
   begin
     reset_n <= '0';
@@ -48,6 +49,7 @@ begin
     reset_n <= '1';
     wait;
   end process;
+  
   clk_process : process
   begin
     count <= count + 1;
@@ -56,6 +58,7 @@ begin
     clk <= '0';
     wait for 5 ns;
   end process;
+  
   stimulus_process : process
   begin
     ld_tx_data <= '0';
@@ -66,6 +69,7 @@ begin
     ld_tx_data <= '0';
     wait;
   end process;
+  
   output_process : process
     variable l : line;
   begin
@@ -81,13 +85,12 @@ begin
     end if;
     writeline(output, l);
   end process;
+  
   comment_process : process
     variable l : line;
   begin
     wait until (count=4);
-    write(l, String'("INFO:  Pulsing ld_tx_data; expect start bit followed by data LSB-first"));
-    writeline(output, l);
-    write(l, String'("INFO:  tx_data = 0x33335555FFFF3333"));
+    write(l, String'("INFO:  tx_data = 0x3333FFFF00003333"));
     writeline(output, l);
     wait;
   end process;

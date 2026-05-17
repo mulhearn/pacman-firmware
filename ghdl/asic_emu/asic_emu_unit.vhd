@@ -19,7 +19,21 @@ entity asic_emu_unit is
 end asic_emu_unit;
 
 architecture behaviour of asic_emu_unit is
-
+  
+  component uart_rx is
+    generic (
+      WIDTH : integer := 64
+    );
+    port (
+      rx_data     : out std_logic_vector(WIDTH-1 downto 0);
+      rx_empty    : out std_logic;
+      rx_in       : in  std_logic;
+      uld_rx_data : in  std_logic;
+      clk         : in  std_logic;
+      reset_n     : in  std_logic
+      );
+  end component;
+  
   component uart_tx is
     generic (
       WIDTH : integer := 64
@@ -37,7 +51,6 @@ architecture behaviour of asic_emu_unit is
 
   signal clk        : std_logic;
   signal reset_n    : std_logic;
-  signal counter  : unsigned(9 downto 0) := (others => '0');
 
   signal tx_out     : std_logic;
   signal tx_busy    : std_logic;
@@ -45,26 +58,32 @@ architecture behaviour of asic_emu_unit is
   signal ld_tx_data : std_logic := '0';
   signal tx_enable  : std_logic := '1';
 
+  signal rx_in       : std_logic := '1';  -- idle high
+  signal uld_rx_data : std_logic := '0';
+  signal rx_data     : std_logic_vector(63 downto 0);
+  signal rx_empty    : std_logic;
+
 begin
-
-  process(clk, reset_n)
-  begin
-    if reset_n = '0' then
-      counter <= (others => '1');
-    elsif rising_edge(clk) then
-      counter <= counter + 1;
-    end if;
-  end process;
-
-  ld_tx_data <= '1' when counter = 0 else '0';
-
-
-
   clk <= UCLK_I;
   reset_n <= G_I(0);
   PISO_O  <= (others => tx_out);
+  rx_in <= POSI_I(0);
 
-  uut0: uart_tx port map (
+  --loopback RX to TX
+  ld_tx_data  <= '1' when rx_empty = '0' and tx_busy = '0' else '0';
+  uld_rx_data <= '1' when rx_empty = '0' and tx_busy = '0' else '0';
+  tx_data     <= rx_data;
+  
+  urx0: uart_rx port map (
+    rx_data     => rx_data,
+    rx_empty    => rx_empty,
+    rx_in       => rx_in,
+    uld_rx_data => uld_rx_data,
+    clk         => clk,
+    reset_n     => reset_n
+  );
+
+  utx0: uart_tx port map (
     tx_out     => tx_out,
     tx_busy    => tx_busy,
     tx_data    => tx_data,

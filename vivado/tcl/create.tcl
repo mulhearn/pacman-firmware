@@ -89,6 +89,7 @@ if {$use_asic_rtl} {
 set files {}
 foreach file [glob src/hdl/*.vhd src/hdl/$hw_version/*.vhd] {
     if {$use_asic_rtl && [file tail $file] eq "digital_core.vhd"} continue
+    if {$use_asic_rtl && [file tail $file] eq "uart_rx.vhd"} continue
     if {$use_asic_rtl && [file tail $file] eq "uart_tx.vhd"} continue
     lappend files [file normalize $file]
 }
