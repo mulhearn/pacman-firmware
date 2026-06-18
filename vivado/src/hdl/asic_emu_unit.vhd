@@ -19,78 +19,109 @@ entity asic_emu_unit is
 end asic_emu_unit;
 
 architecture behaviour of asic_emu_unit is
-  
-  component uart_rx is
-    generic (
-      WIDTH : integer := 64
-    );
+
+  component digital_core is
     port (
-      rx_data     : out std_logic_vector(WIDTH-1 downto 0);
-      rx_empty    : out std_logic;
-      rx_in       : in  std_logic;
-      uld_rx_data : in  std_logic;
-      clk         : in  std_logic;
-      reset_n     : in  std_logic
-      );
-  end component;
-  
-  component uart_tx is
-    generic (
-      WIDTH : integer := 64
-    );
-    port (
-      tx_out     : out std_logic;
-      tx_busy    : out std_logic;
-      tx_data    : in  std_logic_vector(WIDTH-1 downto 0);
-      ld_tx_data : in  std_logic;
-      tx_enable  : in  std_logic;
-      clk        : in  std_logic;
-      reset_n    : in  std_logic
+      piso                    : out std_logic_vector(3 downto 0);
+      digital_monitor         : out std_logic;
+      sample                  : out std_logic_vector(63 downto 0);
+      tx_enable               : out std_logic_vector(3 downto 0);
+      pixel_trim_dac          : out std_logic_vector(319 downto 0);
+      threshold_global        : out std_logic_vector(7 downto 0);
+      gated_reset             : out std_logic_vector(63 downto 0);
+      csa_reset               : out std_logic_vector(63 downto 0);
+      bypass_caps_enable      : out std_logic_vector(63 downto 0);
+      ibias_tdac              : out std_logic_vector(15 downto 0);
+      ibias_comp              : out std_logic_vector(15 downto 0);
+      ibias_buffer            : out std_logic_vector(15 downto 0);
+      ibias_csa               : out std_logic_vector(15 downto 0);
+      ibias_vref_buffer       : out std_logic_vector(3 downto 0);
+      ibias_vcm_buffer        : out std_logic_vector(3 downto 0);
+      ibias_tpulse            : out std_logic_vector(3 downto 0);
+      adc_ibias_delay         : out std_logic_vector(15 downto 0);
+      ref_current_trim        : out std_logic_vector(4 downto 0);
+      adc_comp_trim           : out std_logic_vector(1 downto 0);
+      vref_dac                : out std_logic_vector(7 downto 0);
+      vcm_dac                 : out std_logic_vector(7 downto 0);
+      csa_bypass_enable       : out std_logic_vector(63 downto 0);
+      csa_bypass_select       : out std_logic_vector(63 downto 0);
+      csa_monitor_select      : out std_logic_vector(63 downto 0);
+      csa_testpulse_enable    : out std_logic_vector(63 downto 0);
+      csa_testpulse_dac       : out std_logic_vector(7 downto 0);
+      adc_ibias_delay_monitor : out std_logic_vector(3 downto 0);
+      current_monitor_bank0   : out std_logic_vector(3 downto 0);
+      current_monitor_bank1   : out std_logic_vector(3 downto 0);
+      current_monitor_bank2   : out std_logic_vector(3 downto 0);
+      current_monitor_bank3   : out std_logic_vector(3 downto 0);
+      voltage_monitor_bank0   : out std_logic_vector(2 downto 0);
+      voltage_monitor_bank1   : out std_logic_vector(2 downto 0);
+      voltage_monitor_bank2   : out std_logic_vector(2 downto 0);
+      voltage_monitor_bank3   : out std_logic_vector(2 downto 0);
+      voltage_monitor_refgen  : out std_logic_vector(7 downto 0);
+      en_analog_monitor       : out std_logic;
+      tx_slices0              : out std_logic_vector(3 downto 0);
+      tx_slices1              : out std_logic_vector(3 downto 0);
+      tx_slices2              : out std_logic_vector(3 downto 0);
+      tx_slices3              : out std_logic_vector(3 downto 0);
+      i_tx_diff0              : out std_logic_vector(3 downto 0);
+      i_tx_diff1              : out std_logic_vector(3 downto 0);
+      i_tx_diff2              : out std_logic_vector(3 downto 0);
+      i_tx_diff3              : out std_logic_vector(3 downto 0);
+      i_rx0                   : out std_logic_vector(3 downto 0);
+      i_rx1                   : out std_logic_vector(3 downto 0);
+      i_rx2                   : out std_logic_vector(3 downto 0);
+      i_rx3                   : out std_logic_vector(3 downto 0);
+      i_rx_clk                : out std_logic_vector(3 downto 0);
+      i_rx_rst                : out std_logic_vector(3 downto 0);
+      i_rx_ext_trig           : out std_logic_vector(3 downto 0);
+      r_term0                 : out std_logic_vector(4 downto 0);
+      r_term1                 : out std_logic_vector(4 downto 0);
+      r_term2                 : out std_logic_vector(4 downto 0);
+      r_term3                 : out std_logic_vector(4 downto 0);
+      r_term_clk              : out std_logic_vector(4 downto 0);
+      r_term_rst              : out std_logic_vector(4 downto 0);
+      r_term_ext_trig         : out std_logic_vector(4 downto 0);
+      v_cm_lvds_tx0           : out std_logic_vector(3 downto 0);
+      v_cm_lvds_tx1           : out std_logic_vector(3 downto 0);
+      v_cm_lvds_tx2           : out std_logic_vector(3 downto 0);
+      v_cm_lvds_tx3           : out std_logic_vector(3 downto 0);
+      dout                    : in  std_logic_vector(639 downto 0);
+      done                    : in  std_logic_vector(63 downto 0);
+      hit                     : in  std_logic_vector(63 downto 0);
+      external_trigger        : in  std_logic;
+      posi                    : in  std_logic_vector(3 downto 0);
+      clk                     : in  std_logic;
+      reset_n                 : in  std_logic
       );
   end component;
 
   signal clk        : std_logic;
   signal reset_n    : std_logic;
+  signal ext_trig : std_logic := '0';
+  signal dout_in : std_logic_vector(639 downto 0) := (others => '0');
+  signal done_in : std_logic_vector(63 downto 0)  := (others => '0');
+  signal hit_in  : std_logic_vector(63 downto 0)  := (others => '0');
+  signal dig_mon : std_logic;
+  signal samp    : std_logic_vector(63 downto 0);
 
-  signal tx_out     : std_logic;
-  signal tx_busy    : std_logic;
-  signal tx_data    : std_logic_vector(63 downto 0) := x"33335555FFFF3333";
-  signal ld_tx_data : std_logic := '0';
-  signal tx_enable  : std_logic := '1';
 
-  signal rx_in       : std_logic := '1';  -- idle high
-  signal uld_rx_data : std_logic := '0';
-  signal rx_data     : std_logic_vector(63 downto 0);
-  signal rx_empty    : std_logic;
 
 begin
   clk <= UCLK_I;
   reset_n <= G_I(0);
-  PISO_O  <= (others => tx_out);
-  rx_in <= POSI_I(0);
 
-  --loopback RX to TX
-  ld_tx_data  <= '1' when rx_empty = '0' and tx_busy = '0' else '0';
-  uld_rx_data <= '1' when rx_empty = '0' and tx_busy = '0' else '0';
-  tx_data     <= rx_data;
-  
-  urx0: uart_rx port map (
-    rx_data     => rx_data,
-    rx_empty    => rx_empty,
-    rx_in       => rx_in,
-    uld_rx_data => uld_rx_data,
-    clk         => clk,
-    reset_n     => reset_n
+  uut0: digital_core port map (
+    clk              => clk,
+    reset_n          => reset_n,
+    posi             => POSI_I(3 downto 0),
+    piso             => PISO_O(3 downto 0),
+    external_trigger => ext_trig,
+    dout             => dout_in,
+    done             => done_in,
+    hit              => hit_in,
+    digital_monitor  => dig_mon,
+    sample           => samp
   );
 
-  utx0: uart_tx port map (
-    tx_out     => tx_out,
-    tx_busy    => tx_busy,
-    tx_data    => tx_data,
-    ld_tx_data => ld_tx_data,
-    tx_enable  => tx_enable,
-    clk        => clk,
-    reset_n    => reset_n
-  );
 
 end behaviour;

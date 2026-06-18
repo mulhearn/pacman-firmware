@@ -41,7 +41,7 @@ begin
     clk        => clk,
     reset_n    => reset_n
     );
-  
+
   reset_process : process
   begin
     reset_n <= '0';
@@ -49,7 +49,7 @@ begin
     reset_n <= '1';
     wait;
   end process;
-  
+
   clk_process : process
   begin
     count <= count + 1;
@@ -58,7 +58,7 @@ begin
     clk <= '0';
     wait for 5 ns;
   end process;
-  
+
   stimulus_process : process
   begin
     ld_tx_data <= '0';
@@ -69,7 +69,7 @@ begin
     ld_tx_data <= '0';
     wait;
   end process;
-  
+
   output_process : process
     variable l : line;
   begin
@@ -85,7 +85,7 @@ begin
     end if;
     writeline(output, l);
   end process;
-  
+
   comment_process : process
     variable l : line;
   begin

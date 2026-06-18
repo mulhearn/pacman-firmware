@@ -64,7 +64,7 @@ begin
     rx_in <= '0';
     wait for 10 ns;
     -- Data bits LSB-first
-    for i in 0 to 63 loop      
+    for i in 0 to 63 loop
       rx_in <= TEST_DATA(i);
       wait for 10 ns;
     end loop;
