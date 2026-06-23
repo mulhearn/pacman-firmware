@@ -296,32 +296,28 @@ begin
     end if;
   end process;
 
-  -- packet timeout: reset in IDLE, otherwise count until configurable timeout
-  -- is reached, then flag is high until next reset or IDLE.
+  -- packet timeout: reset in IDLE, otherwise count down from configurable timeout
+  -- TTTT is timeout in nominal sweeps (1 sweep ~ 2^9 = 512 clock cycles)
   process(clk, rst)
-    variable timeout_config : integer;
-    variable timeout_counter : integer range 0 to 16#FFFFF# := 0;
+    variable timeout_counter : integer range 0 to 16#1FFFFFF# := 0;
   begin
     if rst = '1' then
       timeout_counter := 0;
       packet_timeout <= '0';
     elsif rising_edge(clk) then
-      timeout_config := to_integer(unsigned(CONFIG_I(15 downto 0)));
-
       if (state = IDLE) then
-        timeout_counter := 0;
+        timeout_counter := to_integer(unsigned(CONFIG_I(15 downto 0))) * 512;
         packet_timeout <= '0';
       else
-        if (timeout_counter < 16#FFFFF#) then
-          timeout_counter := timeout_counter + 1;
+        if (timeout_counter > 0) then
+          timeout_counter := timeout_counter - 1;
         end if;
-        if ((timeout_config > 0) and (timeout_counter >= timeout_config)) then
+        if ((CONFIG_I(15 downto 0) /= x"0000") and (timeout_counter = 0)) then
           packet_timeout <= '1';
         end if;
       end if;
     end if;
   end process;
-
 
   -- buffer inputs process:
   process(clk, rst)

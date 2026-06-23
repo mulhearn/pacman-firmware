@@ -89,8 +89,8 @@ begin
     '1' when others;
 
   process(clk,rst)
-    variable mode : integer range 0 to 3 := 0;
-
+    variable mode    : integer range 0 to 3 := 0;
+    variable timeout : integer range 0 to 65535 := 0;
   begin
     if (rst='1') then
       DATA_O <= (others => '0');
@@ -98,6 +98,7 @@ begin
       valid  <= '0';
       lost   <= '0';
       mode := 0;
+      timeout := 0;
     elsif (rising_edge(clk)) then
       lost   <= '0';
       mode := to_integer(unsigned(CONFIG_I(13 downto 12)));
@@ -115,10 +116,32 @@ begin
           -- we hold DATA_O and TIMESTAMP_O until valid data replaces it, so
           -- that most recent RX is available in the LOOK register
         end if;
-      else
+      elsif (mode = 0) then
         DATA_O <= (others => '0');
         TIMESTAMP_O <= (others => '0');
         valid  <= '0';
+      elsif (mode = 2) then
+        DATA_O <= (others => '0');
+        TIMESTAMP_O <=  TIMESTAMP_I;
+        if (timeout = 0) then
+          timeout := 10*to_integer(unsigned(CONFIG_I(11 downto 0)));
+          if ((valid = '1') and (ready='0')) then
+            lost <= '1';
+          else
+            valid <= '1';
+          end if;
+        else
+          if (timeout > 0) then
+            timeout := timeout - 1;
+          end if;
+          if (ready='1') then
+            valid <= '0';
+          end if;
+        end if;
+      elsif (mode = 3) then
+        DATA_O <= (others => '0');
+        TIMESTAMP_O <= (others => '0');
+        valid  <= '1';
       end if;
     end if;
   end process;

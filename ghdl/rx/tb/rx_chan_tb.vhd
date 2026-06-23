@@ -47,13 +47,14 @@ begin
   uut: rx_chan port map (
     CLK_I       => clk,
     RST_I       => rst,
-    CONFIG_I    => x"00011001",
+    --CONFIG_I    => x"00032043",
+    CONFIG_I    => x"00001001",
     DATA_O      => data,
     TIMESTAMP_O => tstamp,
     VALID_O     => valid,
     READY_I     => ready,
-    RX_I        => '1',
-    LOOPBACK_I  => rx,
+    RX_I        => rx,
+    LOOPBACK_I  => '1',
     TIMESTAMP_I => x"0000000012345678",
     DEBUG_O     => status
     --STATUS_O     => status
@@ -116,21 +117,14 @@ begin
     show_output <= '1';
     wait until (count = 90);
     tstep_ns <= 100;
-    wait until (count = 740);
+    wait until (count = 750);
     tstep_ns <= 10;
-    wait until (count = 770);
-    wait for 10 ns;
-    show_output <= '0';
-    wait until (count = 1540);
-    show_output <= '1';
-    wait until (count = 1560);
-    wait for 10 ns;
-    show_output <= '0';
-    wait until (count = 2200);
-    show_output <= '1';
-    wait until (count = 2420);
-    wait for 10 ns;
-    show_output <= '0';
+    wait until (count = 800);
+    tstep_ns <= 100;
+    wait until (count = 5720);
+    tstep_ns <= 10;
+    wait until (count = 5730);
+    tstep_ns <= 100;
     wait;
   end process;
 
