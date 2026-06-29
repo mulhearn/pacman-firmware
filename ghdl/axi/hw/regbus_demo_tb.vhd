@@ -102,8 +102,9 @@ begin
     wait for 5 ns;
   end process;
 
-  rapid_read_process : process
+  read_process : process
   begin
+    wait for 1 ns;
     araddr <= x"0000";
     arvalid  <= '0';
     rready <= '0';
@@ -111,36 +112,31 @@ begin
     araddr <= x"0000";
     arvalid  <= '1';
     rready <= '1';
-    wait for 10 ns;
+    wait for 60 ns;
     araddr <= x"0004";
     arvalid  <= '1';
     rready <= '1';
-    wait for 20 ns;
+    wait for 40 ns;
     araddr <= x"0008";
     arvalid  <= '1';
     rready <= '1';
-    wait for 20 ns;
+    wait for 40 ns;
     araddr <= x"000C";
     arvalid  <= '1';
     rready <= '1';
-    wait for 20 ns;
+    wait for 40 ns;
     araddr <= x"0000";
     arvalid  <= '1';
     rready <= '1';
-    wait for 20 ns;
-    araddr <= x"0004";
-    arvalid  <= '1';
-    rready <= '1';
-    wait for 20 ns;
+    wait for 40 ns;
     araddr <= x"0000";
     arvalid  <= '0';
-    wait for 20 ns;
-    rready <= '0';
     wait;
   end process;
 
-  simple_write_process : process
+  write_process : process
   begin
+    wait for 1 ns;
     awaddr <= x"0000";
     awvalid  <= '0';
     wdata  <= x"00000000";
@@ -149,28 +145,26 @@ begin
     wait for 20 ns;
     awaddr <= x"0000";
     awvalid  <= '1';
-    wdata  <= x"11117777";
+    wdata  <= x"CCCCCCCC";
     wvalid  <= '1';
     bready <= '1';
     wait for 20 ns;
     awaddr <= x"0004";
     awvalid  <= '1';
-    wdata  <= x"3333CCCC";
+    wdata  <= x"DDDDDDDD";
     wvalid  <= '1';
     wait for 30 ns;
     awaddr <= x"0000";
     awvalid  <= '0';
     wdata  <= x"00000000";
     wvalid  <= '0';
-    wait for 10 ns;
-    bready <= '0';
     wait;
   end process;
 
   output_process : process
     variable l : line;
   begin
-    if (count < 18) then
+    if (count < 30) then
       wait for 10 ns;
     else
       wait;
@@ -178,39 +172,28 @@ begin
 
     write (l, String'("c: "));
     write (l, count, left, 4);
-    --write (l, String'("aclk: "));
-    --write (l, aclk);
-    write (l, String'(" || ar: 0x"));
+    write (l, String'(" | ar: 0x"));
     hwrite (l, araddr);
-    write (l, String'(" v:"));
+    write (l, String'(" vr:"));
     write (l, arvalid);
-    write (l, String'(" r: "));
     write (l, arready);
-    write (l, String'(" || r: 0x"));
+    write (l, String'(" r: 0x"));
     hwrite (l, rdata);
-    write (l, String'(" "));
-    write (l, rdata(0));
-    write (l, String'(" v: "));
+    write (l, String'(" vr: "));
     write (l, rvalid);
-    write (l, String'(" r: "));
     write (l, rready);
     write (l, String'(" || aw: 0x"));
     hwrite (l, awaddr);
-    write (l, String'(" v: "));
+    write (l, String'(" vr: "));
     write (l, awvalid);
-    write (l, String'(" r: "));
     write (l, awready);
-    write (l, String'(" || w: 0x"));
+    write (l, String'(" w: 0x"));
     hwrite (l, wdata);
-    write (l, STring'(" "));
-    write (l, wdata(0));
-    write (l, String'(" v: "));
+    write (l, String'(" vr: "));
     write (l, wvalid);
-    write (l, String'(" r: "));
     write (l, wready);
-    write (l, String'(" || b:   v: "));
+    write (l, String'(" b vr: "));
     write (l, bvalid);
-    write (l, String'(" r: "));
     write (l, bready);
     if (aresetn = '0') then
       write (l, String'(" (RESET)"));
@@ -247,11 +230,11 @@ begin
       writeline(output, l);
 
       assert(results(0) = x"11111111") report("read 1 failed") severity failure;
-      assert(results(1) = x"00000000") report("read 2 failed") severity failure;
-      assert(results(2) = x"AAAAAAAA") report("read 3 failed") severity failure;
-      assert(results(3) = x"BBBBBBBB") report("read 4 failed") severity failure;
-      assert(results(4) = x"11117777") report("read 5 failed") severity failure;
-      assert(results(5) = x"3333CCCC") report("read 6 failed") severity failure;
+      assert(results(1) = x"CCCCCCCC") report("read 2 failed") severity failure;
+      assert(results(2) = x"DDDDDDDD") report("read 3 failed") severity failure;
+      assert(results(3) = x"AAAAAAAA") report("read 4 failed") severity failure;
+      assert(results(4) = x"BBBBBBBB") report("read 5 failed") severity failure;
+      assert(results(5) = x"CCCCCCCC") report("read 6 failed") severity failure;
 
       write (l, String'("*** Test results were all SUCCESSFUL!!! ***"));
       writeline(output, l);

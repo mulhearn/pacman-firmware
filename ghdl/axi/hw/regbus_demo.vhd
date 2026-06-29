@@ -94,7 +94,6 @@ architecture behaviour of regbus_demo is
   signal wdata    : std_logic_vector(31 downto 0) := (others => '0');
   signal wack     : std_logic;
 
-
   signal scra    : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
   signal scrb    : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
 
@@ -173,7 +172,7 @@ begin
   begin
     if (rst = '1') then
       scra <= x"11111111";
-      scrb <= x"00000000";
+      scrb <= x"22222222";
     else
       if (rising_edge(clk)) then
         if (wupdate='0') then

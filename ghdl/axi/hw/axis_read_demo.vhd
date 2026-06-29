@@ -12,13 +12,13 @@ entity axis_read_demo is
     constant C_DATA_WIDTH  : integer  := C_RB_DATA_WIDTH
   );
   port (
-    S_AXIS_ACLK        : in std_logic;
-    S_AXIS_ARESETN     : in std_logic;
-    S_AXIS_TDATA       : in std_logic_vector(C_TX_AXIS_WIDTH-1 downto 0);
-    S_AXIS_TVALID      : in std_logic;
-    S_AXIS_TREADY      : out std_logic;
-    S_AXIS_TKEEP       : in std_logic_vector(C_TX_AXIS_WIDTH/8-1 downto 0);
-    S_AXIS_TLAST       : in std_logic;
+    CLK_I               : in std_logic;
+    RST_I               : in std_logic;
+    S_AXIS_TDATA        : in std_logic_vector(C_TX_AXIS_WIDTH-1 downto 0);
+    S_AXIS_TVALID       : in std_logic;
+    S_AXIS_TREADY       : out std_logic;
+    S_AXIS_TKEEP        : in std_logic_vector(C_TX_AXIS_WIDTH/8-1 downto 0);
+    S_AXIS_TLAST        : in std_logic;
 
     S_REGBUS_RB_RUPDATE : in  std_logic;
     S_REGBUS_RB_RADDR   : in  std_logic_vector(C_ADDR_WIDTH-1 downto 0);
@@ -39,8 +39,8 @@ architecture behaviour of axis_read_demo is
       constant C_AXIS_BEATS  : integer  := C_AXIS_BEATS
       );
     port (
-      S_AXIS_ACLK        : in std_logic;
-      S_AXIS_ARESETN     : in std_logic;
+      CLK_I              : in std_logic;
+      RST_I              : in std_logic;
 
       S_AXIS_TDATA       : in std_logic_vector(C_AXIS_WIDTH-1 downto 0);
       S_AXIS_TVALID      : in std_logic;
@@ -75,8 +75,8 @@ architecture behaviour of axis_read_demo is
   signal stat     : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
 begin
   uut: axis_read port map (
-    S_AXIS_ACLK     => S_AXIS_ACLK,
-    S_AXIS_ARESETN  => S_AXIS_ARESETN,
+    CLK_I           => CLK_I,
+    RST_I           => RST_I,
     S_AXIS_TDATA    => S_AXIS_TDATA,
     S_AXIS_TVALID   => S_AXIS_TVALID,
     S_AXIS_TREADY   => S_AXIS_TREADY,
@@ -87,8 +87,8 @@ begin
     READY_I         => pready
   );
 
-  clk <= S_AXIS_ACLK;
-  rst <= not S_AXIS_ARESETN;
+  clk <= CLK_I;
+  rst <= RST_I;
 
   rupdate <= S_REGBUS_RB_RUPDATE;
   raddr   <= S_REGBUS_RB_RADDR;

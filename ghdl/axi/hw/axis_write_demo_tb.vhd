@@ -13,12 +13,12 @@ end axis_write_demo_tb;
 architecture behaviour of axis_write_demo_tb is
   component axis_write_demo is
     port (
-      M_AXIS_ACLK        : in std_logic;
-      M_AXIS_ARESETN     : in std_logic;
-      M_AXIS_TDATA       : out std_logic_vector(127 downto 0);
+      CLK_I              : in std_logic;
+      RST_I              : in std_logic;
+      M_AXIS_TDATA       : out std_logic_vector(63 downto 0);
       M_AXIS_TVALID      : out std_logic;
       M_AXIS_TREADY      : in std_logic;
-      M_AXIS_TKEEP       : out std_logic_vector(15 downto 0);
+      M_AXIS_TKEEP       : out std_logic_vector(7 downto 0);
       M_AXIS_TLAST       : out std_logic;
 
       S_REGBUS_RB_RUPDATE : in  std_logic;
@@ -36,13 +36,13 @@ architecture behaviour of axis_write_demo_tb is
     );
   end component;
   signal count    : integer := 0;
-  signal aclk     : std_logic;
-  signal aresetn  : std_logic;
+  signal clk      : std_logic;
+  signal rst      : std_logic;
 
-  signal tdata       : std_logic_vector(127 downto 0);
-  signal tvalid      : std_logic;
-  signal tready      : std_logic := '0';
-  signal tlast       : std_logic;
+  signal tdata    : std_logic_vector(63 downto 0);
+  signal tvalid   : std_logic;
+  signal tready   : std_logic := '0';
+  signal tlast    : std_logic;
 
   signal rupdate  : std_logic := '0';
   signal raddr    : std_logic_vector(15 downto 0) := (others => '0');
@@ -56,8 +56,8 @@ architecture behaviour of axis_write_demo_tb is
 
 begin
   uut: axis_write_demo port map (
-    M_AXIS_ACLK         => aclk,
-    M_AXIS_ARESETN      => aresetn,
+    CLK_I               => clk,
+    RST_I               => rst,
     M_AXIS_TDATA        => tdata,
     M_AXIS_TVALID       => tvalid,
     M_AXIS_TREADY       => tready,
@@ -74,21 +74,21 @@ begin
     REGB_I              => x"FFAAAAFF"
   );
 
-  aclk_process : process
+  clk_process : process
   begin
     count <= count + 1;
-    aclk <= '1';
+    clk <= '1';
     wait for 5 ns;
-    aclk <= '0';
+    clk <= '0';
     wait for 5 ns;
   end process;
 
-  aresetn_process : process
+  rst_process : process
   begin
-    aresetn <= '0';
+    rst <= '1';
     wait for 10 ns;
-    wait until (rising_edge(aclk));
-    aresetn <= '1';
+    wait until (rising_edge(clk));
+    rst <= '0';
     wait;
   end process;
 
@@ -139,13 +139,13 @@ begin
   ready_process : process
   begin
     wait for 50 ns;
-    wait until (rising_edge(aclk));
+    wait until (rising_edge(clk));
     tready <= '1';
     wait for 10 ns;
-    wait until (rising_edge(aclk));
+    wait until (rising_edge(clk));
     tready <= '0';
     wait for 20 ns;
-    wait until (rising_edge(aclk));
+    wait until (rising_edge(clk));
     tready <= '1';
     wait;
   end process;
@@ -161,8 +161,8 @@ begin
 
     write (l, String'("c: "));
     write (l, count, left, 4);
-    write (l, String'("aclk: "));
-    write (l, aclk);
+    write (l, String'("clk: "));
+    write (l, clk);
     write (l, String'(" || tdata: 0x"));
     hwrite (l, tdata);
     write (l, String'(" v:"));
@@ -179,7 +179,7 @@ begin
     hwrite (l, rdata);
     write (l, String'(" ra: "));
     write (l, rack);
-    if (aresetn = '0') then
+    if (rst = '1') then
       write (l, String'(" (RESET)"));
     end if;
     writeline(output, l);
@@ -192,7 +192,7 @@ begin
     --variable results : result_t;
   begin
     --if (reads < 6) then
-      --wait until ((rising_edge(aclk)) and (rvalid='1') and (rready='1'));
+      --wait until ((rising_edge(clk)) and (rvalid='1') and (rready='1'));
       --write (l, String'("*** READ DETECTED ***"));
       --writeline(output, l);
       --results(reads) := rdata;

@@ -1,4 +1,4 @@
-all: modules-a modules-e testbenches
+all: modules-a modules-e hardware testbenches
 
 
 modules-a:
