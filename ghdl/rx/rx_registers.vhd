@@ -468,8 +468,8 @@ begin
 
       gen_next: for i in 0 to C_NUM_UART-1 loop
         -- extract status bits for clarity
-        valid  := ustatus(i)(1);
-        ready  := ustatus(i)(2);
+        valid  := ustatus(i)(2);
+        ready  := ustatus(i)(3);
         start  := ustatus(i)(4);
         update := ustatus(i)(5);
         lost   := ustatus(i)(6);

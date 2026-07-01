@@ -4,7 +4,6 @@ modules-a:
 	ghdl -a ../integration/common.vhd
 	ghdl -a ../integration/register_map.vhd
 	ghdl -a ../axi/axis_write.vhd
-	ghdl -a uart_rx.vhd
 	ghdl -a rx_data_mux.vhd
 	ghdl -a rx_timestamp_mux.vhd
 	ghdl -a rx_header.vhd
@@ -16,7 +15,6 @@ modules-a:
 	ghdl -a rx_buffer.vhd
 	ghdl -a rx_unit.vhd
 modules-e:
-	ghdl -e uart_rx
 	ghdl -e rx_data_mux
 	ghdl -e rx_timestamp_mux
 	ghdl -e rx_header
@@ -63,4 +61,4 @@ run-testbenches: all
 run-unit-testbench: all
 	ghdl -r -fsynopsys rx_unit_tb --stop-time=30us
 run-dev: all
-	ghdl -r -fsynopsys rx_registers_tb --stop-time=4us
+	ghdl -r -fsynopsys rx_chan_tb --stop-time=28us

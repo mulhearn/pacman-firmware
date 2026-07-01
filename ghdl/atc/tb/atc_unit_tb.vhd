@@ -15,7 +15,8 @@ architecture behaviour of atc_unit_tb is
     port (
     ACLK                 : in std_logic; -- fast clock
     RST_I                : in std_logic;
-    UCLK_I               : in std_logic; -- slow clock
+
+    BAUD_SYNC_O           : out std_logic;
 
     S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
     S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -40,9 +41,10 @@ architecture behaviour of atc_unit_tb is
   end component;
 
   signal count    : integer := 0;
-  signal clk     : std_logic;
-  signal rst  : std_logic;
+  signal clk      : std_logic;
+  signal rst      : std_logic;
   signal uclk     : std_logic;
+  signal baud     : std_logic;
   -- read signals:
   signal raddr    : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
   signal rupdate  : std_logic := '0';
@@ -69,7 +71,8 @@ begin
   uut0: atc_unit port map (
     ACLK                => clk,
     RST_I               => rst,
-    UCLK_I              => uclk,
+    BAUD_SYNC_O         => baud,
+    UCLK_O              => uclk,
     S_REGBUS_RB_RUPDATE => rupdate,
     S_REGBUS_RB_RADDR   => raddr,
     S_REGBUS_RB_RDATA   => rdata,
@@ -101,14 +104,6 @@ begin
     wait for 5 ns;
     clk <= '0';
     wait for 5 ns;
-  end process;
-
-  uclk_process : process
-  begin
-    uclk <= '1';
-    wait for 50 ns;
-    uclk <= '0';
-    wait for 50 ns;
   end process;
 
   lemo_a_process : process
@@ -190,8 +185,6 @@ begin
     waddr   <= x"E200";
     wdata   <= x"00000050";
     wupdate <= '1';
-
-
     wait;
   end process;
 
@@ -212,10 +205,12 @@ begin
     if (show_output='1') then
       write (l, String'("c: "));
       write (l, count, left, 4);
-      --write (l, String'("clk: "));
-      --write (l, clk);
+      write (l, String'("clk: "));
+      write (l, clk);
       write (l, String'(" "));
       write (l, uclk);
+      write (l, String'(" baud: "));
+      write (l, baud);
       write (l, String'(" la: "));
       write (l, lemo_a);
       write (l, String'(" | ra: 0x"));

@@ -15,6 +15,7 @@ architecture behaviour of rx_unit_tb is
     port (
       ACLK                   : in std_logic;
       RST_I                  : in std_logic;
+      BAUD_SYNC_I            : in std_logic;
       M_AXIS_TDATA           : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
       M_AXIS_TVALID          : out std_logic;
       M_AXIS_TREADY          : in std_logic;
@@ -46,6 +47,7 @@ architecture behaviour of rx_unit_tb is
   signal clk       : std_logic;
   signal rst       : std_logic;
   signal uclk      : std_logic;
+  signal baud      : std_logic;
 
   signal tdata     : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0) := (others => '0');
   signal tvalid    : std_logic;
@@ -75,6 +77,7 @@ begin
   uut: rx_unit port map (
     ACLK            => clk,
     RST_I           => rst,
+    BAUD_SYNC_I     => baud,
     M_AXIS_TDATA    => tdata,
     M_AXIS_TVALID   => tvalid,
     M_AXIS_TREADY   => tready,
@@ -128,6 +131,14 @@ begin
     wait for 50 ns;
     uclk <= '0';
     wait for 50 ns;
+  end process;
+
+  baud_process : process
+  begin
+    baud <= '1';
+    wait for 10 ns;
+    baud <= '0';
+    wait for 90 ns;
   end process;
 
   read_process : process
@@ -208,7 +219,7 @@ begin
     wait for 20 ns;
     -- broadcasting RX config:
     waddr   <= x"7B04";
-    wdata   <= x"00001001";
+    wdata   <= x"00000011";
     wupdate <= '1';
     wait for 10 ns;
     -- setting buffer config:

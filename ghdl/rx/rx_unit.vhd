@@ -19,6 +19,9 @@ entity rx_unit is
     ACLK                   : in std_logic;
     RST_I                  : in std_logic;
 
+    --enable signal for transmission clock
+    BAUD_SYNC_I            : in std_logic;
+
     -- AXI Stream containing data received
     M_AXIS_TDATA           : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
     M_AXIS_TVALID          : out std_logic;
@@ -152,18 +155,23 @@ architecture behaviour of rx_unit is
 
   component rx_chan is
     port (
-      CLK_I       : in  std_logic;
-      RST_I       : in  std_logic;
-      CONFIG_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      STATUS_O    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DATA_O      : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O     : out std_logic;
-      READY_I     : in  std_logic;
-      RX_I        : in  std_logic;
-      LOOPBACK_I  : in  std_logic;
-      TIMESTAMP_I : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      DEBUG_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+      -- clock and active-high reset
+      CLK_I          : in std_logic;
+      RST_I          : in std_logic;
+      -- sync the start of each baud period:
+      BAUD_SYNC_I    : in std_logic;
+      CONFIG_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      STATUS_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DATA_O         : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+      TIMESTAMP_O    : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      VALID_O        : out  std_logic;
+      READY_I        : in std_logic;
+      RX_I           : in std_logic;
+      LOOPBACK_I     : in std_logic;
+      PATTERN_I      : in std_logic;
+      EMUL_I         : in std_logic;
+      TIMESTAMP_I    : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      DEBUG_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
       );
   end component;
 
@@ -309,6 +317,7 @@ begin
       port map(
         CLK_I         => clk,
         RST_I         => rst,
+        BAUD_SYNC_I   => BAUD_SYNC_I,
         CONFIG_I      => uart_configs(i),
         STATUS_O      => uart_statuses(i),
         DATA_O        => uart_data(i),
@@ -317,6 +326,8 @@ begin
         READY_I       => ready(i),
         RX_I          => PISO_I(i),
         LOOPBACK_I    => LOOPBACK_I(i),
+        PATTERN_I     => '1',
+        EMUL_I        => '1',
         TIMESTAMP_I   => TIMESTAMP_I
         );
   end generate grxchan0;

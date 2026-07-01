@@ -13,33 +13,37 @@ end rx_chan_tb;
 architecture behaviour of rx_chan_tb is
   component rx_chan is
     port (
-      CLK_I         : in  std_logic;
-      RST_I         : in  std_logic;
-      CONFIG_I      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      STATUS_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DATA_O        : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O   : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O       : out std_logic;
-      READY_I       : in  std_logic;
-      RX_I          : in  std_logic;
-      LOOPBACK_I    : in  std_logic;
-      TIMESTAMP_I   : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      -- clock and active-high reset
+      CLK_I          : in std_logic;
+      RST_I          : in std_logic;
+      -- sync the start of each baud period:
+      BAUD_SYNC_I    : in std_logic;
+      CONFIG_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      STATUS_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DATA_O         : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+      TIMESTAMP_O    : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      VALID_O        : out  std_logic;
+      READY_I        : in std_logic;
+      RX_I           : in std_logic;
+      LOOPBACK_I     : in std_logic;
+      PATTERN_I      : in std_logic;
+      EMUL_I         : in std_logic;
+      TIMESTAMP_I    : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
       DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+      );
   end component;
 
   signal count      : integer := 0;
   signal tstep_ns   : integer := 10;
   signal clk        : std_logic;
   signal rst        : std_logic;
-  signal uclk       : std_logic;
+  signal baud       : std_logic;
   signal status     : std_logic_vector(C_RB_DATA_WIDTH-1  downto 0);
   signal data       : std_logic_vector(C_UART_DATA_WIDTH-1 DOWNTO 0);
   signal tstamp     : std_logic_vector(C_UART_DATA_WIDTH-1 DOWNTO 0);
   signal rx         : std_logic := '1';
-
-  signal valid     : std_logic;
-  signal ready     : std_logic;
+  signal valid      : std_logic;
+  signal ready      : std_logic;
 
   signal show_output : std_logic := '0';
 
@@ -47,17 +51,18 @@ begin
   uut: rx_chan port map (
     CLK_I       => clk,
     RST_I       => rst,
-    --CONFIG_I    => x"00032043",
-    CONFIG_I    => x"00001001",
+    BAUD_SYNC_I => baud,
+    CONFIG_I    => x"00000011",
     DATA_O      => data,
     TIMESTAMP_O => tstamp,
     VALID_O     => valid,
     READY_I     => ready,
     RX_I        => rx,
     LOOPBACK_I  => '1',
+    PATTERN_I   => '1',
+    EMUL_I      => '1',
     TIMESTAMP_I => x"0000000012345678",
     DEBUG_O     => status
-    --STATUS_O     => status
   );
 
   clk_process : process
@@ -77,29 +82,29 @@ begin
     wait;
   end process;
 
-  uclk_process : process
+  baud_process : process
   begin
-    uclk <= '1';
-    wait for 50 ns;
-    uclk <= '0';
-    wait for 50 ns;
+    baud <= '1';
+    wait for 10 ns;
+    baud <= '0';
+    wait for 90 ns;
   end process;
 
   ready_process : process
   begin
     ready <= '0';
-    wait until (count=760);
-    wait for 1 ns;
+    wait until count=753;
     ready <='1';
-    wait for 10 ns;
+    wait for 100 ns;
     ready <='0';
+    wait;
   end process;
 
   rx_process : process
     variable i      : integer := 0;
     variable rxdata : std_logic_vector(159 downto 0) := x"FF33332222000011117FFF33331111000011117F";
   begin
-    wait until rising_edge(uclk);
+    wait until rising_edge(baud);
     wait for 1 ns;
     if (i<160) then
       rx <= rxdata(i);
@@ -113,22 +118,10 @@ begin
 
   show_process : process
   begin
-    tstep_ns <= 10;
+    tstep_ns <= 100;
     show_output <= '1';
-    wait until (count = 90);
-    tstep_ns <= 100;
-    wait until (count = 750);
-    tstep_ns <= 10;
-    wait until (count = 800);
-    tstep_ns <= 100;
-    wait until (count = 5720);
-    tstep_ns <= 10;
-    wait until (count = 5730);
-    tstep_ns <= 100;
     wait;
   end process;
-
-
 
   output_process : process
     variable l : line;
@@ -136,27 +129,30 @@ begin
     variable update  : std_logic := '0';
     variable lost    : std_logic := '0';
   begin
-    if (tstep_ns = 100) then
-      wait for 100 ns;
-    else
-      wait for 10 ns;
-    end if;
+    wait until status(0)='1';
+    wait for 1 ns;
+    wait for 10 ns;
+
     start  := status(4);
     update := status(5);
-    lost  := status(6);
+    lost   := status(6);
 
     if (show_output='1') then
       write (l, String'("c: "));
       write (l, count, left, 5);
       write  (l, String'("clk: "));
       write  (l, clk);
+      write  (l, String'(" bd: "));
+      write  (l, baud);
+      write  (l, String'(" en: "));
+      write  (l, status(0));
       write  (l, String'(" b: "));
-      write (l, status(0));
-      write  (l, String'(" v: "));
       write (l, status(1));
+      write  (l, String'(" v: "));
+      write (l, status(2));
       write (l, valid);
       write  (l, String'(" r: "));
-      write (l, status(2));
+      write (l, status(3));
       write (l, ready);
       write  (l, String'(" s: "));
       write (l, start);
@@ -187,8 +183,6 @@ begin
       writeline(output, l);
     end if;
   end process;
-
-
 
 
 
