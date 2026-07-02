@@ -17,7 +17,8 @@ architecture behaviour of axil_to_regbus_tb is
   component axil_to_regbus is
     generic (
       constant C_ADDR_WIDTH : integer := C_ADDR_WIDTH;
-      constant C_DATA_WIDTH : integer := C_DATA_WIDTH
+      constant C_DATA_WIDTH : integer := C_DATA_WIDTH;
+      constant C_TIMEOUT_CYCLES : integer := 2
       );
     port (
       S_AXI_ACLK         : in std_logic;
@@ -211,7 +212,7 @@ begin
     wdata  <= x"00000000";
     wvalid  <= '0';
     wait for 10 ns;
-    wack    <= '1';
+    --wack    <= '1';
     wait for 10 ns;
     wack     <= '0';
     wait for 10 ns;

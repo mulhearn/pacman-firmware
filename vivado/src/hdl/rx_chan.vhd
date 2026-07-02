@@ -37,8 +37,8 @@ architecture behavioral of rx_chan is
   signal rx      : std_logic;  -- registered rx_comb, synchronous to CLK_I
 
   -- config fields
-  alias cfg_input    : std_logic_vector(3 downto 0)  is CONFIG_I(7 downto 4);
-  alias cfg_phase    : std_logic_vector(3 downto 0)  is CONFIG_I(3 downto 0);
+  alias cfg_input    : std_logic_vector(3 downto 0)  is CONFIG_I(11 downto 8);
+  alias cfg_phase    : std_logic_vector(7 downto 0)  is CONFIG_I(7 downto 0);
 
   -- baud phase counter and sample enable
   signal clk_en     : std_logic;  -- pulses when phase_cnt = config_phase
@@ -69,7 +69,7 @@ begin
 
   -- generate clk_en by counting from BAUD_SYNC_I to cfg_phase
   process(clk, rst)
-    variable count : unsigned(3 downto 0);
+    variable count : unsigned(7 downto 0);
   begin
     if (rst='1') then
       count := (others => '0');

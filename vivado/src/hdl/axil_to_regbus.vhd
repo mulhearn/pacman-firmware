@@ -19,8 +19,14 @@ use ieee.numeric_std.all;
 
 entity axil_to_regbus is
   generic (
-    constant C_ADDR_WIDTH : integer := 16;
-    constant C_DATA_WIDTH : integer := 32
+    constant C_ADDR_WIDTH     : integer := 16;
+    constant C_DATA_WIDTH     : integer := 32;
+    -- number of S_AXI_ACLK cycles to wait in WAIT_ACK for a regbus
+    -- ack before giving up on the target and completing the AXI
+    -- transaction anyway (with sentinel data for reads, but always
+    -- an OKAY response -- see notes below).
+    constant C_TIMEOUT_CYCLES : integer := 256
+
   );
   port (
     S_AXI_ACLK           : in  std_logic;
@@ -54,6 +60,20 @@ entity axil_to_regbus is
     P_REGBUS_RB_WADDR    : out std_logic_vector(C_ADDR_WIDTH-1 downto 0);
     P_REGBUS_RB_WDATA    : out std_logic_vector(C_DATA_WIDTH-1 downto 0);
     P_REGBUS_RB_WACK     : in  std_logic
+
+    -- Regbus error status, latched sticky until P_ERR_CLR.
+    -- Packed word, assumes C_ADDR_WIDTH = 16:
+    --   bit 31:16  latched address of the first fault since last clear
+    --   bit 2      unrequested ack (an ack arrived while not waiting
+    --              for one -- see notes below)
+    --   bit 1      timeout (no ack within C_TIMEOUT_CYCLES)
+    --   bit 0      any (= bit1 or bit2)
+    -- The address is not re-latched by an unrequested ack -- it isn't
+    -- for the transaction in progress, and only makes sense in
+    -- reference to whatever transaction most recently timed out.
+    --READ_ERROR_O             : out std_logic_vector(31 downto 0);
+    --WRITE_ERROR_O            : out std_logic_vector(31 downto 0);
+    --CLEAR_ERROR_I            : in  std_logic
     );
 end;
 
@@ -81,17 +101,51 @@ architecture behavioral of axil_to_regbus is
   signal waddr : std_logic_vector(C_ADDR_WIDTH-1 downto 0) := (others => '0');
   signal wdata : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
 
+  -- sentinel value returned as RDATA when a read times out:
+  constant C_TIMEOUT_SENTINEL : std_logic_vector(C_DATA_WIDTH-1 downto 0) := x"EEEEEEEE";
+
+  -- timeouts and error registers:
+  signal rd_timeout   : std_logic;
+  signal wr_timeout   : std_logic;
+  signal rd_error     : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal wr_error     : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
+
 begin
   -- register AXI outputs:
   clk <= S_AXI_ACLK;
   rst <= not S_AXI_ARESETN;
 
+  --READ_ERROR_O  <= rd_error;
+  --WRITE_ERROR_O <= wr_error;
+
   -------------------
   -- Read:
   -------------------
 
+  process(clk,rst)
+    variable counter : integer range 0 to C_TIMEOUT_CYCLES-1 := 0;
+  begin
+    if (rst = '1') then
+      counter := 0;
+      rd_timeout <= '0';
+    elsif rising_edge(clk) then
+      if (rd_state = WAIT_ACK) then
+        if (counter < C_TIMEOUT_CYCLES-1) then
+          counter := counter + 1;
+        end if;
+      else
+        counter := 0;
+      end if;
+      if (counter = C_TIMEOUT_CYCLES-1) then
+        rd_timeout <= '1';
+      else
+        rd_timeout <= '0';
+      end if;
+    end if;
+  end process;
+
   -- determine next read state (combinatoric)
-  process(rd_state, S_AXI_ARVALID, P_REGBUS_RB_RACK, S_AXI_RREADY)
+  process(rd_state, S_AXI_ARVALID, P_REGBUS_RB_RACK, rd_timeout, S_AXI_RREADY)
   begin
     rd_state_next <= rd_state;
     case rd_state is
@@ -102,7 +156,7 @@ begin
       when STROBE =>
         rd_state_next <= WAIT_ACK; -- unconditional, one-cycle strobe
       when WAIT_ACK =>
-        if (P_REGBUS_RB_RACK = '1') then
+        if (P_REGBUS_RB_RACK = '1' or rd_timeout='1') then
           rd_state_next <= WAIT_READY;
         end if;
       when WAIT_READY =>
@@ -113,7 +167,7 @@ begin
   end process;
 
   -- state register
-  process(clk)
+  process(clk,rst)
   begin
     if (rst = '1') then
       rd_state <= IDLE;
@@ -123,14 +177,19 @@ begin
   end process;
 
   -- register address and data: capture address entering STROBE, data at ack
-  process(clk)
+  process(clk,rst)
   begin
-    if rising_edge(clk) then
+    if (rst='1') then
+      raddr <= (others => '0');
+      rdata <= (others => '0');
+    elsif rising_edge(clk) then
       if (rd_state_next = STROBE) then
         raddr <= S_AXI_ARADDR;
       end if;
       if (rd_state = WAIT_ACK and P_REGBUS_RB_RACK = '1') then
         rdata <= P_REGBUS_RB_RDATA;       -- latch while regbus holds it
+      elsif (rd_state = WAIT_ACK and rd_timeout = '1') then
+        rdata <= C_TIMEOUT_SENTINEL;      -- target never acked
       end if;
     end if;
   end process;
@@ -139,7 +198,7 @@ begin
   --    outputs are zero except:
   --      STROBE:      ARREADY = RUPDATE = 1 (for exactly one clock cycle)
   --      WAIT_READY:  RVALID = 1 (until RREADY=1)
-  process(clk)
+  process(clk, rst)
   begin
     if (rst = '1') then
       S_AXI_ARREADY       <= '0';
@@ -169,8 +228,30 @@ begin
   -- Write:
   -------------------
 
+  process(clk,rst)
+    variable counter : integer range 0 to C_TIMEOUT_CYCLES-1 := 0;
+  begin
+    if (rst = '1') then
+      counter := 0;
+      wr_timeout <= '0';
+    elsif rising_edge(clk) then
+      if (wr_state = WAIT_ACK) then
+        if (counter < C_TIMEOUT_CYCLES-1) then
+          counter := counter + 1;
+        end if;
+      else
+        counter := 0;
+      end if;
+      if (counter = C_TIMEOUT_CYCLES-1) then
+        wr_timeout <= '1';
+      else
+        wr_timeout <= '0';
+      end if;
+    end if;
+  end process;
+
   -- determine next write state (combinatoric)
-  process(wr_state, S_AXI_AWVALID, S_AXI_WVALID, P_REGBUS_RB_WACK, S_AXI_BREADY)
+  process(wr_state, S_AXI_AWVALID, S_AXI_WVALID, P_REGBUS_RB_WACK, wr_timeout, S_AXI_BREADY)
   begin
     wr_state_next <= wr_state;
     case wr_state is
@@ -181,7 +262,7 @@ begin
       when STROBE =>
         wr_state_next <= WAIT_ACK; -- unconditional, one-cycle strobe
       when WAIT_ACK =>
-        if (P_REGBUS_RB_WACK = '1') then
+        if (P_REGBUS_RB_WACK = '1' or wr_timeout = '1') then
           wr_state_next <= WAIT_READY;
         end if;
       when WAIT_READY =>
@@ -192,7 +273,7 @@ begin
   end process;
 
   -- state register
-  process(clk)
+  process(clk,rst)
   begin
     if (rst = '1') then
       wr_state <= IDLE;
@@ -202,9 +283,12 @@ begin
   end process;
 
   -- register address and data:  capture both upon entering STROBE
-  process(clk)
+  process(clk,rst)
   begin
-    if rising_edge(clk) then
+    if (rst='1') then
+      waddr <= (others => '0');
+      wdata <= (others => '0');
+    elsif rising_edge(clk) then
       if (wr_state_next = STROBE) then
         waddr <= S_AXI_AWADDR;
         wdata <= S_AXI_WDATA;
@@ -212,11 +296,12 @@ begin
     end if;
   end process;
 
+
   -- register outputs depending on the next state, so that there is no lag:
   --    outputs are zero except:
   --      STROBE:      AWREADY = WREADY = WUPDATE = 1 (for exactly one clock cycle)
   --      WAIT_READY:  BVALID = 1 (until BREADY=1)
-  process(clk)
+  process(clk,rst)
   begin
     if (rst = '1') then
       S_AXI_AWREADY       <= '0';

@@ -90,6 +90,15 @@ package register_map is
   constant C_ADDR_RX_UART_LOST      : integer := 16#2C#; -- count lost='1'
 
   -- Not UART specific, at chan=0x3F:
+  -- test pattern generation:
+  constant C_ADDR_RX_PATTERN_A      : integer := 16#80#;
+  constant C_ADDR_RX_PATTERN_B      : integer := 16#84#;
+  constant C_ADDR_RX_PATTERN_DELAY  : integer := 16#88#;
+  constant C_ADDR_RX_PATTERN_CONFIG : integer := 16#8C#;
+  constant C_ADDR_RX_PATTERN_STATUS : integer := 16#90#;
+  constant C_ADDR_RX_PATTERN_STARTS : integer := 16#94#;
+  constant C_ADDR_RX_PATTERN_STOPS  : integer := 16#98#;
+
   -- RX look feature channel selection:
   constant C_ADDR_RX_LOOK_SELECT    : integer := 16#A0#;
   -- RX look feature UART data (MSB) B(32 bits) A(32 bits) (LSB):
