@@ -93,7 +93,11 @@ architecture behaviour of rx_unit is
   signal look_chan_select   : std_logic_vector(C_SELECT_WIDTH-1 downto 0);
   signal look_uart_data     : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
   signal word_type          : std_logic_vector(C_BYTE-1 downto 0);
-
+  signal pattern_status     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal pattern_payload    : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+  signal pattern_delay      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal pattern_config     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal test_pattern       : std_logic;
   component rx_buffer is
     port (
       CLK_I              : in std_logic;
@@ -149,7 +153,11 @@ architecture behaviour of rx_unit is
       HEADER_D_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       EOP_HEADER_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
+      LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
+      PATTERN_STATUS_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PATTERN_PAYLOAD_O   : out std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+      PATTERN_DELAY_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PATTERN_CONFIG_O    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
       );
   end component;
 
@@ -189,6 +197,19 @@ architecture behaviour of rx_unit is
       CHAN_I     : in uart_small_array_t;
       HEADER_O   : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
     );
+  end component;
+
+  component pattern is
+    port (
+      CLK_I           : in  std_logic;
+      RST_I           : in  std_logic;
+      BAUD_SYNC_I     : in  std_logic;
+      PAYLOAD_I       : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+      CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DELAY_I         : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PATTERN_O       : out std_logic;
+      STATUS_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+      );
   end component;
 
   component rx_timestamp_mux is
@@ -309,7 +330,11 @@ begin
     HEADER_D_O          => header_d,
     EOP_HEADER_O        => eop_header,
     LOOK_SELECT_O       => look_chan_select,
-    LOOK_UART_DATA_I    => look_uart_data
+    LOOK_UART_DATA_I    => look_uart_data,
+    PATTERN_STATUS_I    => pattern_status,
+    PATTERN_PAYLOAD_O   => pattern_payload,
+    PATTERN_DELAY_O     => pattern_delay,
+    PATTERN_CONFIG_O    => pattern_config
     );
 
   grxchan0: for i in 0 to C_NUM_UART-1 generate
@@ -326,11 +351,23 @@ begin
         READY_I       => ready(i),
         RX_I          => PISO_I(i),
         LOOPBACK_I    => LOOPBACK_I(i),
-        PATTERN_I     => '1',
+        PATTERN_I     => test_pattern,
         EMUL_I        => '1',
         TIMESTAMP_I   => TIMESTAMP_I
         );
   end generate grxchan0;
+
+  pat0: pattern port map (
+    CLK_I       => clk,
+    RST_I       => rst,
+    BAUD_SYNC_I => BAUD_SYNC_I,
+    PAYLOAD_I   => pattern_payload,
+    CONFIG_I    => pattern_config,
+    DELAY_I     => pattern_delay,
+    PATTERN_O   => test_pattern,
+    STATUS_O    => pattern_status
+  );
+
 
   h0: rx_header port map (
     CLK_I      => clk,

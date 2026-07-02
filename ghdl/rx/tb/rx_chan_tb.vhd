@@ -52,7 +52,7 @@ begin
     CLK_I       => clk,
     RST_I       => rst,
     BAUD_SYNC_I => baud,
-    CONFIG_I    => x"00000011",
+    CONFIG_I    => x"00000101",
     DATA_O      => data,
     TIMESTAMP_O => tstamp,
     VALID_O     => valid,

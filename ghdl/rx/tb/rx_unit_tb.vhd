@@ -94,7 +94,7 @@ begin
     RX_MARKER_I         => x"0",
     FIFO_COUNT_I        => x"CCCCCCCC",
     PISO_I              => piso,
-    LOOPBACK_I          => (others => '1')
+    LOOPBACK_I          => piso
   );
 
   clk_process : process
@@ -171,6 +171,7 @@ begin
     rupdate <= '0';
     wait for 10 ns;
     show_regbus_output <= '0';
+    -- long pause for transmission
     wait for 20 us;
     show_regbus_output <= '1';
     raddr   <= x"4000";
@@ -203,6 +204,12 @@ begin
     raddr   <= x"7FF4";
     rupdate <= '1';
     wait for 10 ns;
+    raddr   <= x"7F8C";
+    rupdate <= '1';
+    wait for 10 ns;
+    raddr   <= x"7F94";
+    rupdate <= '1';
+    wait for 10 ns;
     raddr   <= x"0000";
     rupdate <= '0';
     wait for 10 ns;
@@ -217,9 +224,22 @@ begin
     wupdate <= '0';
     wait for 1 ns;
     wait for 20 ns;
+    waddr   <= x"7F80";
+    wdata   <= x"CCCCDDDD";
+    wupdate <= '1';
+    wait for 10 ns;
+    waddr   <= x"7F84";
+    wdata   <= x"AAAABBBB";
+    wupdate <= '1';
+    wait for 10 ns;
+    -- enable RX testpattern:
+    waddr   <= x"7F8C";
+    wdata   <= x"00000101";
+    wupdate <= '1';
+    wait for 10 ns;
     -- broadcasting RX config:
     waddr   <= x"7B04";
-    wdata   <= x"00000011";
+    wdata   <= x"00000401";
     wupdate <= '1';
     wait for 10 ns;
     -- setting buffer config:
@@ -362,6 +382,7 @@ begin
   show_rx_process : process
   begin
     show_rx_output<='0';
+    wait;
     wait until (count=100);
     show_rx_output<='1';
     wait until (count=700);

@@ -44,7 +44,11 @@ architecture behaviour of rx_registers_tb is
       HEADER_D_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       EOP_HEADER_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
+      LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
+      PATTERN_STATUS_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PATTERN_PAYLOAD_O   : out std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+      PATTERN_DELAY_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PATTERN_CONFIG_O    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
     );
   end component;
 
@@ -89,7 +93,8 @@ begin
     WORD_TYPE_LUT_O     => wlut,
     BUFFER_STATUS_I     => x"AAAABBBB",
     FIFO_COUNT_I        => fifo_count,
-    LOOK_UART_DATA_I    => x"BBBBBBBBAAAAAAAA"
+    LOOK_UART_DATA_I    => x"BBBBBBBBAAAAAAAA",
+    PATTERN_STATUS_I    => (others => '0')
   );
 
   rst_process : process
