@@ -26,7 +26,7 @@ entity atc_unit is
     LEMO_A_I              : in std_logic;
     LEMO_B_I              : in std_logic;
 
-    BAUD_SYNC_O           : out std_logic;
+    BAUD_O                : out std_logic;
 
     TIMESTAMP_O           : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
     RX_MARKER_O           : out std_logic_vector(C_NUM_MARKER-1 downto 0);
@@ -234,12 +234,12 @@ begin
     if RST_I = '1' then
       cnt         := 0;
       det_clk     <= '0';
-      BAUD_SYNC_O <= '0';
+      BAUD_O <= '0';
     elsif rising_edge(ACLK) then
-      BAUD_SYNC_O <= '0';
+      BAUD_O <= '0';
       if cnt = 0 then
         det_clk     <= '1';   -- rising edge of det_clk
-        BAUD_SYNC_O <= '1';   -- sync pulse, coincident with det_clk rising edge
+        BAUD_O <= '1';   -- sync pulse, coincident with det_clk rising edge
       elsif cnt = 5 then
         det_clk     <= '0';   -- falling edge of det_clk
       end if;

@@ -4,7 +4,6 @@ modules-a:
 	ghdl -a ../integration/common.vhd
 	ghdl -a ../integration/register_map.vhd
 	ghdl -a ../axi/axis_read.vhd
-	ghdl -a uart_tx.vhd
 	ghdl -a tx_chan.vhd
 	ghdl -a tx_registers.vhd
 	ghdl -a tx_buffer.vhd
@@ -12,7 +11,6 @@ modules-a:
 	ghdl -a tx_unit.vhd
 modules-e:
 	ghdl -e axis_read
-	ghdl -e uart_tx
 	ghdl -e tx_chan
 	ghdl -e tx_registers
 	ghdl -e tx_buffer
@@ -31,7 +29,7 @@ testbenches:
 	ghdl -e -fsynopsys tx_unit_tb
 
 run-testbenches: all
-	ghdl -r -fsynopsys tx_chan_tb --stop-time=30000ns
+	ghdl -r -fsynopsys tx_chan_tb --stop-time=3us
 	ghdl -r -fsynopsys tx_registers_tb --stop-time=370ns
 	ghdl -r -fsynopsys tx_buffer_tb --stop-time=700ns --vcd=../diagrams/tx_buffer_tb.vcd
 	ghdl -r -fsynopsys tx_data_mux_tb --stop-time=100ns
@@ -40,4 +38,4 @@ run-unit-testbench: all
 	ghdl -r -fsynopsys tx_unit_tb --stop-time=20us
 
 run-dev: all
-	ghdl -r -fsynopsys tx_buffer_tb --stop-time=1us 
+	ghdl -r -fsynopsys tx_chan_tb --stop-time=3us

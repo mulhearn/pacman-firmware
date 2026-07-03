@@ -14,21 +14,21 @@ use work.common.all;
 
 entity tx_unit is
   port (
-    --clock and reset
+    --Clock and reset
     ACLK                 : in std_logic;
     RST_I                : in std_logic;
 
-    --ASIC clock (slower than ACLK)
-    UCLK_I               : in  std_logic;
+    --Baud rate sync:
+    BAUD_I               : in  std_logic;
 
-    -- AXI Stream containing data to transmit
+    -- AXI stream containing data to transmit
     S_AXIS_TDATA         : in std_logic_vector(C_TX_AXIS_WIDTH-1 downto 0);
     S_AXIS_TVALID        : in std_logic;
     S_AXIS_TREADY        : out std_logic;
     S_AXIS_TKEEP         : in std_logic_vector(C_TX_AXIS_WIDTH/8-1 downto 0);
     S_AXIS_TLAST         : in std_logic;
 
-    -- register bus (REGBUS) interface
+    -- Register bus (REGBUS) interface
     S_REGBUS_RB_RADDR	 : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
     S_REGBUS_RB_RDATA	 : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RUPDATE  : in  std_logic;
@@ -125,14 +125,14 @@ architecture behaviour of tx_unit is
     port (
       CLK_I         : in  std_logic;
       RST_I         : in  std_logic;
-      UCLK_I        : in  std_logic;
+      BAUD_I        : in  std_logic;
       CONFIG_I      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       STATUS_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DATA_I        : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
       VALID_I       : in  std_logic;
       READY_O       : out std_logic;
-      TX_O          : out std_logic;
-      DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+      TX_O          : out std_logic
       );
   end component;
 
@@ -186,7 +186,7 @@ begin
       port map(
         CLK_I      => clk,
         RST_I      => rst,
-        UCLK_I     => UCLK_I,
+        BAUD_I     => BAUD_I,
         CONFIG_I   => config(i),
         STATUS_O   => status(i),
         DATA_I     => data(i),

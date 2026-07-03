@@ -17,7 +17,7 @@ architecture behaviour of rx_chan_tb is
       CLK_I          : in std_logic;
       RST_I          : in std_logic;
       -- sync the start of each baud period:
-      BAUD_SYNC_I    : in std_logic;
+      BAUD_I         : in std_logic;
       CONFIG_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       STATUS_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DATA_O         : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
@@ -51,7 +51,7 @@ begin
   uut: rx_chan port map (
     CLK_I       => clk,
     RST_I       => rst,
-    BAUD_SYNC_I => baud,
+    BAUD_I      => baud,
     CONFIG_I    => x"00000101",
     DATA_O      => data,
     TIMESTAMP_O => tstamp,

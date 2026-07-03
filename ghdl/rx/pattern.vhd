@@ -16,7 +16,7 @@ entity pattern is
   port (
     CLK_I           : in  std_logic;
     RST_I           : in  std_logic;
-    BAUD_SYNC_I     : in  std_logic;
+    BAUD_I     : in  std_logic;
     PAYLOAD_I       : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
     CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     DELAY_I         : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -63,7 +63,7 @@ begin
   rst <= RST_I;
   PATTERN_O <= tx;
 
-  -- generate clk_en by counting from BAUD_SYNC_I to cfg_phase
+  -- generate clk_en by counting from BAUD_I to cfg_phase
   process(clk, rst)
     variable count : unsigned(7 downto 0);
   begin
@@ -71,7 +71,7 @@ begin
       count  := (others => '0');
       clk_en <= '0';
     elsif rising_edge(clk) then
-      if BAUD_SYNC_I = '1' then
+      if BAUD_I = '1' then
         count := (others => '0');
       else
         count := count + 1;

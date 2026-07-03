@@ -20,7 +20,7 @@ entity rx_unit is
     RST_I                  : in std_logic;
 
     --enable signal for transmission clock
-    BAUD_SYNC_I            : in std_logic;
+    BAUD_I            : in std_logic;
 
     -- AXI Stream containing data received
     M_AXIS_TDATA           : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
@@ -167,7 +167,7 @@ architecture behaviour of rx_unit is
       CLK_I          : in std_logic;
       RST_I          : in std_logic;
       -- sync the start of each baud period:
-      BAUD_SYNC_I    : in std_logic;
+      BAUD_I         : in std_logic;
       CONFIG_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       STATUS_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DATA_O         : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
@@ -203,7 +203,7 @@ architecture behaviour of rx_unit is
     port (
       CLK_I           : in  std_logic;
       RST_I           : in  std_logic;
-      BAUD_SYNC_I     : in  std_logic;
+      BAUD_I          : in  std_logic;
       PAYLOAD_I       : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
       CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DELAY_I         : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -342,7 +342,7 @@ begin
       port map(
         CLK_I         => clk,
         RST_I         => rst,
-        BAUD_SYNC_I   => BAUD_SYNC_I,
+        BAUD_I        => BAUD_I,
         CONFIG_I      => uart_configs(i),
         STATUS_O      => uart_statuses(i),
         DATA_O        => uart_data(i),
@@ -360,7 +360,7 @@ begin
   pat0: pattern port map (
     CLK_I       => clk,
     RST_I       => rst,
-    BAUD_SYNC_I => BAUD_SYNC_I,
+    BAUD_I      => BAUD_I,
     PAYLOAD_I   => pattern_payload,
     CONFIG_I    => pattern_config,
     DELAY_I     => pattern_delay,

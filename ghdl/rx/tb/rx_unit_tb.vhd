@@ -15,7 +15,7 @@ architecture behaviour of rx_unit_tb is
     port (
       ACLK                   : in std_logic;
       RST_I                  : in std_logic;
-      BAUD_SYNC_I            : in std_logic;
+      BAUD_I                 : in std_logic;
       M_AXIS_TDATA           : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
       M_AXIS_TVALID          : out std_logic;
       M_AXIS_TREADY          : in std_logic;
@@ -77,7 +77,7 @@ begin
   uut: rx_unit port map (
     ACLK            => clk,
     RST_I           => rst,
-    BAUD_SYNC_I     => baud,
+    BAUD_I          => baud,
     M_AXIS_TDATA    => tdata,
     M_AXIS_TVALID   => tvalid,
     M_AXIS_TREADY   => tready,

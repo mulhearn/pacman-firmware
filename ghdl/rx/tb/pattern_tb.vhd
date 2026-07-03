@@ -14,7 +14,7 @@ architecture behaviour of pattern_tb is
     port (
       CLK_I           : in  std_logic;
       RST_I           : in  std_logic;
-      BAUD_SYNC_I     : in  std_logic;
+      BAUD_I          : in  std_logic;
       PAYLOAD_I       : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
       CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DELAY_I         : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -37,7 +37,7 @@ begin
   uut: pattern port map (
     CLK_I       => clk,
     RST_I       => rst,
-    BAUD_SYNC_I => baud,
+    BAUD_I      => baud,
     PAYLOAD_I   => x"FFFF0000AAAAAAAA",
     CONFIG_I    => x"00000101",
     DELAY_I     => x"00000002",

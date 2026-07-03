@@ -15,7 +15,7 @@ architecture behaviour of tx_unit_tb is
     port (
       ACLK                   : in std_logic;
       RST_I                  : in std_logic;
-      UCLK_I                 : in  std_logic;
+      BAUD_I                 : in  std_logic;
 
       S_AXIS_TDATA           : in std_logic_vector(C_TX_AXIS_WIDTH-1 downto 0);
       S_AXIS_TVALID          : in std_logic;
@@ -41,7 +41,7 @@ architecture behaviour of tx_unit_tb is
   signal count    : integer := 0;
   signal clk      : std_logic  := '0';
   signal rst      : std_logic  := '0';
-  signal uclk     : std_logic  := '0';
+  signal baud     : std_logic  := '0';
 
   signal tdata    : std_logic_vector(C_TX_AXIS_WIDTH-1 downto 0) := (others => '0');
   signal tvalid   : std_logic := '0';
@@ -72,7 +72,7 @@ begin
   uut: tx_unit port map (
     ACLK            => clk,
     RST_I           => rst,
-    UCLK_I          => uclk,
+    BAUD_I          => baud,
     S_AXIS_TDATA    => tdata,
     S_AXIS_TVALID   => tvalid,
     S_AXIS_TREADY   => tready,
@@ -107,12 +107,12 @@ begin
     wait;
   end process;
 
-  uclk_process : process
+  baud_process : process
   begin
-    uclk <= '1';
-    wait for 50 ns;
-    uclk <= '0';
-    wait for 50 ns;
+    baud <= '1';
+    wait for 10 ns;
+    baud <= '0';
+    wait for 90 ns;
   end process;
 
   runshow_process : process

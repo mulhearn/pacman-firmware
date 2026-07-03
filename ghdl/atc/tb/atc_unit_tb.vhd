@@ -16,7 +16,7 @@ architecture behaviour of atc_unit_tb is
     ACLK                 : in std_logic; -- fast clock
     RST_I                : in std_logic;
 
-    BAUD_SYNC_O           : out std_logic;
+    BAUD_O               : out std_logic;
 
     S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
     S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -71,7 +71,7 @@ begin
   uut0: atc_unit port map (
     ACLK                => clk,
     RST_I               => rst,
-    BAUD_SYNC_O         => baud,
+    BAUD_O              => baud,
     UCLK_O              => uclk,
     S_REGBUS_RB_RUPDATE => rupdate,
     S_REGBUS_RB_RADDR   => raddr,
