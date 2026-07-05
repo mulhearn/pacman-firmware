@@ -96,7 +96,7 @@ begin
     elsif rising_edge(clk) then
       if cfg_mode /= C_MODE_ON then
         state       <= IDLE;
-        delay_count <= unsigned(DELAY_I);
+        delay_count <= (others => '0');
       else
         case state is
           when IDLE =>
@@ -122,9 +122,13 @@ begin
             end if;
           when STOP =>
             if clk_en = '1' then
-              state       <= IDLE;
-              delay_count <= unsigned(DELAY_I);
-            end if;
+              if unsigned(DELAY_I) = 0 then
+                state <= START;
+              else
+                state       <= IDLE;
+                delay_count <= unsigned(DELAY_I) - 1;
+              end if;
+            end if;            
           when others =>
             state <= IDLE;
         end case;
