@@ -16,30 +16,36 @@ entity atc_mux_tb is
   );
 end atc_mux_tb;
 
+
 architecture behaviour of atc_mux_tb is
   component atc_mux is
     port (
-    CLK_I	   : in  std_logic;
-    RST_I	   : in  std_logic;
-    LEMO_A_I	   : in  std_logic;
-    LEMO_B_I	   : in  std_logic;
-    POKE_C_I	   : in  std_logic;
-    MASK_C_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-    POKE_D_I	   : in  std_logic;
-    MASK_D_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-    LOGIC_E_I	   : in  std_logic;
-    LOGIC_F_I	   : in  std_logic;
-    DST_LEMO_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    DST_LEMO_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    DST_POKE_C_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    DST_POKE_D_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    DST_LOGIC_E_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    DST_LOGIC_F_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    G_O            : out std_logic_vector(9 downto 0) := (others => '0');
-    H_O            : out std_logic_vector(9 downto 0) := (others => '0');
-    M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0');
-    T_O            : out std_logic
-  );
+      CLK_I	   : in  std_logic;
+      RST_I	   : in  std_logic;
+      LEMO_A_I	   : in  std_logic;
+      LEMO_B_I	   : in  std_logic;
+      POKE_A_I	   : in  std_logic;
+      POKE_B_I	   : in  std_logic;
+      POKE_C_I	   : in  std_logic;
+      POKE_D_I	   : in  std_logic;
+      LOGIC_A_I	   : in  std_logic;
+      LOGIC_B_I	   : in  std_logic;
+      MASK_A_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      MASK_B_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      MASK_C_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      MASK_D_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      DST_LEMO_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LEMO_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_C_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_D_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_A_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_B_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      G_O            : out std_logic_vector(9 downto 0) := (others => '0');
+      H_O            : out std_logic_vector(9 downto 0) := (others => '0');
+      M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0')
+      );
   end component;
 
   signal count    : integer := 0;
@@ -58,7 +64,6 @@ architecture behaviour of atc_mux_tb is
   signal   h   :  std_logic_vector(9 downto 0) := (others => '0');
   signal   g   :  std_logic_vector(9 downto 0) := (others => '0');
   signal   m   :  std_logic_vector(3 downto 0) := (others => '0');
-  signal   t  :  std_logic;
 
 
 
@@ -68,23 +73,28 @@ begin
     RST_I         =>  rst,
     LEMO_A_I	  =>   update_lemo_a,
     LEMO_B_I	  =>   update_lemo_b,
+    POKE_A_I	  =>   '0',
+    POKE_B_I	  =>   '0',
     POKE_C_I	  =>   update_poke_c,
-    MASK_C_I      =>   "1111111101",
     POKE_D_I      =>   update_poke_d,
-    MASK_D_I      =>   "1111110111",
-    LOGIC_E_I	  =>    '0' ,
-    LOGIC_F_I	  =>    '0' ,
-    DST_LEMO_A_I  => x"02FF0601",
-    DST_LEMO_B_I  => x"02FF0501",
-    DST_POKE_C_I  => x"F0000008",
-    DST_POKE_D_I  => x"03FF0101",
-    DST_LOGIC_E_I => x"00FF0304",
-    DST_LOGIC_F_I => x"00FF0404",
+    LOGIC_A_I	  =>    '0' ,
+    LOGIC_B_I	  =>    '0' ,
+    MASK_A_I      =>   (others => '0'),
+    MASK_B_I      =>   (others => '0'),
+    MASK_C_I      =>   "1111111111",
+    MASK_D_I      =>   "1111111111",
+    DST_LEMO_A_I  => x"00000000",
+    DST_LEMO_B_I  => x"0008FFC5",
+    DST_POKE_A_I  => x"00000000",
+    DST_POKE_B_I  => x"00000000",
+    DST_POKE_C_I  => x"0002FFC1",
+    DST_POKE_D_I  => x"0003FFC2",
+    DST_LOGIC_A_I => x"00000000",
+    DST_LOGIC_B_I => x"00000000",
     G_O           => g,
     H_O           => h,
-    M_O           => m,
-    T_O           => t
-  );
+    M_O           => m
+    );
 
   aclk_process : process
   begin
@@ -159,7 +169,7 @@ begin
     wait;
   end process;
 
-  output_process : process
+output_process : process
     variable l : line;
   begin
     wait for 20 ns;
@@ -186,8 +196,6 @@ begin
       write  (l, h);
       write  (l, String'(" m: "));
       write  (l, m);
-      write  (l, String'(" t: "));
-      write  (l, t);
 
       if (rst = '1') then
         write (l, String'(" (RESET)"));
@@ -195,9 +203,6 @@ begin
       writeline(output, l);
     end if;
   end process;
-
-
-
 
 
 end behaviour;

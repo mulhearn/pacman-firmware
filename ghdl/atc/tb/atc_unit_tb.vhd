@@ -13,10 +13,10 @@ end atc_unit_tb;
 architecture behaviour of atc_unit_tb is
   component atc_unit is
     port (
-    ACLK                 : in std_logic; -- fast clock
-    RST_I                : in std_logic;
+    ACLK                  : in std_logic; -- fast clock
+    RST_I                 : in std_logic;
 
-    BAUD_O               : out std_logic;
+    BAUD_O                : out std_logic;
 
     S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
     S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -24,8 +24,8 @@ architecture behaviour of atc_unit_tb is
     S_REGBUS_RB_RACK      : out std_logic;
 
     S_REGBUS_RB_WUPDATE   : in  std_logic;
-    S_REGBUS_RB_WADDR	    : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA	  : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK      : out std_logic;
 
     LEMO_A_I              : in std_logic;
@@ -62,9 +62,9 @@ architecture behaviour of atc_unit_tb is
 
   -- dut outputs
   signal timestamp  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-  signal rx_marker  : std_logic_vector(C_NUM_MARKER-1 downto 0);
   signal atc_h      :  std_logic_vector(9 downto 0) := (others => '0');
   signal atc_g      :  std_logic_vector(9 downto 0) := (others => '0');
+  signal atc_m      :  std_logic_vector(3 downto 0) := (others => '0');
 
   signal show_output : std_logic := '0';
 begin
@@ -84,9 +84,9 @@ begin
     LEMO_A_I            => lemo_a,
     LEMO_B_I            => lemo_b,
     TIMESTAMP_O         => timestamp,
-    RX_MARKER_O         => rx_marker,
     G_O                 => atc_g,
-    H_O                 => atc_h
+    H_O                 => atc_h,
+    RX_MARKER_O         => atc_m
   );
 
   rst_process : process
@@ -109,82 +109,71 @@ begin
   lemo_a_process : process
   begin
     lemo_a   <= '0';
-    wait for 200 ns;
+    wait for 50 ns;
     lemo_a   <= '1';
-    wait for 200 ns;
+    wait for 50 ns;
     lemo_a   <= '0';
-    wait for 200 ns;
+    wait for 50 ns;
   end process;
 
   lemo_b_process : process
   begin
     lemo_b   <= '0';
-    wait for 200 ns;
+    wait for 50 ns;
     lemo_b   <= '1';
-    wait for 200 ns;
+    wait for 50 ns;
     lemo_b   <= '0';
-    wait for 200 ns;
+    wait for 50 ns;
   end process;
 
   read_process : process
   begin
     raddr   <= x"E204";
-    --raddr   <= x"E004";
     rupdate <= '1';
-    wait;
+    wait for 10 ns;
+    raddr   <= x"E004";
+    rupdate <= '1';
+    wait for 10 ns;
   end process;
 
   write_process : process
   begin
+    wait for 1 ns;
     waddr   <= x"0000";
     wdata   <= x"00000000";
     wupdate <= '0';
     wait for 20 ns;
-    -- polarity configuration
-    waddr   <= x"E108";
-    wdata   <= x"00000000";
+    -- configuration for H ouput
+    waddr   <= x"E114";
+    wdata   <= x"0003FF00";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for LEMO A
-    waddr   <= x"E110";
-    wdata   <= x"03FF0011";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- destination configuratin for LEMO B
-    waddr   <= x"E114";
-    wdata   <= x"03FF0022";
+    waddr   <= x"E120";
+    wdata   <= x"0004FFC5";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for POKE C
-    waddr   <= x"E118";
-    wdata   <= x"F0000008";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- destination configuratin for POKE D
-    waddr   <= x"E11C";
-    wdata   <= x"00000000";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- request config update in detector clock domain:
-    waddr   <= x"E100";
-    wdata   <= x"00000000";
+    waddr   <= x"E130";
+    wdata   <= x"001eFFC2";
     wupdate <= '1';
     wait for 10 ns;
     waddr   <= x"0000";
     wdata   <= x"00000000";
     wupdate <= '0';
-    wait until (count=80);
+    wait for 10 ns;
     waddr   <= x"E0C0";
-    wdata   <= x"0000000F";
+    wdata   <= x"000003FF";
     wupdate <= '1';
     wait for 10 ns;
+    waddr   <= x"E200";
+    wdata   <= x"00000060";
+    wupdate <= '1';
+    wait;
     waddr   <= x"0000";
     wdata   <= x"00000000";
     wupdate <= '0';
-    wait until (count=100);
-    waddr   <= x"E200";
-    wdata   <= x"00000050";
-    wupdate <= '1';
+    wait for 10 ns;
     wait;
   end process;
 
@@ -234,7 +223,7 @@ begin
       write (l, String'("  H: "));
       write (l, atc_h);
       write (l, String'(" | M: "));
-      hwrite (l, rx_marker);
+      write (l, atc_m);
       if (rst = '1') then
         write (l, String'(" (RESET)"));
       end if;

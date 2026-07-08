@@ -3,7 +3,6 @@ use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
 library work;
 use work.common.all;
-use work.atc_pkg.all;
 
 entity atc_unit is
   port (
@@ -38,19 +37,11 @@ entity atc_unit is
 end atc_unit;
 
 architecture behaviour of atc_unit is
-
-  component rst_sync is
-    port (
-      CLK_I  : in   std_logic;
-      RST_A  : in   std_logic;
-      RST_O  : out  std_logic
-    );
-  end component;
-
   component atc_registers is
     port (
       CLK_I : in std_logic;
       RST_I : in std_logic;
+
       S_REGBUS_RB_RUPDATE : in  std_logic;
       S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
       S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -59,52 +50,47 @@ architecture behaviour of atc_unit is
       S_REGBUS_RB_WADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
       S_REGBUS_RB_WDATA	  : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK    : out std_logic;
-      CONFIG_REQ_O        : out std_logic;
-      COUNT_REQ_O         : out std_logic;
-      COUNT_CMD_O         : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-      POKE_C_O            : out std_logic;
-      MASK_C_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      POKE_D_O            : out std_logic;
-      MASK_D_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      CONFIG_O            : out atc_config_t;
-      STATUS_I            : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      COUNT_I             : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_I         : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
-    );
-  end component;
-
-  component atc_bridge is
-    port (
-      CLK_A_I       : in  std_logic;
-      RST_A_I       : in  std_logic;
-      CONFIG_REQ_I  : in  std_logic;
-      CONFIG_I      : in  atc_config_t;
-      POKE_C_I      : in  std_logic;  -- CDC
-      MASK_C_I      : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      POKE_D_I      : in  std_logic;  -- CDC
-      MASK_D_I      : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      COUNT_REQ_I   : in  std_logic;
-      COUNT_CMD_I   : in  std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-      COUNT_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      STATUS_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O   : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      MARKER_O      : out std_logic_vector(C_NUM_MARKER-1 downto 0);
-
-      CLK_B_I       : in  std_logic;
-      RST_B_I       : in  std_logic;
-      CONFIG_O      : out atc_config_t;
+      COUNT_REQ_O   : out std_logic;
+      COUNT_CMD_O   : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
+      COUNT_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      POKE_A_O      : out std_logic;
+      MASK_A_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      POKE_B_O      : out std_logic;
+      MASK_B_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
       POKE_C_O      : out std_logic;
       MASK_C_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
       POKE_D_O      : out std_logic;
       MASK_D_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      COUNT_REQ_O   : out std_logic;
-      COUNT_CMD_O   : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-      COUNT_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_TOGGLE_I : in std_logic;
-      TIMESTAMP_TSYNC_I  : in std_logic;
-      MARKER_I      : in std_logic_vector(C_NUM_MARKER-1 downto 0)
-      );
+      CONFIG_INPUT_O : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_UART_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_BAUD_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_G_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_H_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LEMO_A_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LEMO_B_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_A_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_B_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_C_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_D_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_A_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_B_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      STATUS_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      TIMESTAMP_I    : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
+    );
   end component;
+
+  component atc_timer is
+    port (
+      CLK_I      : in  std_logic;
+      RST_I      : in  std_logic;
+      CONFIG_UART_I : in  std_logic_vector(31 downto 0);
+      CONFIG_BAUD_I : in  std_logic_vector(31 downto 0);
+      UART_O     : out std_logic;
+      BAUD_O     : out std_logic;
+      UCLK_O     : out std_logic
+    );
+  end component;
+
 
   component rising_edge_sync is
     generic ( DEBOUNCE_CYCLES : integer);
@@ -118,151 +104,186 @@ architecture behaviour of atc_unit is
       );
   end component;
 
-
   component atc_mux is
     port (
-      CLK_I          : in  std_logic;
-      RST_I          : in  std_logic;
-      LEMO_A_I       : in  std_logic;
-      LEMO_B_I       : in  std_logic;
-      POKE_C_I       : in  std_logic;
+      CLK_I	   : in  std_logic;
+      RST_I	   : in  std_logic;
+      LEMO_A_I	   : in  std_logic;
+      LEMO_B_I	   : in  std_logic;
+      POKE_A_I	   : in  std_logic;
+      POKE_B_I	   : in  std_logic;
+      POKE_C_I	   : in  std_logic;
+      POKE_D_I	   : in  std_logic;
+      LOGIC_A_I	   : in  std_logic;
+      LOGIC_B_I	   : in  std_logic;
+      MASK_A_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      MASK_B_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
       MASK_C_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      POKE_D_I       : in  std_logic;
       MASK_D_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      LOGIC_E_I      : in  std_logic;
-      LOGIC_F_I      : in  std_logic;
       DST_LEMO_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DST_LEMO_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DST_POKE_C_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       DST_POKE_D_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_LOGIC_E_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_LOGIC_F_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      G_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      H_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0);
-      T_O            : out std_logic
+      DST_LOGIC_A_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_B_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      G_O            : out std_logic_vector(9 downto 0) := (others => '0');
+      H_O            : out std_logic_vector(9 downto 0) := (others => '0');
+      M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0')
       );
+  end component;
+
+  component timer is
+    port (
+      CLK_I      : in  std_logic;
+      RST_I      : in  std_logic;
+      CONFIG_I   : in  std_logic_vector(31 downto 0);
+      STROBE_O   : out std_logic
+    );
   end component;
 
   component atc_counter is
     port (
       CLK_I	               : in  std_logic;
       RST_I	               : in  std_logic;
+
+     --input signal
       LEMO_A_I	            : in  std_logic;
       LEMO_B_I	            : in  std_logic;
+      POKE_A_I	            : in  std_logic;
+      POKE_B_I	            : in  std_logic;
       POKE_C_I	            : in  std_logic;
       POKE_D_I	            : in  std_logic;
+      M_I                   : in std_logic_vector(C_NUM_MARKER -1 downto 0) ;
       G_I                   : in std_logic_vector(C_NUM_TILE -1  downto 0) ;
       H_I                   : in std_logic_vector(C_NUM_TILE -1 downto 0) ;
+
       UPDATE_I              : in  std_logic;
       COMMAND_I             : in  std_logic_vector(7 downto 0);
+
+    --output
       COUNT_O               : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
   end component;
 
-  component timestamp_simple is
-    port (
-      CLK_I	        : in  std_logic;
-      RST_I	        : in  std_logic;
-      TIMESTAMP_O         : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      TOGGLE_O            : out std_logic;
-      TSYNC_O             : out std_logic
-    );
-  end component;
-
-  component nchan_inverter is
+  component atc_buffer is
     port (
       CLK_I      : in  std_logic;
       RST_I      : in  std_logic;
+      UART_I     : in  std_logic;
       SIG_I      : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      INVERT_I : in  std_logic_vector(C_NUM_TILE-1 downto 0);
+      CONFIG_I   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       SIG_O      : out std_logic_vector(C_NUM_TILE-1 downto 0)
       );
   end component;
 
-  -- system clock domain:
-  signal sys_clk        : std_logic;
-  signal sys_rst        : std_logic;
-
-  signal sys_cfg_req    : std_logic;
-  signal sys_cnt_req    : std_logic;
-  signal sys_cnt_cmd    : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-  signal sys_poke_c     : std_logic;
-  signal sys_mask_c     : std_logic_vector(C_NUM_TILE-1 downto 0);
-  signal sys_poke_d     : std_logic;
-  signal sys_mask_d     : std_logic_vector(C_NUM_TILE-1 downto 0);
-
-  signal sys_status     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-  signal sys_cfg        : atc_config_t;
-  signal sys_cnt        : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-  signal sys_timestamp  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-
-  -- detector clock domain:
-  signal det_clk        : std_logic;
-  signal det_rst        : std_logic;
-
-  signal det_lemo_a     : std_logic;
-  signal det_lemo_b     : std_logic;
-
-  signal det_cfg_req    : std_logic;
-  signal det_cnt_req    : std_logic;
-  signal det_cnt_cmd    : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-  signal det_poke_c     : std_logic;
-  signal det_mask_c     : std_logic_vector(C_NUM_TILE-1 downto 0);
-  signal det_poke_d     : std_logic;
-  signal det_mask_d     : std_logic_vector(C_NUM_TILE-1 downto 0);
-
-  signal det_cfg        : atc_config_t;
-  signal det_cnt        : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-
-  signal det_rst_or     : std_logic;
-  signal det_toggle     : std_logic;
-  signal det_tsync      : std_logic;
-
-  signal det_g          : std_logic_vector(C_NUM_TILE-1 downto 0) := (others => '0');
-  signal det_h          : std_logic_vector(C_NUM_TILE-1 downto 0) := (others => '0');
-  signal det_t          : std_logic := '0';
-  signal det_m          : std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0');
-begin
-  sys_clk <= ACLK;
-  sys_rst <= RST_I;
-  UCLK_O <= det_clk;
-
-  process(ACLK, RST_I)
-    variable cnt : integer range 0 to 9;
-  begin
-    if RST_I = '1' then
-      cnt         := 0;
-      det_clk     <= '0';
-      BAUD_O <= '0';
-    elsif rising_edge(ACLK) then
-      BAUD_O <= '0';
-      if cnt = 0 then
-        det_clk     <= '1';   -- rising edge of det_clk
-        BAUD_O <= '1';   -- sync pulse, coincident with det_clk rising edge
-      elsif cnt = 5 then
-        det_clk     <= '0';   -- falling edge of det_clk
-      end if;
-      if cnt < 9 then
-        cnt := cnt + 1;
-      else
-        cnt := 0;
-      end if;
-    end if;
-  end process;
-
-  TIMESTAMP_O <= sys_timestamp;
-
-  dut0: rst_sync
-    port map (
-      CLK_I  => det_clk,
-      RST_A  => sys_rst,
-      RST_O  => det_rst
+  component timestamp is
+    port (
+      CLK_I       : in  std_logic;
+      RST_I       : in  std_logic;
+      ENABLE_I    : in  std_logic;
+      TIMESTAMP_O     : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
     );
+  end component;
 
-  atcreg0: atc_registers port map (
-    CLK_I               => sys_clk,
-    RST_I               => sys_rst,
+  -- system clock domain:
+  signal clk        : std_logic;
+  signal rst        : std_logic;
+  -- uart strobe, marking start of each UART clock period:
+  signal uart       : std_logic;
+  -- baud strobe, marking start of each baud period:
+  signal baud       : std_logic;
+
+  -- stimuli:
+  signal lemo_a     : std_logic;
+  signal lemo_b     : std_logic;
+  signal poke_a     : std_logic;
+  signal mask_a     : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal poke_b     : std_logic;
+  signal mask_b     : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal poke_c     : std_logic;
+  signal mask_c     : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal poke_d     : std_logic;
+  signal mask_d     : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal logic_a    : std_logic;
+  signal logic_b    : std_logic;
+
+  -- output to ASICs:
+  signal g          : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal h          : std_logic_vector(C_NUM_TILE-1 downto 0);
+
+  --markers:
+  signal m          : std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0');
+
+  -- configs:
+  signal config_input : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal config_uart  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal config_baud  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal config_g     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal config_h     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal dst_lemo_a  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_lemo_b  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_poke_a  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_poke_b  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_poke_c  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_poke_d  : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_logic_a : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal dst_logic_b : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+
+  -- counter request-driven interface:
+  signal count_req    : std_logic;
+  signal count_cmd    : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
+  signal count      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+
+  signal status     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal ts  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0) := (others => '0');
+
+begin
+  clk <= ACLK;
+  rst <= RST_I;
+
+  TIMESTAMP_O <= ts;
+  RX_MARKER_O <= m;
+
+  ts0: timestamp port map (
+    CLK_I        => clk,
+    RST_I        => rst,
+    ENABLE_I     => uart,
+    TIMESTAMP_O  => ts
+  );
+
+  timer0: atc_timer port map (
+    CLK_I      => clk,
+    RST_I      => rst,
+    CONFIG_UART_I => config_uart,
+    CONFIG_BAUD_I => config_baud,
+    UART_O     => uart,
+    BAUD_O     => baud,
+    UCLK_O     => UCLK_O
+  );
+
+  logic_a_timer: timer
+    port map (
+      CLK_I      => clk,
+      RST_I      => rst,
+      CONFIG_I   => x"00000000",
+      STROBE_O   => logic_a
+      );
+
+  logic_b_timer: timer
+    port map (
+      CLK_I      => clk,
+      RST_I      => rst,
+      CONFIG_I   => x"00000000",
+      STROBE_O   => logic_b
+      );
+
+
+
+  atcreg0:atc_registers port map (
+    CLK_I               => clk,
+    RST_I               => rst,
     S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
     S_REGBUS_RB_RADDR   => S_REGBUS_RB_RADDR,
     S_REGBUS_RB_RDATA   => S_REGBUS_RB_RDATA,
@@ -271,47 +292,34 @@ begin
     S_REGBUS_RB_WADDR   => S_REGBUS_RB_WADDR,
     S_REGBUS_RB_WDATA   => S_REGBUS_RB_WDATA,
     S_REGBUS_RB_WACK    => S_REGBUS_RB_WACK,
-    CONFIG_REQ_O        => sys_cfg_req,
-    CONFIG_O            => sys_cfg,
-    COUNT_REQ_O         => sys_cnt_req,
-    COUNT_CMD_O         => sys_cnt_cmd,
-    POKE_C_O            => sys_poke_c,
-    MASK_C_O            => sys_mask_c,
-    POKE_D_O            => sys_poke_d,
-    MASK_D_O            => sys_mask_d,
-    STATUS_I            => sys_status,
-    COUNT_I             => sys_cnt,
-    TIMESTAMP_I         => sys_timestamp
-  );
 
-  atcbridge0: atc_bridge port map (
-    CLK_A_I          => sys_clk,
-    RST_A_I          => sys_rst,
-    CONFIG_REQ_I     => sys_cfg_req,
-    CONFIG_I         => sys_cfg,
-    POKE_C_I         => sys_poke_c,
-    MASK_C_I         => sys_mask_c,
-    POKE_D_I         => sys_poke_d,
-    MASK_D_I         => sys_mask_d,
-    COUNT_REQ_I      => sys_cnt_req,
-    COUNT_CMD_I      => sys_cnt_cmd,
-    COUNT_O          => sys_cnt,
-    STATUS_O         => sys_status,
-    TIMESTAMP_O      => sys_timestamp,
-    MARKER_O         => RX_MARKER_O,
-    CLK_B_I          => det_clk,
-    RST_B_I          => det_rst,
-    CONFIG_O         => det_cfg,
-    POKE_C_O         => det_poke_c,
-    MASK_C_O         => det_mask_c,
-    POKE_D_O         => det_poke_d,
-    MASK_D_O         => det_mask_d,
-    COUNT_REQ_O      => det_cnt_req,
-    COUNT_CMD_O      => det_cnt_cmd,
-    COUNT_I          => det_cnt,
-    TIMESTAMP_TOGGLE_I => det_toggle,
-    TIMESTAMP_TSYNC_I  => det_tsync,
-    MARKER_I         => det_m
+    CONFIG_INPUT_O => config_input,
+    CONFIG_UART_O  => config_uart,
+    CONFIG_BAUD_O  => config_baud,
+    CONFIG_G_O     => config_g,
+    CONFIG_H_O     => config_h,
+    DST_LEMO_A_O   => dst_lemo_a,
+    DST_LEMO_B_O   => dst_lemo_b,
+    DST_POKE_A_O   => dst_poke_a,
+    DST_POKE_B_O   => dst_poke_b,
+    DST_POKE_C_O   => dst_poke_c,
+    DST_POKE_D_O   => dst_poke_d,
+    DST_LOGIC_A_O  => dst_logic_a,
+    DST_LOGIC_B_O  => dst_logic_b,
+
+    COUNT_REQ_O         => count_req,
+    COUNT_CMD_O         => count_cmd,
+    POKE_A_O            => poke_a,
+    MASK_A_O            => mask_a,
+    POKE_B_O            => poke_b,
+    MASK_B_O            => mask_b,
+    POKE_C_O            => poke_c,
+    MASK_C_O            => mask_c,
+    POKE_D_O            => poke_d,
+    MASK_D_O            => mask_d,
+    STATUS_I            => status,
+    COUNT_I             => count,
+    TIMESTAMP_I         => ts
   );
 
 
@@ -321,11 +329,11 @@ begin
      )
 
    port map (
-     CLK_I  => det_clk,
-     RST_I  => det_rst,
+     CLK_I  => clk,
+     RST_I  => rst,
      ASYNC_SIGNAL_I => LEMO_A_I,
-     INVERT_I => det_cfg.polarity(0),
-     UPDATE_O => det_lemo_a
+     INVERT_I => config_input(0),
+     UPDATE_O => lemo_a
    );
 
   lemob0: rising_edge_sync
@@ -333,76 +341,80 @@ begin
       DEBOUNCE_CYCLES => 4
      )
    port map (
-     CLK_I  => det_clk,
-     RST_I  => det_rst,
+     CLK_I  => clk,
+     RST_I  => rst,
      ASYNC_SIGNAL_I => LEMO_B_I,
-     INVERT_I => det_cfg.polarity(1),
-     UPDATE_O => det_lemo_b
+     INVERT_I => config_input(1),
+     UPDATE_O => lemo_b
    );
 
   atcmux0: atc_mux port map (
-    CLK_I         => det_clk,
-    RST_I         => det_rst,
-    LEMO_A_I      => det_lemo_a,
-    LEMO_B_I      => det_lemo_b,
-    POKE_C_I      => det_poke_c,
-    MASK_C_I      => det_mask_c,
-    POKE_D_I      => det_poke_d,
-    MASK_D_I      => det_mask_d,
-    LOGIC_E_I     => '0' ,
-    LOGIC_F_I     => '0' ,
-    DST_LEMO_A_I  => det_cfg.dst_lemo_a,
-    DST_LEMO_B_I  => det_cfg.dst_lemo_b,
-    DST_POKE_C_I  => det_cfg.dst_poke_c,
-    DST_POKE_D_I  => det_cfg.dst_poke_d,
-    DST_LOGIC_E_I => det_cfg.dst_logic_e,
-    DST_LOGIC_F_I => det_cfg.dst_logic_f,
-    G_O           => det_g,
-    H_O           => det_h,
-    T_O           => det_t,
-    M_O           => det_m
-  );
-
-
-  atccnt0: atc_counter port map (
-    CLK_I	     => det_clk,
-    RST_I 	     => det_rst,
-    LEMO_A_I	     => det_lemo_a,
-    LEMO_B_I	     => det_lemo_b,
-    POKE_C_I	     => det_poke_c,
-    POKE_D_I	     => det_poke_d,
-    G_I              => det_g,
-    H_I              => det_h,
-    UPDATE_I         => det_cnt_req,
-    COMMAND_I        => det_cnt_cmd,
-    COUNT_O          => det_cnt
-  );
-
-  -- we reset timestamp for a global reset or from a configurable timing pulse from the MUX:
-  det_rst_or <= det_rst or det_t;
-  tstamp0: timestamp_simple port map (
-    CLK_I              => det_clk,
-    RST_I              => det_rst_or,
-    --TIMESTAMP_O        => det_timestamp,  -- not yet used...
-    TOGGLE_O           => det_toggle,
-    TSYNC_O            => det_tsync
+    CLK_I         => clk,
+    RST_I         => rst,
+    LEMO_A_I	  => lemo_a,
+    LEMO_B_I	  => lemo_b,
+    POKE_A_I	  => poke_a,
+    POKE_B_I	  => poke_b,
+    POKE_C_I	  => poke_c,
+    POKE_D_I      => poke_d,
+    LOGIC_A_I	  => logic_a,
+    LOGIC_B_I	  => logic_b,
+    MASK_A_I      => mask_a,
+    MASK_B_I      => mask_b,
+    MASK_C_I      => mask_c,
+    MASK_D_I      => mask_d,
+    DST_LEMO_A_I  => dst_lemo_a,
+    DST_LEMO_B_I  => dst_lemo_b,
+    DST_POKE_A_I  => dst_poke_a,
+    DST_POKE_B_I  => dst_poke_b,
+    DST_POKE_C_I  => dst_poke_c,
+    DST_POKE_D_I  => dst_poke_d,
+    DST_LOGIC_A_I => dst_logic_a,
+    DST_LOGIC_B_I => dst_logic_b,
+    G_O           => g,
+    H_O           => h,
+    M_O           => m
     );
 
-  ginv0: nchan_inverter port map (
-    CLK_I	=> det_clk,
-    RST_I 	=> det_rst,
-    SIG_I	=> det_g,
-    INVERT_I    => det_cfg.polarity(13 downto 4),
+  atccnt0: atc_counter port map (
+    CLK_I	     => clk,
+    RST_I 	     => rst,
+    LEMO_A_I	     => lemo_a,
+    LEMO_B_I	     => lemo_b,
+    POKE_A_I	     => poke_a,
+    POKE_B_I	     => poke_b,
+    POKE_C_I	     => poke_c,
+    POKE_D_I	     => poke_d,
+    G_I              => g,
+    H_I              => h,
+    M_I              => m,
+    UPDATE_I         => count_req,
+    COMMAND_I        => count_cmd,
+    COUNT_O          => count
+  );
+
+  BAUD_O <= baud;
+
+  gbuf0: atc_buffer port map (
+    CLK_I	=> clk,
+    RST_I 	=> rst,
+    UART_I      => uart,
+    SIG_I	=> g,
+    CONFIG_I    => config_g,
     SIG_O	=> G_O
   );
 
-  hinv0: nchan_inverter port map (
-    CLK_I	=> det_clk,
-    RST_I 	=> det_rst,
-    SIG_I	=> det_h,
-    INVERT_I    => det_cfg.polarity(25 downto 16),
+  hbuf0: atc_buffer port map (
+    CLK_I	=> clk,
+    RST_I 	=> rst,
+    UART_I      => uart,
+    SIG_I	=> h,
+    CONFIG_I    => config_h,
     SIG_O	=> H_O
   );
+
+
+
 
 
 end behaviour;

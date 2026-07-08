@@ -5,7 +5,6 @@ use ieee.std_logic_1164.all;
 use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
 library work;
 use work.common.all;
-use work.atc_pkg.all;
 
 --  Defines a testbench (without any ports)
 entity atc_registers_tb is
@@ -25,17 +24,32 @@ architecture behaviour of atc_registers_tb is
       S_REGBUS_RB_WADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
       S_REGBUS_RB_WDATA	  : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK    : out std_logic;
-      CONFIG_REQ_O        : out std_logic;
-      COUNT_REQ_O         : out std_logic;
-      COUNT_CMD_O         : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-      POKE_C_O            : out std_logic;
-      MASK_C_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      POKE_D_O            : out std_logic;
-      MASK_D_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      CONFIG_O            : out atc_config_t;
-      STATUS_I            : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      COUNT_I             : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_I         : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
+      COUNT_REQ_O   : out std_logic;
+      COUNT_CMD_O   : out std_logic_vector(C_BYTE_WIDTH-1 downto 0);
+      COUNT_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      POKE_A_O      : out std_logic;
+      MASK_A_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      POKE_B_O      : out std_logic;
+      MASK_B_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      POKE_C_O      : out std_logic;
+      MASK_C_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      POKE_D_O      : out std_logic;
+      MASK_D_O      : out std_logic_vector(C_NUM_TILE-1 downto 0);
+      CONFIG_INPUT_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_UART_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_BAUD_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_G_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CONFIG_H_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LEMO_A_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LEMO_B_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_A_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_B_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_C_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_POKE_D_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_A_O : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      DST_LOGIC_B_O : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      STATUS_I      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      TIMESTAMP_I   : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
     );
   end component;
 
@@ -55,13 +69,16 @@ architecture behaviour of atc_registers_tb is
 
   signal show_output : std_logic := '0';
 
-  signal cfg_req : std_logic;
   signal cnt_req  : std_logic;
-  signal cnt_cmd        : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
-  signal poke_c         : std_logic;
-  signal mask_c         : std_logic_vector(C_NUM_TILE-1 downto 0);
-  signal poke_d         : std_logic;
-  signal mask_d         : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal cnt_cmd  : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
+  signal poke_a   : std_logic;
+  signal mask_a   : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal poke_b   : std_logic;
+  signal mask_b   : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal poke_c   : std_logic;
+  signal mask_c   : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal poke_d   : std_logic;
+  signal mask_d   : std_logic_vector(C_NUM_TILE-1 downto 0);
 
 begin
   uut0: atc_registers port map (
@@ -75,9 +92,12 @@ begin
     S_REGBUS_RB_WADDR   => waddr,
     S_REGBUS_RB_WDATA   => wdata,
     S_REGBUS_RB_WACK    => wack,
-    CONFIG_REQ_O        => cfg_req,
     COUNT_REQ_O         => cnt_req,
     COUNT_CMD_O         => cnt_cmd,
+    POKE_A_O            => poke_a,
+    MASK_A_O            => mask_a,
+    POKE_B_O            => poke_b,
+    MASK_B_O            => mask_b,
     POKE_C_O            => poke_c,
     MASK_C_O            => mask_c,
     POKE_D_O            => poke_d,
@@ -116,29 +136,23 @@ begin
     raddr   <= x"E004";
     rupdate <= '1';
     wait for 10 ns;
+    raddr   <= x"E100";
+    rupdate <= '1';
+    wait for 10 ns;
+    raddr   <= x"E100";
+    rupdate <= '1';
+    wait for 10 ns;
     raddr   <= x"E104";
     rupdate <= '1';
     wait for 10 ns;
     raddr   <= x"E108";
     rupdate <= '1';
     wait for 10 ns;
-    raddr   <= x"E110";
+    raddr   <= x"E10C";
     rupdate <= '1';
     wait for 10 ns;
-    raddr   <= x"E124";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"E120";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 50 ns;
     raddr   <= x"E204";
     rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
     wait;
   end process;
 
@@ -149,32 +163,36 @@ begin
     wupdate <= '0';
     wait for 1 ns;
     wait for 20 ns;
+    waddr   <= x"E100";
+    wdata   <= x"AAAAAAAA";
+    wupdate <= '1';
+    wait for 10 ns;
     waddr   <= x"E104";
-    wdata   <= x"1040AAAA";
+    wdata   <= x"BBBBBBBB";
     wupdate <= '1';
     wait for 10 ns;
     waddr   <= x"E108";
-    wdata   <= x"1080BBBB";
+    wdata   <= x"CCCCCCCC";
     wupdate <= '1';
     wait for 10 ns;
-    waddr   <= x"E110";
-    wdata   <= x"1100CCCC";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"E124";
-    wdata   <= x"1240DDDD";
+    waddr   <= x"E10C";
+    wdata   <= x"DDDDDDDD";
     wupdate <= '1';
     wait for 10 ns;
     waddr   <= x"0000";
     wdata   <= x"00000000";
     wupdate <= '0';
-    wait for 30 ns;
-    waddr   <= x"E100";
-    wdata   <= x"00000000";
-    wupdate <= '1';
-    wait for 10 ns;
+    wait for 40 ns;
     waddr   <= x"E200";
     wdata   <= x"000000AB";
+    wupdate <= '1';
+    wait for 10 ns;
+    waddr   <= x"E0A0";
+    wdata   <= x"000003FF";
+    wupdate <= '1';
+    wait for 10 ns;
+    waddr   <= x"E0B0";
+    wdata   <= x"00000001";
     wupdate <= '1';
     wait for 10 ns;
     waddr   <= x"E0C0";
@@ -224,17 +242,21 @@ begin
       hwrite (l, wdata);
       write (l, String'(" wk:"));
       write (l, wack);
-      write (l, String'(" || req: "));
-      write (l, cfg_req);
+      write (l, String'(" || cmd: "));
       write (l, cnt_req);
-      write (l, poke_c);
-      write (l, poke_d);
       write (l, String'(" 0x"));
       hwrite(l, cnt_cmd);
+      write (l, String'(" || pokes: "));
+      write (l, poke_a);
+      write (l, poke_b);
+      write (l, poke_c);
+      write (l, poke_d);
+
       write (l, String'(" 0x"));
-      hwrite(l, "00" & mask_c);
+      hwrite(l, "00" & mask_a);
       write (l, String'(" 0x"));
-      hwrite(l, "00" & mask_d);
+      hwrite(l, "00" & mask_b);
+
       if (rst = '1') then
         write (l, String'(" (RESET)"));
       end if;
@@ -251,8 +273,8 @@ begin
     wait until (count=3);
     write(l, String'("INFO:  Reading status and timestamp, writing then reading a few configs:"));
     writeline(output, l);
-    wait until (count=10);
-    write(l, String'("INFO:  Sending update requests and pokes:"));
+    wait until (count=11);
+    write(l, String'("INFO:  Sending count requests and pokes: (count is fixed value in testbench)"));
     writeline(output, l);
     wait;
   end process;

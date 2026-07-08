@@ -29,9 +29,13 @@ architecture behavioral of counter is
   signal increment_regb : std_logic;
   signal clear_reg      : std_logic;
 
-  signal count_next   : unsigned(C_COUNT_BITS-1 downto 0);
-  signal count_rega   : unsigned(C_COUNT_BITS-1 downto 0);
-  signal count_regb   : unsigned(C_COUNT_BITS-1 downto 0);
+  signal count_next_edge   : unsigned(C_COUNT_BITS-1 downto 0);
+  signal count_rega_edge   : unsigned(C_COUNT_BITS-1 downto 0);
+  signal count_regb_edge   : unsigned(C_COUNT_BITS-1 downto 0);
+
+  signal count_next_int    : unsigned(C_COUNT_BITS-1 downto 0);
+  signal count_rega_int    : unsigned(C_COUNT_BITS-1 downto 0);
+  signal count_regb_int    : unsigned(C_COUNT_BITS-1 downto 0);
 
 begin
 
@@ -51,36 +55,57 @@ begin
     end if;
   end process;
 
-  -- Combinatorial next value
-  process(run_reg, increment_rega, clear_reg, count_rega)
+  -- Combinatorial next value: edge count (rising-edge detect, as before)
+  process(run_reg, increment_rega, increment_regb, clear_reg, count_rega_edge)
   begin
+    count_next_edge <= count_rega_edge;
     if clear_reg = '1' then
-      count_next <= (others => '0');
-    elsif run_reg = '1' and increment_rega = '1' and increment_regb = '0' then
-      if count_rega < C_COUNT_MAX then
-        count_next <= count_rega + 1;
-      else
-        count_next <= count_rega;  -- saturate at max
-      end if;
-    else
-      count_next <= count_rega;
+      count_next_edge <= (others => '0');
+    elsif run_reg = '1' and increment_rega = '1' and increment_regb = '0' and count_rega_edge < C_COUNT_MAX then
+      count_next_edge <= count_rega_edge + 1;
     end if;
   end process;
 
-  -- Two-stage registered outputs
+  -- Combinatorial next value: integral (level count, one tick per clock while high)
+  process(run_reg, increment_rega, increment_regb, clear_reg, count_rega_int, count_rega_edge)
+  begin
+    count_next_int <= count_rega_int;
+
+    if clear_reg = '1' then
+      count_next_int <= (others => '0');
+    elsif run_reg = '1' and increment_rega = '1' and
+      ((increment_regb = '0') or (count_rega_edge > 0)) and
+      count_rega_int < C_COUNT_MAX then
+      count_next_int <= count_rega_int + 1;
+    end if;
+  end process;
+
+  -- Two-stage registered outputs (edge count)
   process(CLK_I, RST_I)
   begin
     if RST_I = '1' then
-      count_rega <= (others => '0');
-      count_regb <= (others => '0');
+      count_rega_edge <= (others => '0');
+      count_regb_edge <= (others => '0');
     elsif rising_edge(CLK_I) then
-      count_rega <= count_next;
-      count_regb <= count_rega;
+      count_rega_edge <= count_next_edge;
+      count_regb_edge <= count_rega_edge;
     end if;
   end process;
 
-  -- Output zero-extended to full bus width
-  COUNT_O <= (C_RB_DATA_WIDTH-1 downto C_COUNT_BITS => '0') & std_logic_vector(count_regb);
+  -- Two-stage registered outputs (integral)
+  process(CLK_I, RST_I)
+  begin
+    if RST_I = '1' then
+      count_rega_int <= (others => '0');
+      count_regb_int <= (others => '0');
+    elsif rising_edge(CLK_I) then
+      count_rega_int <= count_next_int;
+      count_regb_int <= count_rega_int;
+    end if;
+  end process;
+
+  -- Output: edge count in low half, integral in high half
+  COUNT_O <= std_logic_vector(count_regb_int) & std_logic_vector(count_regb_edge);
 
 end behavioral;
 
