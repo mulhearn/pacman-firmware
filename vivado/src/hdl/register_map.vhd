@@ -37,24 +37,27 @@ package register_map is
   constant C_ADDR_ATC_STATUS          : integer := 16#000#; --read only
   constant C_ADDR_ATC_TIMESTAMP       : integer := 16#004#; --read only
 
-  constant C_ADDR_ATC_POKE_C          : integer := 16#0C0#;
-  constant C_ADDR_ATC_POKE_D          : integer := 16#0D0#;
+  constant C_ADDR_ATC_POKE_A          : integer := 16#0A0#; --write only
+  constant C_ADDR_ATC_POKE_B          : integer := 16#0B0#; --write only
+  constant C_ADDR_ATC_POKE_C          : integer := 16#0C0#; --write only
+  constant C_ADDR_ATC_POKE_D          : integer := 16#0D0#; --write only
 
-  constant C_ADDR_ATC_CONFIG_REQ      : integer := 16#100#;
-  constant C_ADDR_ATC_CONFIG          : integer := 16#104#;
-  constant C_ADDR_ATC_POLARITY        : integer := 16#108#;
-  constant C_ADDR_ATC_LOGIC           : integer := 16#10C#;
-  constant C_ADDR_ATC_DST_LEMO_A      : integer := 16#110#;
-  constant C_ADDR_ATC_DST_LEMO_B      : integer := 16#114#;
-  constant C_ADDR_ATC_DST_POKE_C      : integer := 16#118#;
-  constant C_ADDR_ATC_DST_POKE_D      : integer := 16#11C#;
-  constant C_ADDR_ATC_DST_LOGIC_E     : integer := 16#120#;
-  constant C_ADDR_ATC_DST_LOGIC_F     : integer := 16#124#;
+  constant C_ADDR_ATC_CONFIG_UART     : integer := 16#100#;
+  constant C_ADDR_ATC_CONFIG_BAUD     : integer := 16#104#;
+  constant C_ADDR_ATC_CONFIG_INPUT    : integer := 16#108#;
+  constant C_ADDR_ATC_CONFIG_G        : integer := 16#110#;
+  constant C_ADDR_ATC_CONFIG_H        : integer := 16#114#;
+  constant C_ADDR_ATC_DST_LEMO_A      : integer := 16#120#;
+  constant C_ADDR_ATC_DST_LEMO_B      : integer := 16#124#;
+  constant C_ADDR_ATC_DST_POKE_A      : integer := 16#128#;
+  constant C_ADDR_ATC_DST_POKE_B      : integer := 16#12C#;
+  constant C_ADDR_ATC_DST_POKE_C      : integer := 16#130#;
+  constant C_ADDR_ATC_DST_POKE_D      : integer := 16#134#;
+  constant C_ADDR_ATC_DST_LOGIC_A     : integer := 16#138#;
+  constant C_ADDR_ATC_DST_LOGIC_B     : integer := 16#13C#;
 
   constant C_ADDR_ATC_COUNT_REQ       : integer := 16#200#;
   constant C_ADDR_ATC_COUNT           : integer := 16#204#; --read only
-
-
 
   --
   -- Registers with SCOPE=UART_TX

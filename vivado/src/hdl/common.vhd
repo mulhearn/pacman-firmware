@@ -86,7 +86,8 @@ package common is
   constant C_DEFAULT_RX_ROLLOVER_HEADER   : integer := 16#00530053#;
   constant C_DEFAULT_RX_TRIGGER_HEADER    : integer := 16#00000054#;
   constant C_DEFAULT_RX_EOP_HEADER        : integer := 16#0000004C#;
-
+  constant C_DEFAULT_ATC_CONFIG_UART      : integer := 16#0000000A#;
+  constant C_DEFAULT_ATC_CONFIG_BAUD      : integer := 16#0000000A#;
 
   constant BRAM_ADDR_WIDTH     : integer  := 13;
   constant ADC_DATA_WIDTH      : integer  := 12;
