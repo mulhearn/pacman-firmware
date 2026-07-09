@@ -128,7 +128,7 @@ begin
                 state       <= IDLE;
                 delay_count <= unsigned(DELAY_I) - 1;
               end if;
-            end if;            
+            end if;
           when others =>
             state <= IDLE;
         end case;
