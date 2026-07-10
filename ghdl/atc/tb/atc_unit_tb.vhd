@@ -150,18 +150,18 @@ begin
     wait for 10 ns;
     -- destination configuratin for LEMO A
     waddr   <= x"E120";
-    wdata   <= x"0004FFC5";
+    wdata   <= x"0004FFC1";
     wupdate <= '1';
     wait for 10 ns;
     -- destination configuratin for POKE C
     waddr   <= x"E130";
-    wdata   <= x"001eFFC2";
+    wdata   <= x"001eFFC6";
     wupdate <= '1';
     wait for 10 ns;
     waddr   <= x"0000";
     wdata   <= x"00000000";
     wupdate <= '0';
-    wait for 10 ns;
+    wait for 200 ns;
     waddr   <= x"E0C0";
     wdata   <= x"000003FF";
     wupdate <= '1';

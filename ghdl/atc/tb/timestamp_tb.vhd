@@ -14,6 +14,7 @@ architecture behaviour of timestamp_tb is
     port (
       CLK_I       : in  std_logic;
       RST_I       : in  std_logic;
+      SYNC_I      : in  std_logic;
       ENABLE_I    : in  std_logic;
       TIMESTAMP_O     : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
     );
@@ -31,6 +32,7 @@ begin
   uut: timestamp port map (
     CLK_I        => clk,
     RST_I        => rst,
+    SYNC_I       => '0',
     ENABLE_I     => enable,
     TIMESTAMP_O  => ts
   );
