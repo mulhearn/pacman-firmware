@@ -73,7 +73,7 @@ package common is
   type uart_counter_array_t is array (0 to C_NUM_UART-1) of unsigned(C_COUNT_BITS-1 downto 0);
 
   -- default TX / RX config register (can be set per UART channel)
-  constant C_DEFAULT_TX_UART_CONFIG : integer := 16#00001601#;
+  constant C_DEFAULT_TX_UART_CONFIG : integer := 16#00000006#;
   constant C_DEFAULT_RX_UART_CONFIG : integer := 16#00000101#;
 
   -- default TX / RX global config register (one global setting)
