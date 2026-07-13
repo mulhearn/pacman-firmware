@@ -41,6 +41,9 @@ package common is
   type uart_reg16_array_t     is array (0 to C_NUM_UART-1) of std_logic_vector (C_REG16_WIDTH-1 downto 0);
   type uart_data_array_t      is array (0 to C_NUM_UART-1) of std_logic_vector (C_UART_DATA_WIDTH-1 downto 0);
 
+  type regbus_addr_array_t is array (natural range <>) of std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+  type regbus_data_array_t is array (natural range <>) of std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+
   constant C_ATC_COUNT_SELECT_WIDTH : integer := 5;
 
   -- TX unit:

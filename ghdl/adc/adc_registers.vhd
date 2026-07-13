@@ -94,7 +94,6 @@ begin
         else
           -- this is not an error, just a request outside our scope/role
           rdata <= x"00000000";
-          rdata(15 downto 0) <= raddr;
           rack  <= '0';
         end if;
       end if;

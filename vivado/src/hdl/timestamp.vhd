@@ -10,6 +10,7 @@ entity timestamp is
     --clock and active high reset:
     CLK_I       : in  std_logic;
     RST_I       : in  std_logic;
+    SYNC_I      : in  std_logic;
 
     --clock enable strobe:
     ENABLE_I    : in  std_logic;
@@ -32,10 +33,15 @@ begin
       count  := to_unsigned(1, C_TIMESTAMP_WIDTH);
       count_reg <= std_logic_vector(to_unsigned(1, C_TIMESTAMP_WIDTH));
       TIMESTAMP_O <= (others => '0');
-    elsif rising_edge(CLK_I) and ENABLE_I='1' then
-      count := count + 1;
-      count_reg <= std_logic_vector(count);
-      TIMESTAMP_O <= count_reg;
+    elsif rising_edge(CLK_I) then
+      if (SYNC_I='1') then
+        count := to_unsigned(0, C_TIMESTAMP_WIDTH);
+      end if;
+      if ENABLE_I='1' then
+        count := count + 1;
+        count_reg <= std_logic_vector(count);
+        TIMESTAMP_O <= count_reg;
+      end if;
     end if;
   end process;
 

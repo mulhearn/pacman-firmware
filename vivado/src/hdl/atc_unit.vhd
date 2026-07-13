@@ -180,10 +180,11 @@ architecture behaviour of atc_unit is
 
   component timestamp is
     port (
-      CLK_I       : in  std_logic;
-      RST_I       : in  std_logic;
-      ENABLE_I    : in  std_logic;
-      TIMESTAMP_O     : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
+      CLK_I        : in  std_logic;
+      RST_I        : in  std_logic;
+      SYNC_I       : in  std_logic;
+      ENABLE_I     : in  std_logic;
+      TIMESTAMP_O  : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
     );
   end component;
 
@@ -249,6 +250,7 @@ begin
   ts0: timestamp port map (
     CLK_I        => clk,
     RST_I        => rst,
+    SYNC_I       => m(0),
     ENABLE_I     => uart,
     TIMESTAMP_O  => ts
   );
