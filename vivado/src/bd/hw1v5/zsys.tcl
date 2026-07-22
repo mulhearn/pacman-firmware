@@ -279,7 +279,7 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_ACT_ENET0_PERIPHERAL_FREQMHZ {125.000000} \
     CONFIG.PCW_ACT_ENET1_PERIPHERAL_FREQMHZ {10.000000} \
     CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ {100.000000} \
-    CONFIG.PCW_ACT_FPGA1_PERIPHERAL_FREQMHZ {10.000000} \
+    CONFIG.PCW_ACT_FPGA1_PERIPHERAL_FREQMHZ {62.500000} \
     CONFIG.PCW_ACT_FPGA2_PERIPHERAL_FREQMHZ {10.000000} \
     CONFIG.PCW_ACT_FPGA3_PERIPHERAL_FREQMHZ {10.000000} \
     CONFIG.PCW_ACT_PCAP_PERIPHERAL_FREQMHZ {200.000000} \
@@ -297,7 +297,7 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_ACT_UART_PERIPHERAL_FREQMHZ {100.000000} \
     CONFIG.PCW_ACT_WDT_PERIPHERAL_FREQMHZ {111.111115} \
     CONFIG.PCW_CLK0_FREQ {100000000} \
-    CONFIG.PCW_CLK1_FREQ {10000000} \
+    CONFIG.PCW_CLK1_FREQ {62500000} \
     CONFIG.PCW_CLK2_FREQ {10000000} \
     CONFIG.PCW_CLK3_FREQ {10000000} \
     CONFIG.PCW_CRYSTAL_PERIPHERAL_FREQMHZ {33.333333} \
@@ -332,7 +332,7 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_EN_WDT {1} \
     CONFIG.PCW_FCLK_CLK1_BUF {TRUE} \
     CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} \
-    CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {10} \
+    CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {62.5} \
     CONFIG.PCW_FPGA_FCLK0_ENABLE {1} \
     CONFIG.PCW_FPGA_FCLK1_ENABLE {1} \
     CONFIG.PCW_GPIO_MIO_GPIO_ENABLE {1} \
@@ -622,6 +622,7 @@ proc create_root_design { parentCell } {
     CONFIG.HAS_TLAST {1} \
     CONFIG.HAS_TSTRB {0} \
     CONFIG.HAS_WR_DATA_COUNT {0} \
+    CONFIG.IS_ACLK_ASYNC {1} \
     CONFIG.TDATA_NUM_BYTES {8} \
     CONFIG.TDEST_WIDTH {0} \
     CONFIG.TID_WIDTH {0} \
@@ -686,6 +687,7 @@ proc create_root_design { parentCell } {
     CONFIG.HAS_TKEEP {0} \
     CONFIG.HAS_TLAST {1} \
     CONFIG.HAS_TSTRB {0} \
+    CONFIG.IS_ACLK_ASYNC {1} \
     CONFIG.TDATA_NUM_BYTES {8} \
     CONFIG.TDEST_WIDTH {0} \
     CONFIG.TID_WIDTH {0} \
@@ -704,6 +706,9 @@ proc create_root_design { parentCell } {
      return 1
    }
   
+  # Create instance: rst_ps7_0_62M5, and set properties
+  set rst_ps7_0_62M5 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps7_0_62M5 ]
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_dma_0_M_AXIS_MM2S [get_bd_intf_pins axi_dma_0/M_AXIS_MM2S] [get_bd_intf_pins axis_data_fifo_1/S_AXIS]
   connect_bd_intf_net -intf_net axi_dma_0_M_AXI_MM2S [get_bd_intf_pins axi_dma_0/M_AXI_MM2S] [get_bd_intf_pins axi_mem_intercon/S00_AXI]
@@ -757,10 +762,13 @@ proc create_root_design { parentCell } {
   connect_bd_net -net global_unit_0_ANALOG_PWR_EN_O [get_bd_pins global_unit_0/ANALOG_PWR_EN_O] [get_bd_ports ANALOG_PWR_EN_O_0]
   connect_bd_net -net global_unit_0_LED_O [get_bd_pins global_unit_0/LED_O] [get_bd_ports LED_O_0]
   connect_bd_net -net global_unit_0_TILE_EN_O [get_bd_pins global_unit_0/TILE_EN_O] [get_bd_ports TILE_EN_O_0]
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins adc_unit_0/ACLK] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins axil_to_regbus_0/S_AXI_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins axis_data_fifo_0/s_axis_aclk] [get_bd_pins rx_unit_0/ACLK] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins global_unit_0/ACLK] [get_bd_pins axi_dma_0/m_axi_mm2s_aclk] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins tx_unit_0/ACLK] [get_bd_pins vio_0/clk] [get_bd_pins axi_mem_intercon/S01_ACLK] [get_bd_pins axi_dma_0/m_axi_sg_aclk] [get_bd_pins axi_mem_intercon/S02_ACLK] [get_bd_pins atc_unit_0/ACLK] [get_bd_pins axis_data_fifo_1/s_axis_aclk] [get_bd_pins regbus_hub_0/S_CLK_I] [get_bd_pins regbus_hub_0/P_CLK_I]
-  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
-  connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn1 [get_bd_pins rst_ps7_0_100M/peripheral_aresetn] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axil_to_regbus_0/S_AXI_ARESETN] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins axis_data_fifo_0/s_axis_aresetn] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/S01_ARESETN] [get_bd_pins axi_mem_intercon/S02_ARESETN] [get_bd_pins axis_data_fifo_1/s_axis_aresetn]
-  connect_bd_net -net rst_ps7_0_100M_peripheral_reset [get_bd_pins rst_ps7_0_100M/peripheral_reset] [get_bd_pins tx_unit_0/RST_I] [get_bd_pins global_unit_0/RST_I] [get_bd_pins rx_unit_0/RST_I] [get_bd_pins adc_unit_0/RST_I] [get_bd_pins atc_unit_0/RST_I] [get_bd_pins regbus_hub_0/S_RST_I] [get_bd_pins regbus_hub_0/P_RST_I]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk] [get_bd_pins adc_unit_0/ACLK] [get_bd_pins axi_dma_0/m_axi_mm2s_aclk] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins axis_data_fifo_1/s_axis_aclk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_mem_intercon/S01_ACLK] [get_bd_pins axis_data_fifo_0/m_axis_aclk] [get_bd_pins axi_dma_0/m_axi_sg_aclk] [get_bd_pins axi_mem_intercon/S02_ACLK] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK] [get_bd_pins axil_to_regbus_0/S_AXI_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins global_unit_0/ACLK] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins vio_0/clk] [get_bd_pins regbus_hub_0/S_CLK_I]
+  connect_bd_net -net processing_system7_0_FCLK_CLK1 [get_bd_pins processing_system7_0/FCLK_CLK1] [get_bd_pins rst_ps7_0_62M5/slowest_sync_clk] [get_bd_pins axis_data_fifo_0/s_axis_aclk] [get_bd_pins axis_data_fifo_1/m_axis_aclk] [get_bd_pins regbus_hub_0/P_CLK_I] [get_bd_pins rx_unit_0/ACLK] [get_bd_pins tx_unit_0/ACLK] [get_bd_pins atc_unit_0/ACLK]
+  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in] [get_bd_pins rst_ps7_0_62M5/ext_reset_in]
+  connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_pins rst_ps7_0_100M/peripheral_aresetn] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axis_data_fifo_1/s_axis_aresetn] [get_bd_pins axi_mem_intercon/S01_ARESETN] [get_bd_pins axi_mem_intercon/S02_ARESETN] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axil_to_regbus_0/S_AXI_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins ps7_0_axi_periph/ARESETN]
+  connect_bd_net -net rst_ps7_0_100M_peripheral_reset [get_bd_pins rst_ps7_0_100M/peripheral_reset] [get_bd_pins regbus_hub_0/S_RST_I] [get_bd_pins global_unit_0/RST_I] [get_bd_pins adc_unit_0/RST_I]
+  connect_bd_net -net rst_ps7_0_62M5_peripheral_aresetn [get_bd_pins rst_ps7_0_62M5/peripheral_aresetn] [get_bd_pins axis_data_fifo_0/s_axis_aresetn]
+  connect_bd_net -net rst_ps7_0_62M5_peripheral_reset [get_bd_pins rst_ps7_0_62M5/peripheral_reset] [get_bd_pins regbus_hub_0/P_RST_I] [get_bd_pins rx_unit_0/RST_I] [get_bd_pins tx_unit_0/RST_I] [get_bd_pins atc_unit_0/RST_I]
   connect_bd_net -net tx_unit_0_POSI_O [get_bd_pins tx_unit_0/POSI_O] [get_bd_ports POSI_O_0] [get_bd_pins rx_unit_0/LOOPBACK_I]
 
   # Create address segments
