@@ -43,7 +43,7 @@ begin
       data   := (others => '0');
       chan   := to_integer(unsigned(SEL_I));
 
-      if (chan < 40) then
+      if (chan < C_NUM_UART) then
         data   := DATA_I(chan);
       end if;
     end if;
