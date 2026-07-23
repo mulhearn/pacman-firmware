@@ -71,9 +71,9 @@ begin
   begin
     data <= (others => (others => '0'));
     data(0)(15 downto 0) <= x"1234";
-    data(8)(15 downto 0) <= x"AAAA";
-    data(9)(15 downto 0) <= x"BBBB";
-    data(10)(15 downto 0) <= x"CCCC";
+    data(1)(15 downto 0) <= x"AAAA";
+    data(2)(15 downto 0) <= x"BBBB";
+    data(3)(15 downto 0) <= x"CCCC";
     wait;
   end process;
 

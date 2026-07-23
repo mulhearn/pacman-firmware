@@ -4,27 +4,6 @@ use ieee.numeric_std.all;
 
 package common is
 
-  -- register bus data is 32 bits, address 16 bits.
-  constant C_RB_ADDR_WIDTH       : integer  := 16;
-  constant C_RB_DATA_WIDTH       : integer  := 32;
-
-  -- DEPRECATE:
-  constant C_BYTE                : integer  := 8;   --deprecate for C_BYTE_WIDTH
-  constant C_SMALL               : integer  := 16;  --deprecate for C_REG16
-  constant C_SELECT_WIDTH        : integer  := 6;   --deprecate for C_UART_SELECT_WIDTH
-  constant C_UART_DATA_WIDTH     : integer  := 64;  --deprecate for C_UART64
-  --deprecate for uart_reg16_array_t:
-  type uart_small_array_t     is array (0 to 39) of std_logic_vector (15 downto 0);
-
-  -- maximum AXI-lite register size is 32-bits, but we provide smaller opitions:
-  constant C_REG32_WIDTH         : integer  := 32;
-  constant C_ADDR16_WIDTH        : integer  := 16;
-  constant C_REG16_WIDTH         : integer  := 16;
-  constant C_BYTE_WIDTH          : integer  := 8;
-
-  -- the UART data packet size from ASIC design is 64-bits:
-  constant C_UART64              : integer  := 64;
-
   -- maximum number of tile cards supported by firmware:
   constant C_NUM_TILE            : integer  := 10;
   -- maximum number of UART channels supported:
@@ -35,6 +14,28 @@ package common is
   constant C_UART_SELECT_WIDTH   : integer  := 6;
   -- number of marker bits sent from ATC to RX
   constant C_NUM_MARKER          : integer  := 4;
+
+  -- register bus data is 32 bits, address 16 bits.
+  constant C_RB_ADDR_WIDTH       : integer  := 16;
+  constant C_RB_DATA_WIDTH       : integer  := 32;
+
+  -- DEPRECATE:
+  constant C_BYTE                : integer  := 8;   --deprecate for C_BYTE_WIDTH
+  constant C_SMALL               : integer  := 16;  --deprecate for C_REG16
+  constant C_SELECT_WIDTH        : integer  := 6;   --deprecate for C_UART_SELECT_WIDTH
+  constant C_UART_DATA_WIDTH     : integer  := 64;  --deprecate for C_UART64
+  --deprecate for uart_reg16_array_t:
+  type uart_small_array_t     is array (0 to C_NUM_UART-1) of std_logic_vector (15 downto 0);
+
+  -- maximum AXI-lite register size is 32-bits, but we provide smaller opitions:
+  constant C_REG32_WIDTH         : integer  := 32;
+  constant C_ADDR16_WIDTH        : integer  := 16;
+  constant C_REG16_WIDTH         : integer  := 16;
+  constant C_BYTE_WIDTH          : integer  := 8;
+
+  -- the UART data packet size from ASIC design is 64-bits:
+  constant C_UART64              : integer  := 64;
+
 
   --arrays of std_logic_vectors with array length the number of uart channels:
   type uart_reg_array_t       is array (0 to C_NUM_UART-1) of std_logic_vector (C_RB_DATA_WIDTH-1 downto 0);

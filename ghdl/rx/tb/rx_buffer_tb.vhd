@@ -66,15 +66,13 @@ architecture behaviour of rx_buffer_tb is
 begin
 
   tlk <= tdata(7 downto 0);
-  uva <= uvalid(2);
-  uvb <= uvalid(5);
-  uvc <= uvalid(8);
-  ura <= uready(2);
-  urb <= uready(5);
-  urc <= uready(8);
-  ulast <= status(7);
-
-
+  uva <= uvalid(0);
+  uvb <= uvalid(1);
+  uvc <= uvalid(2);
+  ura <= uready(0);
+  urb <= uready(1);
+  urc <= uready(2);
+  ulast <= status(2);
 
 
   uut: rx_buffer port map (
@@ -123,15 +121,12 @@ begin
     variable init  : std_logic := '1';
   begin
     if (delay='1') then
-      uvalid <= x"00000000000";
+      uvalid <= (others => '0');
       wait for 500 ns;
       delay := '0';
     end if;
     if (init='1') then
-      -- 44 RX channels (40 UARTS plus 4 extra for e.g. SYNC words)
-      --uvalid <= x"00000000001";
-      uvalid <= x"00000000124";
-      --uvalid <= x"0FFFFFFFFFF";
+      uvalid <= (others =>'1');
       init := '0';
     end if;
     wait for 10 ns;

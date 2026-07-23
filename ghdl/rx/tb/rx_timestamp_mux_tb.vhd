@@ -59,9 +59,9 @@ begin
   begin
     timestamp <= (others => (others => '0'));
     timestamp(0)(15 downto 0) <= x"1234";
-    timestamp(8)(15 downto 0) <= x"AAAA";
-    timestamp(9)(15 downto 0) <= x"BBBB";
-    timestamp(10)(15 downto 0) <= x"CCCC";
+    timestamp(1)(15 downto 0) <= x"AAAA";
+    timestamp(2)(15 downto 0) <= x"BBBB";
+    timestamp(3)(15 downto 0) <= x"CCCC";
     wait;
   end process;
 

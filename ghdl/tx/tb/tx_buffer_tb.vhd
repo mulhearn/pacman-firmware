@@ -60,11 +60,11 @@ architecture behaviour of tx_buffer_tb is
 
 begin
   uvalid_a <= uvalid(0);
-  uvalid_b <= uvalid(8);
-  uvalid_c <= uvalid(16);
+  uvalid_b <= uvalid(1);
+  uvalid_c <= uvalid(2);
   uready_a <= uready(0);
-  uready_b <= uready(8);
-  uready_c <= uready(16);
+  uready_b <= uready(1);
+  uready_c <= uready(2);
 
   uut: tx_buffer port map (
     CLK_I           => clk,
@@ -93,17 +93,21 @@ begin
     uready <= (others => '0');
     wait for 1 ns;
     wait for 460 ns;
-    uready <= x"00000000FF";
+    uready <= (others => '1');
     wait for 10 ns;
-    uready <= x"0000000000";
-    wait for 20 ns;
-    uready <= x"000000FF00";
-    wait for 10 ns;
-    uready <= x"0000000000";
-    wait for 20 ns;
-    uready <= x"FFFFFF0000";
-    wait for 10 ns;
-    uready <= x"0000000000";
+    uready <= (others => '0');
+
+--    uready <= x"00000000FF";
+--    wait for 10 ns;
+--    uready <= x"0000000000";
+--    wait for 20 ns;
+--    uready <= x"000000FF00";
+--    wait for 10 ns;
+--    uready <= x"0000000000";
+--    wait for 20 ns;
+--    uready <= x"FFFFFF0000";
+--    wait for 10 ns;
+--    uready <= x"0000000000";
     wait;
   end process;
 
@@ -249,10 +253,10 @@ begin
     hwrite (l, udata(0)(11 downto 0));
     write (l, String'(" 1:"));
     hwrite (l, udata(1)(11 downto 0));
-    write (l, String'(" 38:"));
-    hwrite (l, udata(38)(11 downto 0));
-    write (l, String'(" 39:"));
-    hwrite (l, udata(39)(11 downto 0));
+    write (l, String'(" 2:"));
+    hwrite (l, udata(2)(11 downto 0));
+    write (l, String'(" 3:"));
+    hwrite (l, udata(3)(11 downto 0));
 
     if (rst = '1') then
       write (l, String'(" (RESET)"));

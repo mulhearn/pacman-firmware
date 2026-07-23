@@ -359,7 +359,7 @@ begin
     end if;
   end process;
 
-  piso(39 downto 0)  <= (others => rx);
+  piso(C_NUM_UART-1 downto 0)  <= (others => rx);
 
   rx_process : process
     variable i      : integer := 0;
