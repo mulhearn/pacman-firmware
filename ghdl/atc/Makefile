@@ -4,7 +4,7 @@ modules-a:
 	echo "*** modules analysis ***"
 	ghdl -a ../integration/common.vhd
 	ghdl -a ../integration/register_map.vhd
-	ghdl -a ../cdc/rising_edge_sync.vhd
+	ghdl -a rising_edge_sync.vhd
 	ghdl -a timestamp.vhd
 	ghdl -a timer.vhd
 	ghdl -a atc_timer.vhd
@@ -14,6 +14,7 @@ modules-a:
 	ghdl -a atc_mux.vhd
 	ghdl -a atc_counter.vhd
 	ghdl -a atc_unit.vhd
+
 
 modules-e:
 	echo "*** module elaboration ***"
@@ -30,6 +31,8 @@ modules-e:
 
 testbenches:
 	echo "*** testbench analysis and elaboration ***"
+	ghdl -a -fsynopsys tb/rising_edge_sync_tb.vhd
+	ghdl -e -fsynopsys rising_edge_sync_tb
 	ghdl -a -fsynopsys tb/atc_registers_tb.vhd
 	ghdl -e -fsynopsys atc_registers_tb
 	ghdl -a -fsynopsys tb/timer_tb.vhd
@@ -50,6 +53,7 @@ testbenches:
 	ghdl -e -fsynopsys atc_unit_tb
 
 run-testbenches: all
+	ghdl -r -fsynopsys rising_edge_sync_tb --stop-time=2000ns
 	ghdl -r -fsynopsys atc_registers_tb --stop-time=500ns
 	ghdl -r -fsynopsys timer_tb --stop-time=300ns
 	ghdl -r -fsynopsys counter_tb --stop-time=300ns
