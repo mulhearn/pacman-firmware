@@ -1,0 +1,8 @@
+/axi_dma_0/Data_MM2S/SEG_processing_system7_0_HP0_DDR_LOWOCM offset=0x00000000   range=0x40000000
+/axi_dma_0/Data_S2MM/SEG_processing_system7_0_HP0_DDR_LOWOCM offset=0x00000000   range=0x40000000
+/axi_dma_0/Data_SG/SEG_processing_system7_0_HP0_DDR_LOWOCM   offset=0x00000000   range=0x40000000
+/axi_dma_0/S_AXI_LITE/Reg                                    offset=             range=0x00001000
+/axil_to_regbus_0/S_AXI/reg0                                 offset=             range=0x00010000
+/processing_system7_0/Data/SEG_axi_dma_0_Reg                 offset=0x40400000   range=0x00010000
+/processing_system7_0/Data/SEG_axil_to_regbus_0_reg0         offset=0x40000000   range=0x00010000
+/processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM               offset=             range=0x40000000

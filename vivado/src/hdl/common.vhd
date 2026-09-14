@@ -78,7 +78,7 @@ package common is
 
   -- default TX / RX config register (can be set per UART channel)
   constant C_DEFAULT_TX_UART_CONFIG : integer := 16#00000006#;
-  constant C_DEFAULT_RX_UART_CONFIG : integer := 16#00000101#;
+  constant C_DEFAULT_RX_UART_CONFIG : integer := 16#000A1104#;
 
   -- default TX / RX global config register (one global setting)
   constant C_DEFAULT_TX_BUFFER_CONFIG     : integer := 16#00000000#;

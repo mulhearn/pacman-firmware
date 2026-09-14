@@ -131,13 +131,16 @@ architecture behavioral of rx_registers is
   -- signal to set all counter / maximums to 0
   signal zero_counters : std_logic := '0';
 
--- UART condition counts and FIFO high-water mark
-  -- don't care about latency, so heavily registered:
+  -- UART condition counts and FIFO high-water mark
+  -- we don't care about latency, so these are all heavily registered
+  -- (to help with timing)
   -- combintorial stage:
   signal starts_next  : uart_counter_array_t := (others => (others => '0'));
   signal beats_next   : uart_counter_array_t := (others => (others => '0'));
   signal updates_next : uart_counter_array_t := (others => (others => '0'));
   signal lost_next    : uart_counter_array_t := (others => (others => '0'));
+  signal frame_err_next : uart_counter_array_t := (others => (others => '0'));
+  signal noise_next     : uart_counter_array_t := (others => (others => '0'));
   signal fifo_max_next : unsigned(C_RB_DATA_WIDTH-1 downto 0);
   signal pattern_starts_next : unsigned(C_COUNT_BITS-1 downto 0) := (others => '0');
   signal pattern_stops_next  : unsigned(C_COUNT_BITS-1 downto 0) := (others => '0');
@@ -146,6 +149,8 @@ architecture behavioral of rx_registers is
   signal beats_rega   : uart_counter_array_t := (others => (others => '0'));
   signal updates_rega : uart_counter_array_t := (others => (others => '0'));
   signal lost_rega    : uart_counter_array_t := (others => (others => '0'));
+  signal frame_err_rega : uart_counter_array_t := (others => (others => '0'));
+  signal noise_rega     : uart_counter_array_t := (others => (others => '0'));
   signal fifo_max_rega : unsigned(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal pattern_starts_rega : unsigned(C_COUNT_BITS-1 downto 0) := (others => '0');
   signal pattern_stops_rega  : unsigned(C_COUNT_BITS-1 downto 0) := (others => '0');
@@ -154,6 +159,8 @@ architecture behavioral of rx_registers is
   signal beats_regb   : uart_counter_array_t := (others => (others => '0'));
   signal updates_regb : uart_counter_array_t := (others => (others => '0'));
   signal lost_regb    : uart_counter_array_t := (others => (others => '0'));
+  signal frame_err_regb : uart_counter_array_t := (others => (others => '0'));
+  signal noise_regb     : uart_counter_array_t := (others => (others => '0'));
   signal fifo_max_regb : unsigned(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal pattern_starts_regb : unsigned(C_COUNT_BITS-1 downto 0) := (others => '0');
   signal pattern_stops_regb  : unsigned(C_COUNT_BITS-1 downto 0) := (others => '0');
@@ -301,6 +308,14 @@ begin
               elsif (reg=C_ADDR_RX_UART_LOST) then
                 rdata <= (others => '0');
                 rdata(C_COUNT_BITS-1 downto 0) <= std_logic_vector(lost_regb(chan));
+                rack  <= '1';
+              elsif (reg=C_ADDR_RX_UART_FRAME_ERR) then
+                rdata <= (others => '0');
+                rdata(C_COUNT_BITS-1 downto 0) <= std_logic_vector(frame_err_regb(chan));
+                rack  <= '1';
+              elsif (reg=C_ADDR_RX_UART_NOISE) then
+                rdata <= (others => '0');
+                rdata(C_COUNT_BITS-1 downto 0) <= std_logic_vector(noise_regb(chan));
                 rack  <= '1';
               end if;
             -- global (to RX) registers)
@@ -514,18 +529,24 @@ begin
 
   -- Count RX conditions from status register, zero on reset or zero_counters signal.
   process(rst, ustatus, zero_counters, starts_rega, beats_rega, updates_rega, lost_rega, pstatus, pattern_starts_rega, pattern_stops_rega)
-    variable fifo_now : unsigned(31 downto 0);
-    variable valid  : std_logic;
-    variable ready  : std_logic;
-    variable start  : std_logic;
-    variable update : std_logic;
-    variable lost   : std_logic;
+    variable fifo_now  : unsigned(31 downto 0);
+    variable valid     : std_logic;
+    variable ready     : std_logic;
+    variable start     : std_logic;
+    variable update    : std_logic;
+    variable lost      : std_logic;
+    variable frame_err : std_logic;
+    variable noise     : std_logic;
+
   begin
     if (rst='1') or (zero_counters = '1') then
       starts_next   <= (others => (others => '0'));
       beats_next    <= (others => (others => '0'));
       updates_next  <= (others => (others => '0'));
       lost_next     <= (others => (others => '0'));
+      frame_err_next <= (others => (others => '0'));
+      noise_next     <= (others => (others => '0'));
+
       fifo_max_next  <= (others => '0');
       pattern_starts_next <= (others => '0');
       pattern_stops_next  <= (others => '0');
@@ -554,11 +575,13 @@ begin
 
       gen_next: for i in 0 to C_NUM_UART-1 loop
         -- extract status bits for clarity
-        valid  := ustatus(i)(2);
-        ready  := ustatus(i)(3);
-        start  := ustatus(i)(4);
-        update := ustatus(i)(5);
-        lost   := ustatus(i)(6);
+        valid     := ustatus(i)(2);
+        ready     := ustatus(i)(3);
+        start     := ustatus(i)(4);
+        update    := ustatus(i)(5);
+        lost      := ustatus(i)(6);
+        frame_err := ustatus(i)(7);
+        noise     := ustatus(i)(8);
 
         -- starts count increments if starts=1
         if (start = '1') and (starts_rega(i) < C_COUNT_MAX) then
@@ -588,6 +611,20 @@ begin
           lost_next(i) <= lost_rega(i);
         end if;
 
+        -- frame_err count increments when frame_err=1 (bad stop bit):
+        if (frame_err = '1') and (frame_err_rega(i) < C_COUNT_MAX) then
+          frame_err_next(i) <= frame_err_rega(i) + 1;
+        else
+          frame_err_next(i) <= frame_err_rega(i);
+        end if;
+
+        -- noise count increments when noise=1 (dissent at a sample point):
+        if (noise = '1') and (noise_rega(i) < C_COUNT_MAX) then
+          noise_next(i) <= noise_rega(i) + 1;
+        else
+          noise_next(i) <= noise_rega(i);
+        end if;
+
       end loop;
     end if;
   end process;
@@ -605,6 +642,8 @@ begin
       beats_rega    <= (others => (others => '0'));
       updates_rega  <= (others => (others => '0'));
       lost_rega     <= (others => (others => '0'));
+      frame_err_rega <= (others => (others => '0'));
+      noise_rega     <= (others => (others => '0'));
       fifo_max_rega <= (others => '0');
       pattern_starts_rega <= (others => '0');
       pattern_stops_rega  <= (others => '0');
@@ -613,32 +652,35 @@ begin
       beats_regb    <= (others => (others => '0'));
       updates_regb  <= (others => (others => '0'));
       lost_regb     <= (others => (others => '0'));
+      frame_err_regb <= (others => (others => '0'));
+      noise_regb     <= (others => (others => '0'));
       fifo_max_regb <= (others => '0');
       pattern_starts_regb <= (others => '0');
       pattern_stops_regb  <= (others => '0');
+
    elsif rising_edge(clk) then
       -- First register stage: next -> rega
-      starts_rega   <= starts_next;
-      beats_rega    <= beats_next;
-      updates_rega  <= updates_next;
-      lost_rega     <= lost_next;
-      fifo_max_rega <= fifo_max_next;
+      starts_rega    <= starts_next;
+      beats_rega     <= beats_next;
+      updates_rega   <= updates_next;
+      lost_rega      <= lost_next;
+      frame_err_rega <= frame_err_next;
+      noise_rega     <= noise_next;
+      fifo_max_rega  <= fifo_max_next;
       pattern_starts_rega <= pattern_starts_next;
       pattern_stops_rega  <= pattern_stops_next;
 
       -- Second register stage: rega -> regb
-      starts_regb   <= starts_rega;
-      beats_regb    <= beats_rega;
-      updates_regb  <= updates_rega;
-      lost_regb     <= lost_rega;
-      fifo_max_regb <= fifo_max_rega;
+      starts_regb    <= starts_rega;
+      beats_regb     <= beats_rega;
+      updates_regb   <= updates_rega;
+      lost_regb      <= lost_rega;
+      frame_err_regb <= frame_err_rega;
+      noise_regb     <= noise_rega;
+      fifo_max_regb  <= fifo_max_rega;
       pattern_starts_regb <= pattern_starts_rega;
       pattern_stops_regb  <= pattern_stops_rega;
     end if;
   end process;
-
-
-
-
 
 end;

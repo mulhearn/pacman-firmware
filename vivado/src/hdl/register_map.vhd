@@ -91,6 +91,8 @@ package register_map is
   constant C_ADDR_RX_UART_BEATS     : integer := 16#24#; -- count valid='1' & ready='1'
   constant C_ADDR_RX_UART_UPDATES   : integer := 16#28#; -- count update='1'
   constant C_ADDR_RX_UART_LOST      : integer := 16#2C#; -- count lost='1'
+  constant C_ADDR_RX_UART_FRAME_ERR : integer := 16#30#; -- count frame_err='1'
+  constant C_ADDR_RX_UART_NOISE     : integer := 16#34#; -- count noise='1'
 
   -- Not UART specific, at chan=0x3F:
   -- test pattern generation:
