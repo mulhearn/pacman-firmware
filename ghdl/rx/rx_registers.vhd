@@ -191,15 +191,12 @@ begin
   rst <= RST_I;
   rupdate  <= S_REGBUS_RB_RUPDATE;
   raddr    <= S_REGBUS_RB_RADDR;
-  S_REGBUS_RB_RDATA <= rdata;
-  S_REGBUS_RB_RACK  <= rack;
   wupdate  <= S_REGBUS_RB_WUPDATE;
   waddr    <= S_REGBUS_RB_WADDR;
   wdata    <= S_REGBUS_RB_WDATA;
   S_REGBUS_RB_WACK <= wack;
 
   -- set output registers
-  UART_CONFIG_O           <= uart_config;
   UART_CHAN_O             <= uart_chan;
   BUFFER_CONFIG_O         <= bconfig;
   BUFFER_ENABLES_O        <= benables;
@@ -211,6 +208,27 @@ begin
   PATTERN_PAYLOAD_O       <= pattern_payload;
   PATTERN_DELAY_O         <= pattern_delay;
   PATTERN_CONFIG_O        <= pattern_config;
+
+  -- additional register stage for congested inputs and outputs to aid with timing
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      S_REGBUS_RB_RDATA <= (others => '0');
+      S_REGBUS_RB_RACK  <= '0';
+    elsif rising_edge(clk) then
+      S_REGBUS_RB_RDATA <= rdata;
+      S_REGBUS_RB_RACK  <= rack;
+    end if;
+  end process;
+
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      UART_CONFIG_O <= (others => (others => '0'));
+    elsif rising_edge(clk) then
+      UART_CONFIG_O <= uart_config;
+    end if;
+  end process;
 
   -- splice PACMAN ID field into the headers:
   HEADER_A_O(7 downto 0)   <= header_a(7 downto 0);

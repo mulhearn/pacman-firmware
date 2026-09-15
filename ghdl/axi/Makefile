@@ -20,7 +20,7 @@ testbenches:
 	ghdl -e -fsynopsys axil_to_regbus_tb
 	ghdl -e -fsynopsys axis_write_tb
 	ghdl -e -fsynopsys axis_read_tb
-hardware:
+hardware: all
 	echo "*** HW demos ***"
 	ghdl -a hw/regbus_demo.vhd
 	ghdl -e regbus_demo
@@ -34,11 +34,11 @@ hardware:
 	ghdl -e axis_read_demo
 	ghdl -a -fsynopsys hw/axis_read_demo_tb.vhd
 	ghdl -e -fsynopsys axis_read_demo_tb
-run-testbenches:
+run-testbenches: all
 	ghdl -r -fsynopsys axil_to_regbus_tb --stop-time=350ns
 	ghdl -r -fsynopsys axis_write_tb --stop-time=300ns
 	ghdl -r -fsynopsys axis_read_tb --stop-time=300ns
-run-hardware:
+run-hardware: all
 	ghdl -r -fsynopsys regbus_demo_tb --stop-time=350ns
 	ghdl -r -fsynopsys axis_write_demo_tb --stop-time=350ns
 	ghdl -r -fsynopsys axis_read_demo_tb --stop-time=350ns

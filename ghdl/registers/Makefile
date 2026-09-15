@@ -24,9 +24,12 @@ testbenches:
 	ghdl -a -fsynopsys tb/regbus_hub_tb.vhd
 	ghdl -e -fsynopsys regbus_hub_tb
 
-
-run-testbenches:
+run-testbenches: all
 	ghdl -r -fsynopsys registers_scratch_tb --stop-time=350ns
 	ghdl -r -fsynopsys regbus_fanout_tb --stop-time=350ns
 	ghdl -r -fsynopsys regbus_cdc_tb --stop-time=350ns
 	ghdl -r -fsynopsys regbus_hub_tb --stop-time=350ns
+
+run-dev: all
+	ghdl -r -fsynopsys regbus_hub_tb --stop-time=350ns
+

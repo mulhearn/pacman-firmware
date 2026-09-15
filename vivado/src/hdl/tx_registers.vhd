@@ -69,7 +69,7 @@ architecture behavioral of tx_registers is
   signal bstatus    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
   -- registered controlled configuration per UART channel
-  signal config   : uart_reg_array_t := (others => (others => '0'));
+  signal uart_config   : uart_reg_array_t := (others => (others => '0'));
   -- zero all counters:
   signal zero_counters : std_logic := '0';
 
@@ -94,8 +94,6 @@ begin
   rst <= RST_I;
   rupdate  <= S_REGBUS_RB_RUPDATE;
   raddr    <= S_REGBUS_RB_RADDR;
-  S_REGBUS_RB_RDATA <= rdata;
-  S_REGBUS_RB_RACK  <= rack;
   wupdate  <= S_REGBUS_RB_WUPDATE;
   waddr    <= S_REGBUS_RB_WADDR;
   wdata    <= S_REGBUS_RB_WDATA;
@@ -116,8 +114,26 @@ begin
     end if;
   end process;
 
-  -- set output registers:
-  UART_CONFIG_O  <= config;
+  -- additional register stage for congested inputs and outputs to aid with timing
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      S_REGBUS_RB_RDATA <= (others => '0');
+      S_REGBUS_RB_RACK  <= '0';
+    elsif rising_edge(clk) then
+      S_REGBUS_RB_RDATA <= rdata;
+      S_REGBUS_RB_RACK  <= rack;
+    end if;
+  end process;
+
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      UART_CONFIG_O <= (others => (others => '0'));
+    elsif rising_edge(clk) then
+      UART_CONFIG_O <= uart_config;
+    end if;
+  end process;
 
   -- Handle Read Request:
   -- 1) Read request are indicated via rupdate=1 with a valid address
@@ -155,7 +171,7 @@ begin
                 rdata <= ustatus(chan);
                 rack  <= '1';
               elsif (reg=C_ADDR_TX_UART_CONFIG) then
-                rdata <= config(chan);
+                rdata <= uart_config(chan);
                 rack  <= '1';
               elsif (reg=C_ADDR_TX_UART_STARTS) then
                 rdata <= (others => '0');
@@ -208,7 +224,7 @@ begin
   begin
     if (rst = '1') then
       wack  <= '0';
-      config            <= (others => std_logic_vector(to_unsigned(C_DEFAULT_TX_UART_CONFIG, C_RB_DATA_WIDTH)));
+      uart_config            <= (others => std_logic_vector(to_unsigned(C_DEFAULT_TX_UART_CONFIG, C_RB_DATA_WIDTH)));
       zero_counters <= '0';
     else
       if (rising_edge(clk)) then
@@ -221,7 +237,7 @@ begin
           -- UART channel registers:
           if ((scope=C_SCOPE_UPPER_TX) and (chan < C_NUM_UART)) then
             if (reg=C_ADDR_TX_UART_CONFIG) then
-              config(chan) <= wdata;
+              uart_config(chan) <= wdata;
               wack  <= '1';
             end if;
           end if;
@@ -229,7 +245,7 @@ begin
           if ((scope=0) and (chan = 16#3B#)) then
             if (reg=C_ADDR_TX_UART_CONFIG) then
               for i in 0 to C_NUM_UART-1 loop
-                config(i) <= wdata;
+                uart_config(i) <= wdata;
               end loop;
               wack  <= '1';
             end if;

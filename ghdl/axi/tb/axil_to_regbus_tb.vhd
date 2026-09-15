@@ -18,7 +18,7 @@ architecture behaviour of axil_to_regbus_tb is
     generic (
       constant C_ADDR_WIDTH : integer := C_ADDR_WIDTH;
       constant C_DATA_WIDTH : integer := C_DATA_WIDTH;
-      constant C_TIMEOUT_CYCLES : integer := 2
+      constant C_TIMEOUT_CYCLES : integer := 3
       );
     port (
       S_AXI_ACLK         : in std_logic;
@@ -130,47 +130,27 @@ begin
     araddr   <= x"0000";
     arvalid  <= '0';
     rack     <= '0';
-    rready   <= '0';
-    wait for 10 ns;
-    wait for 10 ns;
-    araddr   <= x"0000";
-    arvalid  <= '1';
     rready   <= '1';
-    wait for 10 ns;
+    wait for 20 ns;
+    araddr   <= x"0004";
+    arvalid  <= '1';
+    wait for 20 ns;
+    araddr   <= x"0008";
+    arvalid  <= '1';
     wait for 10 ns;
     rb_rdata <= x"AAAAAAAA";
     rack     <= '1';
-    araddr   <= x"0004";
     wait for 10 ns;
-    rb_rdata <= x"00000000";
     rack     <= '0';
-    wait for 10 ns;
-    wait for 10 ns;
+    wait for 30 ns;
+    araddr   <= x"000C";
     wait for 10 ns;
     rb_rdata <= x"BBBBBBBB";
     rack     <= '1';
-    araddr   <= x"0008";
     wait for 10 ns;
-    rb_rdata <= x"00000000";
     rack     <= '0';
-    wait for 10 ns;
-    wait for 10 ns;
-    wait for 10 ns;
-    araddr   <= x"0000";
-    arvalid  <= '0';
-    wait for 20 ns;
-    rb_rdata <= x"CCCCCCCC";
-    rack     <= '1';
-    wait for 10 ns;
-    rb_rdata <= x"00000000";
-    rack     <= '0';
-    wait for 10 ns;
-    rb_rdata <= x"00000000";
-    araddr   <= x"0000";
-    arvalid  <= '0';
-    rack     <= '0';
-    rready   <= '0';
     wait;
+
   end process;
 
   write_process : process
@@ -183,40 +163,29 @@ begin
     wack     <= '0';
     wait for 20 ns;
     bready <= '1';
-    awaddr <= x"0000";
+    awaddr <= x"0004";
     awvalid  <= '1';
     wdata  <= x"11111111";
     wvalid  <= '1';
     wait for 20 ns;
-    awaddr <= x"0004";
-    wdata  <= x"22222222";
-    wack     <= '1';
-    wait for 10 ns;
-    wack     <= '0';
-    wait for 10 ns;
-    wait for 10 ns;
-    wait for 10 ns;
     awaddr <= x"0008";
-    wdata  <= x"33333333";
-    wack     <= '0';
+    wdata  <= x"22222222";
     wait for 10 ns;
     wack     <= '1';
     wait for 10 ns;
     wack     <= '0';
-    wait for 10 ns;
-    bready   <= '0';
-    wait for 10 ns;
-    wait for 10 ns;
+    wait for 30 ns;
+    awaddr <= x"000C";
+    wdata  <= x"33333333";
+    wait for 60 ns;
     awaddr <= x"0000";
     awvalid  <= '0';
     wdata  <= x"00000000";
     wvalid  <= '0';
     wait for 10 ns;
-    --wack    <= '1';
+    wack     <= '1';
     wait for 10 ns;
     wack     <= '0';
-    wait for 10 ns;
-    bready   <= '1';
     wait;
   end process;
 

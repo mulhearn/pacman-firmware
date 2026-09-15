@@ -16,15 +16,20 @@ use ieee.numeric_std.all;
 --
 -- This simplification limits throughput , but it doesn't require
 -- any buffering.
+--
+-- If a target has not acknowledged a read or write within
+-- C_TIMEOUT_CYCLES, the AXI transaction is completed (successfully)
+-- to avoid hanging the bus, using the fixed patter 0xEEEEEEEE for the
+-- write response.  An error status register is implemented, but hasn't been
+-- brought out to the port map in this version.
+
+
 
 entity axil_to_regbus is
   generic (
     constant C_ADDR_WIDTH     : integer := 16;
     constant C_DATA_WIDTH     : integer := 32;
-    -- number of S_AXI_ACLK cycles to wait in WAIT_ACK for a regbus
-    -- ack before giving up on the target and completing the AXI
-    -- transaction anyway (with sentinel data for reads, but always
-    -- an OKAY response -- see notes below).
+    -- timeout for wating on acknowledgement from target.
     constant C_TIMEOUT_CYCLES : integer := 256
 
   );
@@ -61,16 +66,11 @@ entity axil_to_regbus is
     P_REGBUS_RB_WDATA    : out std_logic_vector(C_DATA_WIDTH-1 downto 0);
     P_REGBUS_RB_WACK     : in  std_logic
 
-    -- Regbus error status, latched sticky until P_ERR_CLR.
-    -- Packed word, assumes C_ADDR_WIDTH = 16:
+    -- Regbus error status, latched sticky until cleared
     --   bit 31:16  latched address of the first fault since last clear
-    --   bit 2      unrequested ack (an ack arrived while not waiting
-    --              for one -- see notes below)
+    --   bit 2      unrequested ack (NOTE: no address latched for this fault)
     --   bit 1      timeout (no ack within C_TIMEOUT_CYCLES)
     --   bit 0      any (= bit1 or bit2)
-    -- The address is not re-latched by an unrequested ack -- it isn't
-    -- for the transaction in progress, and only makes sense in
-    -- reference to whatever transaction most recently timed out.
     --READ_ERROR_O             : out std_logic_vector(31 downto 0);
     --WRITE_ERROR_O            : out std_logic_vector(31 downto 0);
     --CLEAR_ERROR_I            : in  std_logic
@@ -100,6 +100,10 @@ architecture behavioral of axil_to_regbus is
   signal rdata : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
   signal waddr : std_logic_vector(C_ADDR_WIDTH-1 downto 0) := (others => '0');
   signal wdata : std_logic_vector(C_DATA_WIDTH-1 downto 0) := (others => '0');
+
+  -- read and write update registers:
+  signal rupdate : std_logic := '0';
+  signal wupdate : std_logic := '0';
 
   -- sentinel value returned as RDATA when a read times out:
   constant C_TIMEOUT_SENTINEL : std_logic_vector(C_DATA_WIDTH-1 downto 0) := x"EEEEEEEE";
@@ -203,15 +207,15 @@ begin
     if (rst = '1') then
       S_AXI_ARREADY       <= '0';
       S_AXI_RVALID        <= '0';
-      P_REGBUS_RB_RUPDATE <= '0';
+      rupdate             <= '0';
     elsif rising_edge(clk) then
       S_AXI_ARREADY       <= '0';
       S_AXI_RVALID        <= '0';
-      P_REGBUS_RB_RUPDATE <= '0';
+      rupdate             <= '0';
       case rd_state_next is
         when STROBE =>
           S_AXI_ARREADY <= '1';
-          P_REGBUS_RB_RUPDATE <= '1';
+          rupdate       <= '1';
         when WAIT_READY =>
           S_AXI_RVALID <= '1';
         when others =>
@@ -220,9 +224,19 @@ begin
     end if;
   end process;
 
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      P_REGBUS_RB_RUPDATE <= '0';
+      P_REGBUS_RB_RADDR   <= (others => '0');
+    elsif rising_edge(clk) then
+      P_REGBUS_RB_RUPDATE <= rupdate;
+      P_REGBUS_RB_RADDR   <= raddr;
+    end if;
+  end process;
+
   S_AXI_RDATA       <= rdata;
   S_AXI_RRESP       <= (others => '0');
-  P_REGBUS_RB_RADDR <= raddr;
 
   -------------------
   -- Write:
@@ -307,17 +321,17 @@ begin
       S_AXI_AWREADY       <= '0';
       S_AXI_WREADY        <= '0';
       S_AXI_BVALID        <= '0';
-      P_REGBUS_RB_WUPDATE <= '0';
+      wupdate             <= '0';
     elsif rising_edge(clk) then
       S_AXI_AWREADY       <= '0';
       S_AXI_WREADY        <= '0';
       S_AXI_BVALID        <= '0';
-      P_REGBUS_RB_WUPDATE <= '0';
+      wupdate             <= '0';
       case wr_state_next is
         when STROBE     =>
           S_AXI_AWREADY       <= '1';
           S_AXI_WREADY        <= '1';
-          P_REGBUS_RB_WUPDATE <= '1';
+          wupdate             <= '1';
         when WAIT_READY =>
           S_AXI_BVALID <= '1';
         when others =>
@@ -326,9 +340,19 @@ begin
     end if;
   end process;
 
-  S_AXI_BRESP       <= (others => '0');
-  P_REGBUS_RB_WADDR <= waddr;
-  P_REGBUS_RB_WDATA <= wdata;
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      P_REGBUS_RB_WUPDATE <= '0';
+      P_REGBUS_RB_WADDR   <= (others => '0');
+      P_REGBUS_RB_WDATA   <= (others => '0');
+    elsif rising_edge(clk) then
+      P_REGBUS_RB_WUPDATE <= wupdate;
+      P_REGBUS_RB_WADDR   <= waddr;
+      P_REGBUS_RB_WDATA   <= wdata;
+    end if;
+  end process;
 
+  S_AXI_BRESP       <= (others => '0');
 
 end;

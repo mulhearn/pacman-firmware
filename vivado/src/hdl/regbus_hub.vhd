@@ -143,9 +143,7 @@ architecture behavioral of regbus_hub is
       );
   end component;
 
-  ---------------------------------------------------------------------------
   -- Top-level fanout: secondary -> PA, PB, CDC branch
-  ---------------------------------------------------------------------------
   constant N_TOP : integer := 3;  -- future PC -> 4
 
   signal top_rupdate : std_logic_vector(0 to N_TOP-1);
@@ -157,11 +155,10 @@ architecture behavioral of regbus_hub is
   signal top_wdata   : regbus_data_array_t(0 to N_TOP-1);
   signal top_wack    : std_logic_vector(0 to N_TOP-1);
 
-  ---------------------------------------------------------------------------
   -- P_CLK_I-domain fanout: CDC branch -> PL, PM, PN
-  ---------------------------------------------------------------------------
   constant N_PLMN : integer := 3;
 
+  -- PL/PM/PN-side of the PLMN fanout
   signal plmn_rupdate : std_logic_vector(0 to N_PLMN-1);
   signal plmn_raddr   : regbus_addr_array_t(0 to N_PLMN-1);
   signal plmn_rdata   : regbus_data_array_t(0 to N_PLMN-1);
@@ -171,11 +168,7 @@ architecture behavioral of regbus_hub is
   signal plmn_wdata   : regbus_data_array_t(0 to N_PLMN-1);
   signal plmn_wack    : std_logic_vector(0 to N_PLMN-1);
 
-  -- fanout_plmn's "secondary side" -- this is the P_CLK_I-domain aggregation
-  -- point that the CDC talks to. RADDR/WADDR/WDATA are combinational
-  -- passthroughs (quasi-static, held for the round trip); RUPDATE/RACK/
-  -- WUPDATE/WACK/RDATA are handled inside regbus_cdc (RDATA is masked to
-  -- zero there until this branch's own ack has landed -- see regbus_cdc).
+    -- u_regbus_cdc's P_CLK_I-domain interface
   signal p_rupdate : std_logic;
   signal p_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
   signal p_rdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -185,24 +178,53 @@ architecture behavioral of regbus_hub is
   signal p_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal p_wack    : std_logic;
 
+  -- additional register stage to aid with timing
+  signal s_rupdate_reg : std_logic := '0';
+  signal s_raddr_reg   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal s_wupdate_reg : std_logic := '0';
+  signal s_waddr_reg   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal s_wdata_reg   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal p_rupdate_reg : std_logic := '0';
+  signal p_raddr_reg   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal p_wupdate_reg : std_logic := '0';
+  signal p_waddr_reg   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal p_wdata_reg   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
+
 begin
 
-  ---------------------------------------------------------------------------
+  --
+  process(S_CLK_I, S_RST_I)
+  begin
+    if (S_RST_I = '1') then
+      s_rupdate_reg <= '0';
+      s_raddr_reg   <= (others => '0');
+      s_wupdate_reg <= '0';
+      s_waddr_reg   <= (others => '0');
+      s_wdata_reg   <= (others => '0');
+    elsif rising_edge(S_CLK_I) then
+      s_rupdate_reg <= S_REGBUS_RB_RUPDATE;
+      s_raddr_reg   <= S_REGBUS_RB_RADDR;
+      s_wupdate_reg <= S_REGBUS_RB_WUPDATE;
+      s_waddr_reg   <= S_REGBUS_RB_WADDR;
+      s_wdata_reg   <= S_REGBUS_RB_WDATA;
+    end if;
+  end process;
+
+
   -- Top fanout: secondary -> {PA, PB, CDC branch}
-  ---------------------------------------------------------------------------
   u_fanout_top : regbus_fanout
     generic map (
       N_PRIMARY => N_TOP
       )
     port map (
-      S_REGBUS_RB_RUPDATE  => S_REGBUS_RB_RUPDATE,
-      S_REGBUS_RB_RADDR    => S_REGBUS_RB_RADDR,
+      S_REGBUS_RB_RUPDATE  => s_rupdate_reg,
+      S_REGBUS_RB_RADDR    => s_raddr_reg,
       S_REGBUS_RB_RDATA    => S_REGBUS_RB_RDATA,
       S_REGBUS_RB_RACK     => S_REGBUS_RB_RACK,
 
-      S_REGBUS_RB_WUPDATE  => S_REGBUS_RB_WUPDATE,
-      S_REGBUS_RB_WADDR    => S_REGBUS_RB_WADDR,
-      S_REGBUS_RB_WDATA    => S_REGBUS_RB_WDATA,
+      S_REGBUS_RB_WUPDATE  => s_wupdate_reg,
+      S_REGBUS_RB_WADDR    => s_waddr_reg,
+      S_REGBUS_RB_WDATA    => s_wdata_reg,
       S_REGBUS_RB_WACK     => S_REGBUS_RB_WACK,
 
       P_REGBUS_RB_RUPDATE  => top_rupdate,
@@ -251,7 +273,9 @@ begin
   -- branch's own ack lands) happens inside regbus_cdc. ADDR/WDATA cross as
   -- plain combinational wires below, held stable by the req/ack handshake.
   ---------------------------------------------------------------------------
-  u_cdc : regbus_cdc
+
+  -- u_regbus_cdc: note that this name is used explicitly in constraints file.
+  u_regbus_cdc : regbus_cdc
     port map (
       S_CLK_I               => S_CLK_I,
       S_RST_I                => S_RST_I,
@@ -275,6 +299,23 @@ begin
   p_waddr <= top_waddr(2);
   p_wdata <= top_wdata(2);
 
+  process(P_CLK_I, P_RST_I)
+  begin
+    if (P_RST_I = '1') then
+      p_rupdate_reg <= '0';
+      p_raddr_reg   <= (others => '0');
+      p_wupdate_reg <= '0';
+      p_waddr_reg   <= (others => '0');
+      p_wdata_reg   <= (others => '0');
+    elsif rising_edge(P_CLK_I) then
+      p_rupdate_reg <= p_rupdate;
+      p_raddr_reg   <= p_raddr;
+      p_wupdate_reg <= p_wupdate;
+      p_waddr_reg   <= p_waddr;
+      p_wdata_reg   <= p_wdata;
+    end if;
+  end process;
+
   ---------------------------------------------------------------------------
   -- PL/PM/PN fanout (P_CLK_I domain, behind the CDC)
   ---------------------------------------------------------------------------
@@ -283,14 +324,14 @@ begin
       N_PRIMARY => N_PLMN
       )
     port map (
-      S_REGBUS_RB_RUPDATE  => p_rupdate,
-      S_REGBUS_RB_RADDR    => p_raddr,
+      S_REGBUS_RB_RUPDATE  => p_rupdate_reg,
+      S_REGBUS_RB_RADDR    => p_raddr_reg,
       S_REGBUS_RB_RDATA    => p_rdata,
       S_REGBUS_RB_RACK     => p_rack,
 
-      S_REGBUS_RB_WUPDATE  => p_wupdate,
-      S_REGBUS_RB_WADDR    => p_waddr,
-      S_REGBUS_RB_WDATA    => p_wdata,
+      S_REGBUS_RB_WUPDATE  => p_wupdate_reg,
+      S_REGBUS_RB_WADDR    => p_waddr_reg,
+      S_REGBUS_RB_WDATA    => p_wdata_reg,
       S_REGBUS_RB_WACK     => p_wack,
 
       P_REGBUS_RB_RUPDATE  => plmn_rupdate,

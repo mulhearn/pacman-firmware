@@ -617,11 +617,11 @@ proc create_root_design { parentCell } {
     CONFIG.FIFO_DEPTH {64} \
     CONFIG.FIFO_MEMORY_TYPE {auto} \
     CONFIG.FIFO_MODE {1} \
-    CONFIG.HAS_RD_DATA_COUNT {1} \
+    CONFIG.HAS_RD_DATA_COUNT {0} \
     CONFIG.HAS_TKEEP {0} \
     CONFIG.HAS_TLAST {1} \
     CONFIG.HAS_TSTRB {0} \
-    CONFIG.HAS_WR_DATA_COUNT {0} \
+    CONFIG.HAS_WR_DATA_COUNT {1} \
     CONFIG.IS_ACLK_ASYNC {1} \
     CONFIG.TDATA_NUM_BYTES {8} \
     CONFIG.TDEST_WIDTH {0} \
@@ -756,7 +756,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net atc_unit_0_RX_MARKER_O [get_bd_pins atc_unit_0/RX_MARKER_O] [get_bd_pins rx_unit_0/RX_MARKER_I]
   connect_bd_net -net atc_unit_0_TIMESTAMP_O [get_bd_pins atc_unit_0/TIMESTAMP_O] [get_bd_pins rx_unit_0/TIMESTAMP_I]
   connect_bd_net -net atc_unit_0_UCLK_O [get_bd_pins atc_unit_0/UCLK_O] [get_bd_ports GLB_CLK_O_0]
-  connect_bd_net -net axis_data_fifo_0_axis_rd_data_count [get_bd_pins axis_data_fifo_0/axis_rd_data_count] [get_bd_pins rx_unit_0/FIFO_COUNT_I]
+  connect_bd_net -net axis_data_fifo_0_axis_wr_data_count [get_bd_pins axis_data_fifo_0/axis_wr_data_count] [get_bd_pins rx_unit_0/FIFO_COUNT_I]
   connect_bd_net -net global_unit_0_ADC_CLK_O [get_bd_pins adc_unit_0/ADC_CLK_O] [get_bd_ports ADC_CLK_O_0]
   connect_bd_net -net global_unit_0_ADC_EN_O [get_bd_pins adc_unit_0/ADC_EN_O] [get_bd_ports ADC_EN_O_0]
   connect_bd_net -net global_unit_0_ANALOG_PWR_EN_O [get_bd_pins global_unit_0/ANALOG_PWR_EN_O] [get_bd_ports ANALOG_PWR_EN_O_0]
