@@ -8,8 +8,6 @@ set_property IOSTANDARD LVCMOS33 [get_ports GLB_CLK_O_0]
 set_property IOSTANDARD LVCMOS33 [get_ports TILE_EN_O_0]
 set_property IOSTANDARD LVCMOS33 [get_ports TRIG_O_0]
 set_property IOSTANDARD LVCMOS33 [get_ports SYNC_O_0]
-set_property IOSTANDARD LVCMOS33 [get_ports UART_TX_BUSY]
-set_property IOSTANDARD LVCMOS33 [get_ports UART_RX_BUSY]
 set_property PACKAGE_PIN J16 [get_ports ANALOG_PWR_EN_O_0]
 set_property PACKAGE_PIN C19 [get_ports GLB_CLK_O_0]
 
