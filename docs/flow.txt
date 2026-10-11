@@ -58,6 +58,9 @@ Various reports from the latest firmware build are stored in:
 
 reports/*.txt
 
+The last line of the build output (also reports/sync_check.txt) reports
+whether vivado/src/hdl matches the ghdl directory tree.
+
 Building the firmware for a different hardware version:
 -------------------------------------------------------
 

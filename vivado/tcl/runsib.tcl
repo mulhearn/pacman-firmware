@@ -31,3 +31,6 @@ report_timing -max_paths 10 -sort_by slack -delay_type max -nworst 10 -input_pin
 report_timing -max_paths 10 -sort_by slack -delay_type min -nworst 10 -input_pins -significant_digits 3 -file ../reports/worst_timing_min.txt
 
 write_hw_platform -fixed -include_bit -force -file ${origin_dir}/../products/pacman.xsa
+
+# check if pacman/src/hdl and ghdl are in sync:
+puts [exec bash $origin_dir/../utils/check_sync.sh]
