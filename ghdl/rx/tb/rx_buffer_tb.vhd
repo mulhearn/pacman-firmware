@@ -131,7 +131,7 @@ begin
     end if;
     wait for 10 ns;
     uvalid <= uvalid and (not uready);
-    if (uvalid = x"00000000000") then
+    if (unsigned(uvalid) = 0) then
       delay := '1';
       init := '1';
     end if;

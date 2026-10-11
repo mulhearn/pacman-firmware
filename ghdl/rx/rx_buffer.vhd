@@ -56,7 +56,7 @@ use work.common.all;
 --
 -- CONFIG_I:   0xMMMMTTTT
 -- DEFAULT:    0x00000001
--- where: TTTT is timeout in clock cycles for completing packet
+-- where: TTTT is timeout in sweeps of 512 clock cycles for completing packet
 --        MMMM is max words streamed for completing a packet
 --
 -- In both cases, a zero is no condition (no timeout / no maximum).
@@ -357,7 +357,10 @@ begin
             --waiting for mux...
 
           when 2 =>
-            if (buffer_active) then
+            -- not when the packet is full: the FSM moves to TRAILER after
+            -- this fragment, and a word buffered now (ready already sent)
+            -- would wait for the start of the next packet
+            if (buffer_active) and (packet_full = '0') then
               -- buffer the MUX inputs:
               header <= HEADER_I;
               frag_a <= FRAG_A_I;

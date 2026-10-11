@@ -99,10 +99,6 @@ begin
       arvalid <= S_AXI_ARVALID;
       rready  <= S_AXI_RREADY;
       awaddr  <= S_AXI_AWADDR;
-      awvalid <= S_AXI_ARVALID;
-      wdata   <= S_AXI_WDATA;
-      wvalid  <= S_AXI_RREADY;
-      awaddr  <= S_AXI_AWADDR;
       awvalid <= S_AXI_AWVALID;
       wdata   <= S_AXI_WDATA;
       wvalid  <= S_AXI_WVALID;
@@ -116,7 +112,7 @@ begin
   arready <= not rvalid;
   rupdate <= arready and arvalid;
   -- Determine rvalid:
-  process(clk)
+  process(clk, rst)
   begin
     if (rst = '1') then
       rvalid  <= '0';
@@ -129,7 +125,7 @@ begin
   end process;
 
   -- Send data
-  process(clk)
+  process(clk, rst)
   variable lowaddr : std_logic_vector(7 downto 0);
   begin
     if (rst = '1') then
@@ -163,7 +159,7 @@ begin
   wupdate <= awvalid and wvalid and (not wready) and (not bvalid);
 
   -- Determine wready:
-  process(clk)
+  process(clk, rst)
   variable lowaddr : std_logic_vector(7 downto 0);
   begin
     if (rst = '1') then
@@ -178,7 +174,7 @@ begin
   end process;
 
   -- Receive data:
-  process(clk)
+  process(clk, rst)
   variable lowaddr : std_logic_vector(7 downto 0);
   begin
     if (rst = '1') then

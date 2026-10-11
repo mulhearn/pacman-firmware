@@ -104,7 +104,7 @@ begin
   wdata   <= S_REGBUS_RB_WDATA;
   S_REGBUS_RB_WACK <= wack;
 
-  process(clk)
+  process(clk, rst)
     variable count : integer := 1;
   begin
     if (rst='1') then
@@ -128,7 +128,7 @@ begin
   end process;
 
   -- Handle Read Request:
-  process(clk)
+  process(clk, rst)
     variable reg     : integer;
   begin
     if (rst = '1') then
@@ -164,7 +164,7 @@ begin
   end process;
 
   -- Handle Write Request:
-  process(clk)
+  process(clk, rst)
     variable reg     : integer;
   begin
     if (rst = '1') then

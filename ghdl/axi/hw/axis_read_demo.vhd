@@ -105,7 +105,7 @@ begin
   stat(C_DATA_WIDTH-1 downto 1) <= (others => '0');
 
   -- Handle Read Request:
-  process(clk)
+  process(clk, rst)
     variable reg  : integer;
     variable word : integer;
   begin
@@ -141,7 +141,7 @@ begin
   end process;
 
   -- Handle Write Request:
-  process(clk)
+  process(clk, rst)
   variable reg     : integer;
   begin
     if (rst = '1') then

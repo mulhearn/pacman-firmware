@@ -48,7 +48,10 @@ begin
         valid <= '0';
         TIMESTAMP_O <= (others => '0');
       end if;
-      if (not (to_integer(unsigned(TIMESTAMP_I)) = to_integer(unsigned(CONFIG_I)))) then
+      -- low 32 timestamp bits against CONFIG_I, compared as vectors: the
+      -- hardware compare (synthesis truncated the 64-bit to_integer to 32
+      -- bits), without to_integer's overflow in simulation past 2^31
+      if (TIMESTAMP_I(C_RB_DATA_WIDTH-1 downto 0) /= CONFIG_I) then
         sent := '0';
       elsif ((EN_I='1') and (sent='0')) then
         if ((valid='0') or ((valid='1') and (ready='1'))) then

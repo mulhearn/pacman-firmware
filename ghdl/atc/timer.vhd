@@ -20,7 +20,7 @@ begin
 
   cfg_period <= unsigned(CONFIG_I);
 
-  process(CLK_I)
+  process(CLK_I, RST_I)
   begin
     if RST_I = '1' then
       count    <= (others => '0');

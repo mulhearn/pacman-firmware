@@ -65,7 +65,7 @@ begin
   BAUD_O <= baud;
 
   -- UCLK: high from uart strobe, low at half period
-  process(CLK_I)
+  process(CLK_I, RST_I)
   begin
     if RST_I = '1' then
       uclk_cnt <= (others => '0');

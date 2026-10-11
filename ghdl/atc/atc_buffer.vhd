@@ -42,7 +42,7 @@ begin
   cfg_invert <= CONFIG_I(8+C_NCHAN-1 downto 8);
 
   -- phase counter: resets on uart_i, counts up to cfg_phase
-  process(CLK_I)
+  process(CLK_I, RST_I)
   begin
     if RST_I = '1' then
       locked <= '0';
@@ -66,7 +66,7 @@ begin
   end generate;
 
   -- registered output, gated by clk_en
-  process(CLK_I)
+  process(CLK_I, RST_I)
   begin
     if RST_I = '1' then
       SIG_O <= (others => '0');

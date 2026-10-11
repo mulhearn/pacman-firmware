@@ -25,23 +25,25 @@ end;
 
 architecture behavioral of rx_timestamp_mux is
   signal clk       : std_logic;
-  signal rst       : std_logic;
+  signal rst       : std_logic := '1';
 
-  signal timestamp : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
 begin
   clk <= CLK_I;
   rst <= RST_I;
 
 
-  timestamp <= (others => '0') when to_integer(unsigned(SEL_I)) >= C_RX_NUM_CHAN
-            else TIMESTAMP_I(to_integer(unsigned(SEL_I)));
-
+  -- The mux sits inside the clocked process (same logic as a concurrent
+  -- mux into the register), so SEL_I is not evaluated before reset.
   process(clk, rst)
   begin
     if rst = '1' then
       TIMESTAMP_O  <= (others => '0');
     elsif rising_edge(clk) then
-      TIMESTAMP_O  <= timestamp;
+      if to_integer(unsigned(SEL_I)) >= C_RX_NUM_CHAN then
+        TIMESTAMP_O  <= (others => '0');
+      else
+        TIMESTAMP_O  <= TIMESTAMP_I(to_integer(unsigned(SEL_I)));
+      end if;
     end if;
   end process;
 

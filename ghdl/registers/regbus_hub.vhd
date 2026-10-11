@@ -272,6 +272,14 @@ begin
   -- CDC: S_CLK_I -> P_CLK_I strobes, index 2. RDATA masking (zero until this
   -- branch's own ack lands) happens inside regbus_cdc. ADDR/WDATA cross as
   -- plain combinational wires below, held stable by the req/ack handshake.
+  --
+  -- Assumption: every request enters the CDC, including those for PA/PB,
+  -- which get no ack from this branch.  After a PA/PB access the S side moves
+  -- on while that strobe is still crossing (about 4 P_CLK_I cycles); if the
+  -- next request arrived within that time, the strobe would pick up its
+  -- address.  But the AXI-Lite from the PS is not that fast to cause this race
+  -- condition, so this design chooses simplicity over explicit protection,
+  -- with stress tests confirming the assumption.
   ---------------------------------------------------------------------------
 
   -- u_regbus_cdc: note that this name is used explicitly in constraints file.

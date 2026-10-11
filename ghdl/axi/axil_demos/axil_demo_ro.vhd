@@ -93,7 +93,7 @@ begin
   rupdate <= (arready and arvalid);
 
   -- Determine rvalid:
-  process(clk)
+  process(clk, rst)
     variable update : std_logic;
   begin
     if (rst = '1') then
@@ -107,7 +107,7 @@ begin
   end process;
 
   -- Send data
-  process(clk)
+  process(clk, rst)
   variable lowaddr : std_logic_vector(7 downto 0);
   begin
     if (rst = '1') then

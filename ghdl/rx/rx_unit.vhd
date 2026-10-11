@@ -62,7 +62,7 @@ end rx_unit;
 
 architecture behaviour of rx_unit is
   signal clk                : std_logic;
-  signal rst                : std_logic;
+  signal rst                : std_logic := '1';
 
   signal uart_data          : uart_data_array_t  := (others => (others => '0'));
   signal timestamp          : rx_timestamp_array_t;

@@ -118,8 +118,9 @@ begin
           end if;
 
         when DELAY =>
+          -- cfg_delay /= 0 here; d bit periods: count 0 .. d-1
           if clk_en = '1' then
-            if count < unsigned(cfg_delay) then
+            if count < unsigned(cfg_delay) - 1 then
               count := count + 1;
             else
               state <= IDLE;

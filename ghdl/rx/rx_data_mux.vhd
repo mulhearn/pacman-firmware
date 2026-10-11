@@ -33,7 +33,7 @@ end;
 
 architecture behavioral of rx_data_mux is
   signal clk       : std_logic;
-  signal rst       : std_logic;
+  signal rst       : std_logic := '1';
 
   signal data_a    : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
   signal data_b    : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);

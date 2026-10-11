@@ -130,7 +130,7 @@ begin
   rst <= not S_AXI_ARESETN;
 
   -- Handle Read Request:
-  process(clk)
+  process(clk, rst)
     variable reg     : integer;
   begin
     if (rst = '1') then
@@ -167,7 +167,7 @@ begin
 
 
   -- Handle Write Request:
-  process(clk)
+  process(clk, rst)
   variable reg     : integer;
   begin
     if (rst = '1') then
