@@ -15,14 +15,14 @@ zipline-2023.2:
    This is the pristine zipline firmware branch for Vivado 2023.2
    Only the release manager (Mulhearn, currently) will make PRs into this branch.
 
-working-on-3.<X>-zipline-2023:
+working-on-3.<X>-zipline-2023.2:
    A branch of this form is an integration branch aimed at zipline
    version 3.<X> Commits are by pull request (PR) only, rebase only.
    Only fully validated commits, with a cleaned-up and linear commit
    history will be accepted.
 
 There are no other branches supported, currently.  Developers should
-work in their own fork of this reposistory, and make PRs only when a
+work in their own fork of this repository, and make PRs only when a
 task has been completed and validated.
 
 Usage
