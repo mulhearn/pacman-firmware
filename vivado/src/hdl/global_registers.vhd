@@ -152,6 +152,9 @@ begin
           elsif (reg=C_ADDR_GLOBAL_GIT_HASH_LOWER) then
             rdata <= std_logic_vector(to_unsigned(C_GIT_HASH_LOWER,rdata'length));
             rack  <= '1';
+          elsif (reg=C_ADDR_GLOBAL_BUILD_FLAGS) then
+            rdata <= std_logic_vector(to_unsigned(C_BUILD_FLAGS,rdata'length));
+            rack  <= '1';
           elsif (reg=C_ADDR_GLOBAL_VIVADO_MAJOR) then
             rdata <= std_logic_vector(to_unsigned(C_VIVADO_MAJOR,rdata'length));
             rack  <= '1';

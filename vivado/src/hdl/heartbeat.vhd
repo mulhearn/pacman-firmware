@@ -27,7 +27,7 @@ architecture behavioral of heartbeat is
   signal valid      : std_logic;
   signal ready      : std_logic;
 
-  signal count      : integer;
+  signal count      : unsigned(C_RB_DATA_WIDTH-1 downto 0);
 
 begin
   clk <= CLK_I;
@@ -39,7 +39,7 @@ begin
   process(clk,rst)
   begin
     if (rst='1') then
-      count <= 0;
+      count <= (others => '0');
       valid <= '0';
       TIMESTAMP_O <= (others => '0');
     elsif (rising_edge(clk)) then
@@ -50,10 +50,12 @@ begin
       if ((EN_I='1') and ((count+1) >= unsigned(CONFIG_I))) then
         if ((valid='0') or ((valid='1') and (ready='1'))) then
           valid <= '1';
-          count <= 0;
+          count <= (others => '0');
           TIMESTAMP_O <= TIMESTAMP_I;
         end if;
-      else
+      elsif ((count+1) < unsigned(CONFIG_I)) then
+        -- saturates at the threshold (e.g. while disabled), so no overflow;
+        -- enabling after a long wait still sends the next heartbeat at once
         count <= count + 1;
       end if;
     end if;

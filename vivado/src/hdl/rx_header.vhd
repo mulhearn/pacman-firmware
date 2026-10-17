@@ -41,7 +41,7 @@ end;
 
 architecture behavioral of rx_header is
   signal clk         : std_logic;
-  signal rst         : std_logic;
+  signal rst         : std_logic := '1';
   signal header_next : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
   signal header      : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
 begin

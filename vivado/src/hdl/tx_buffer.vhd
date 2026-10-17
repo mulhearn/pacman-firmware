@@ -12,6 +12,12 @@ use work.common.all;
 -- transmitted.  The header contains a channel mask specifying which
 -- channels have data to transmit.
 --
+-- Contract: every DMA packet is exactly C_TX_AXIS_BEATS (41) beats, TLAST
+-- on the last; the drivers always send 41 (TX_PACKET_BYTES = 0x148).  A
+-- shorter packet is not checked: the words it did not carry keep the
+-- previous packet's values (see axis_read), and are sent again to any
+-- channel the mask selects.
+--
 -- Once an entire DMA packet is received, the data for each UART is
 -- placed in an output buffer and a valid bit is set for each UART
 -- specified in the mask.  The stream reader is sent the ready

@@ -47,6 +47,9 @@ begin
 
   -- stream I/O
   -- (ignore TKEEP)
+  -- Packets are expected to be exactly C_AXIS_BEATS long.  On an early
+  -- TLAST the beats not received keep the previous packet's data; past
+  -- C_AXIS_BEATS, further beats overwrite the last slot until TLAST.
   tdata   <= S_AXIS_TDATA;
   tvalid  <= S_AXIS_TVALID;
   tlast <= S_AXIS_TLAST;

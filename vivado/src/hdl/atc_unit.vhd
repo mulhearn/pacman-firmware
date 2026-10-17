@@ -237,11 +237,13 @@ architecture behaviour of atc_unit is
   signal count_cmd    : std_logic_vector(C_BYTE_WIDTH-1 downto 0);
   signal count      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
-  signal status     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  -- STATUS register: no status bits defined yet, reads 0
+  signal status     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal ts  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0) := (others => '0');
 
 begin
   clk <= ACLK;
+  status <= (others => '0');
   rst <= RST_I;
 
   TIMESTAMP_O <= ts;

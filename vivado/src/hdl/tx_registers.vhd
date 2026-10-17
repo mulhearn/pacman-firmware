@@ -275,10 +275,10 @@ begin
       beats_next    <= (others => (others => '0'));
     else
       gen_next: for i in 0 to C_NUM_UART-1 loop
-        -- extract status bits for clarity
-        valid  := ustatus(i)(1);
-        ready  := ustatus(i)(2);
-        start  := ustatus(i)(3);
+        -- extract status bits for clarity (layout: status in tx_chan.vhd)
+        valid  := ustatus(i)(2);
+        ready  := ustatus(i)(3);
+        start  := ustatus(i)(0);
 
         -- starts count increments if starts=1
         if (start = '1') and (starts_rega(i) < C_COUNT_MAX) then

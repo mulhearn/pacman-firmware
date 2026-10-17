@@ -452,6 +452,7 @@ begin
       header_a               <= std_logic_vector(to_unsigned(C_DEFAULT_RX_HEARTBEAT_HEADER, C_RB_DATA_WIDTH));
       header_b               <= std_logic_vector(to_unsigned(C_DEFAULT_RX_ROLLOVER_HEADER,  C_RB_DATA_WIDTH));
       header_c               <= std_logic_vector(to_unsigned(C_DEFAULT_RX_TRIGGER_HEADER,   C_RB_DATA_WIDTH));
+      header_d               <= (others => '0');
       eop_header             <= std_logic_vector(to_unsigned(C_DEFAULT_RX_EOP_HEADER,       C_RB_DATA_WIDTH));
       zero_counters <= '0';
       look_select <= (others => '0');
@@ -546,7 +547,8 @@ begin
   end process;
 
   -- Count RX conditions from status register, zero on reset or zero_counters signal.
-  process(rst, ustatus, zero_counters, starts_rega, beats_rega, updates_rega, lost_rega, pstatus, pattern_starts_rega, pattern_stops_rega)
+  process(rst, ustatus, zero_counters, starts_rega, beats_rega, updates_rega, lost_rega, pstatus, pattern_starts_rega, pattern_stops_rega,
+          fifo_count, fifo_max_rega, frame_err_rega, noise_rega)
     variable fifo_now  : unsigned(31 downto 0);
     variable valid     : std_logic;
     variable ready     : std_logic;
