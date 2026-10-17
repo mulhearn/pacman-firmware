@@ -40,6 +40,23 @@ set git_hash_lower [ascii_to_int $git_hash_lower_str]
 puts "INFO: GIT_HASH_UPPER (int): $git_hash_upper"
 puts "INFO: GIT_HASH_LOWER (int): $git_hash_lower"
 
+# Build flags (C_BUILD_FLAGS):
+#   bit 0 DIRTY:             vivado/ has local changes (modified or untracked files; build outputs are ignored)
+#   bit 1 OFFICIAL_RELEASE:  the committed BUILD_RELEASE file is present at the top of the repository.
+#                            Without it the build is a candidate release (of the next official version).
+set dirty 0
+catch {
+    set changes [exec git -C $origin_dir status --porcelain -- .]
+    if {[string trim $changes] ne ""} { set dirty 1 }
+}
+set official 0
+catch {
+    set tracked [exec git -C $origin_dir/.. ls-files -- BUILD_RELEASE]
+    if {[file exists $origin_dir/../BUILD_RELEASE] && [string trim $tracked] ne ""} { set official 1 }
+}
+set build_flags [expr {$dirty | ($official << 1)}]
+puts "INFO: Build flags: $build_flags (DIRTY=$dirty, OFFICIAL_RELEASE=$official)"
+
 # get the Vivado version numbers as integers (major, minor)
 set version_string [version]
 puts "INFO: Vivado version string:\n$version_string"
@@ -66,6 +83,7 @@ puts $fh "-- Auto-generated version_info_pkg --"
 puts $fh "-- Synthesis date: [clock format $now -format {%Y-%m-%d %H:%M:%S}]"
 puts $fh "-- Git hash: $git_hash"
 puts $fh "-- Vivado version: $vivado_major.$vivado_minor"
+puts $fh "-- Build flags: $build_flags (DIRTY=$dirty, OFFICIAL_RELEASE=$official)"
 puts $fh "library ieee;"
 puts $fh "use ieee.std_logic_1164.all;"
 puts $fh ""
@@ -75,6 +93,7 @@ puts $fh "  constant C_GIT_HASH_UPPER  : integer := $git_hash_upper;"
 puts $fh "  constant C_GIT_HASH_LOWER  : integer := $git_hash_lower;"
 puts $fh "  constant C_VIVADO_MAJOR    : integer := $vivado_major;"
 puts $fh "  constant C_VIVADO_MINOR    : integer := $vivado_minor;"
+puts $fh "  constant C_BUILD_FLAGS     : integer := $build_flags;"
 puts $fh "end package;"
 puts $fh ""
 close $fh

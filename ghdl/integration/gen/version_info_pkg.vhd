@@ -11,4 +11,5 @@ package version_info_pkg is
   constant C_GIT_HASH_LOWER  : integer := 0;
   constant C_VIVADO_MAJOR    : integer := 0;
   constant C_VIVADO_MINOR    : integer := 0;
+  constant C_BUILD_FLAGS     : integer := 0;
 end package;

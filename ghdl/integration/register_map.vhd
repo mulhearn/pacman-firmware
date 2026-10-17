@@ -28,6 +28,7 @@ package register_map is
   constant C_ADDR_GLOBAL_SYNTHESIS_DATE  : integer := 16#F30#; -- Read Only
   constant C_ADDR_GLOBAL_GIT_HASH_UPPER  : integer := 16#F40#; -- Read Only
   constant C_ADDR_GLOBAL_GIT_HASH_LOWER  : integer := 16#F44#; -- Read Only
+  constant C_ADDR_GLOBAL_BUILD_FLAGS     : integer := 16#F48#; -- Read Only: bit 0 DIRTY, bit 1 OFFICIAL_RELEASE
   constant C_ADDR_GLOBAL_VIVADO_MAJOR    : integer := 16#F50#; -- Read Only
   constant C_ADDR_GLOBAL_VIVADO_MINOR    : integer := 16#F54#; -- Read Only
 
