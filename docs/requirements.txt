@@ -1,0 +1,102 @@
+PACMAN firmware requirements (3.6) for simulation and hardware verification
+===========================================================================
+
+The PACMAN firmware verification requirements are arranged hierarchically.  At top level
+(e.g. REG-1) are what a unit promises.  The next level (e.g. REG-1.1) are the testable requirements,
+in simulation (sim), or both simulation and hardware (sim+hw).
+
+REG      Register access (all units)
+REG-1    Every register is reachable at its address, and nothing else answers.
+REG-1.1  sim+hw  Each unit acknowledges reads and writes of its own defined registers.
+REG-1.2  sim+hw  Undefined addresses, other units' scopes, writes to read-only registers and reads of the
+                 broadcast channel are not acknowledged, and change nothing.
+REG-1.3  sim+hw  A request nobody acknowledges is completed by the bridge after its timeout (a read returns
+                 0xEEEEEEEE), and the bus keeps working.
+REG-2    Registers hold what is written, independently.
+REG-2.1  sim+hw  Every read/write register reads back every value written to it, all bits.
+REG-2.2  sim+hw  A write changes only the register addressed:  no crosstalk between registers, channels or units.
+REG-2.3  sim+hw  A broadcast write (channel 0x3B) sets the register of all 40 UARTs.
+REG-3    Register access timing.
+REG-3.1  sim     Global and Timing answer reads and writes one clock after the request;  RX and TX answer writes
+                 one clock and reads two clocks after the request.
+REG-3.2  sim     Back-to-back requests, to one unit or across units and clock domains, are answered in order,
+                 each once, with no mixed data.
+REG-3.3  sim     A read in the same clock as a write of the same register returns the old value (current
+                 behaviour, no stated contract).
+REG-4    Reset.
+REG-4.1  sim     Reset restores every register to its default, in every unit.
+
+GLB      Global unit
+GLB-1    The board controls do exactly what the register says.
+GLB-1.1  sim     ENABLES bit 16 drives TILE_POWER_ENABLE and bits 9-0 TILE_ENABLES;  the other bits drive nothing.
+GLB-1.2  sim     LEDS bits 1-0 drive the two PL LEDs;  the other bits drive nothing.
+GLB-1.3  sim     After reset, tile power, the tiles and the LEDs are off.
+GLB-2    The firmware identifies itself.
+GLB-2.1  sim+hw  STATUS reads 0x0000CAFE.
+GLB-2.2  sim+hw  The version registers read the firmware and hardware versions and the build information.
+
+TX       TX unit
+TX-1     Every word of a DMA packet is sent on the UARTs of its mask, intact, and nowhere else.
+TX-1.1   sim+hw  The channels of the mask send their own word;  the others stay idle;  mask bits above 39 are
+                 ignored.
+TX-1.2   sim+hw  All 40 channels can send at once, each its own word.
+TX-1.3   sim+hw  Back-to-back packets are sent in order, with no word dropped or repeated;  the next packet is
+                 read while the UARTs send.
+TX-2     The UART frames are as configured.
+TX-2.1   sim+hw  A frame is a start bit, the 64 data bits least significant first, and a stop bit, one bit per
+                 BAUD period.
+TX-2.2   sim     DELAY adds exactly that many idle bit periods between frames.
+TX-2.3   sim     PHASE moves the bit edges within the BAUD period.
+TX-3     The TX unit can be monitored.
+TX-3.1   sim+hw  STARTS and BEATS count each channel's frames and hand-overs (equal in normal operation);
+                 ZERO_CNTS clears them.
+TX-3.2   sim+hw  LOOK shows the word last loaded for the selected channel.
+TX-3.3   sim     The status registers show the channel and buffer states.
+
+RX       RX unit
+RX-1     Every word received reaches the stream once, intact, with its header and timestamp.
+RX-1.1   sim+hw  A word on one channel comes out as header, timestamp and data, followed by the trailer.
+RX-1.2   sim+hw  Words on several channels at once come out in channel order, in one packet.
+RX-1.3   sim+hw  Every data bit arrives as sent.
+RX-1.4   sim+hw  The header carries the word type (WORD_TYPE_LUT, by data bits 1-0), the PACMAN id and the
+                 channel id.
+RX-2     The receiver copes with real lines.
+RX-2.1   sim     A start bit at any phase of the BAUD period is received (MODE 1).
+RX-2.2   sim     A glitch shorter than a bit is outvoted, and counted as noise.
+RX-2.3   sim     A bad stop bit is a frame error:  counted, no word.
+RX-2.4   sim+hw  MODE 0 turns a channel off;  INPUT selects the line (idle, PISO, loopback, test pattern).
+RX-3     The stream is cut into DMA packets as configured, and congestion is accounted for.
+RX-3.1   sim     When the stream stalls, waiting words are held;  a further word on a channel still holding one
+                 is lost, and counted.
+RX-3.2   sim+hw  BUFFER_CONFIG's maximum closes a packet after that many words.
+RX-3.3   sim+hw  BUFFER_CONFIG's timeout lets later words join the open packet, then closes it.
+RX-4     The extra channels add their words when enabled.
+RX-4.1   sim+hw  Heartbeat:  a word every HEARTBEAT_CONFIG clocks (HEADER_A, timestamp, zero data).
+RX-4.2   sim     Rollover:  a word when the timestamp equals ROLLOVER_CONFIG (HEADER_B).
+RX-4.3   sim+hw  Markers 2 and 3:  a word for each marker pulse (HEADER_C, HEADER_D).
+RX-5     The test pattern generator feeds any channel.
+RX-5.1   sim+hw  A channel on the test pattern receives the pattern word, frame after frame;  the generator's
+                 status and counters follow.
+RX-6     The RX unit can be monitored.
+RX-6.1   sim+hw  The counters (STARTS, BEATS, UPDATES, LOST, FRAME_ERR, NOISE) count their events;  ZERO_CNTS
+                 clears them.
+RX-6.2   sim+hw  LOOK shows the last word received on the selected channel.
+RX-6.3   sim     The status registers show the channel and buffer states.
+RX-6.4   sim     FIFO_CNT shows the FIFO count, FIFO_MAX its maximum since ZERO_CNTS.
+
+ATC      Timing unit
+ATC-1    The clocks and the timestamp run as configured.
+ATC-1.1  sim     BAUD and UCLK follow CONFIG_BAUD and CONFIG_UART.
+ATC-1.2  sim+hw  The timestamp counts UART periods, and reaches the RX unit.
+ATC-1.3  sim+hw  Marker 0 restarts the timestamp.
+ATC-2    Each stimulus goes where its destination register sends it.
+ATC-2.1  sim     A poke reaches G and/or H on the tiles of its destination and of its own mask, for its duration.
+ATC-2.2  sim+hw  A stimulus reaches the markers of its destination.
+ATC-2.3  sim     LEMO A and B, and every poke, route by their own destination registers.
+ATC-2.4  sim     LOGIC A and B never fire (disabled in this version).
+ATC-3    The G and H outputs are shaped as configured.
+ATC-3.1  sim     CONFIG_G and CONFIG_H set the phase of the outputs within the UART period, and invert tiles.
+ATC-4    The LEMO inputs give one stimulus per clean edge.
+ATC-4.1  sim     A rising edge held two clocks or more is one stimulus;  glitches and bounces are not.
+ATC-5    The counters count, and are controlled by their commands.
+ATC-5.1  sim+hw  READ latches the edges and the integral of the chosen signal;  START, STOP and CLEAR act on all.
