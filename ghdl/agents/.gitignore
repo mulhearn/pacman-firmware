@@ -1,0 +1,7 @@
+build/
+waveforms/.venv/
+waveforms/__pycache__/
+waveforms/*.vcd
+waveforms/*.pdf
+waveforms/*.log
+*.o
