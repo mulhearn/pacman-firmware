@@ -21,17 +21,18 @@ use work.common.all;
 --   IDLE:  waiting for arrival of valid data
 --     On arrival of valid data, move to STREAM state
 --
---   WAIT_STATE: all valid data streamed, wait for new data or timeout
---     On arrival of valid data, move to STREAM state
---     If configurable timeout occurs, move to TRAILER state
+--   WAIT_STATE: end of a sweep; close the packet or start next sweep.
+--     If the timeout has occurred, move to TRAILER state
+--     Otherwise, on valid data, move to STREAM state
 --
 --   STREAM: turn-based round-robin streaming of data to FIFO. Each RX
 --     channel is assigned one turn which lasts long enough to stream
 --     three 64-bit fragments when valid data is available and the
 --     stream is not busy.
---     If the number of words sent exceeds a threshold, move to
+--     If the number of words sent reaches the maximum, move to
 --     TRAILER state.
---     If no more valid data is available, return to WAIT_STATE
+--     After each channel has had its turn (a full sweep), return to
+--     WAIT_STATE
 --
 --   TRAILER: stream trailer word
 --     At end of packet, send three 64-bit fragments to write a
@@ -45,9 +46,10 @@ use work.common.all;
 -- streaming, the ready bit is set for that channel.  On receiving
 -- ready, each UART channel clears its valid bit.  If new data arrives
 -- on the RX channel before the valid bit is cleared (via ready) the
--- packet is lost, which is noted by the lost bit in the UART status
--- (see rx_chan.vhd).  Counters track the number of lost packets for
--- each UART (which should be zero during normal operation).
+-- ASIC packet is lost, which is noted by the lost bit in the UART
+-- status (see rx_chan.vhd).  Counters track the number of lost
+-- packets for each UART (which should be zero during normal
+-- operation).
 --
 -- Although the data is streamed one word at a time, many words are
 -- assembled into a single DMA packet (as marked via the LAST bit).
@@ -56,14 +58,16 @@ use work.common.all;
 --
 -- CONFIG_I:   0xMMMMTTTT
 -- DEFAULT:    0x00000001
--- where: TTTT is timeout in sweeps of 512 clock cycles for completing packet
---        MMMM is max words streamed for completing a packet
 --
+-- where TTTT is the timeout in units of 512 clock cycles for completing
+-- packet, and MMMM is max words streamed for completing a packet.
 -- In both cases, a zero is no condition (no timeout / no maximum).
--- The timeout is not checked while in stream state, so e.g. a timeout of one
--- (default setting) will send data from all channels with valid data once
--- valid data from at least one channel is available.
 --
+-- The timeout counts from the start of the packet and is acted on
+-- only in WAIT_STATE, at the end of a sweep.  At baud=10 each
+-- transmission takes 660 cycles.  For the default timeout setting of
+-- 1, packets will contain at most one ASIC packet per UART channel.
+
 
 entity rx_buffer is
   port (
@@ -102,33 +106,7 @@ entity rx_buffer is
   );
 end;
 
-
-
 architecture behavioral of rx_buffer is
-  component axis_write is
-    generic (
-      constant C_AXIS_WIDTH    : integer  := C_RX_AXIS_WIDTH;
-      constant C_DEBUG_WIDTH   : integer  := 8
-    );
-    port (
-      CLK_I              : in std_logic;
-      RST_I              : in std_logic;
-
-      M_AXIS_TDATA       : out std_logic_vector(C_AXIS_WIDTH-1 downto 0);
-      M_AXIS_TVALID      : out std_logic;
-      M_AXIS_TREADY      : in std_logic;
-
-      M_AXIS_TKEEP       : out std_logic_vector(C_AXIS_WIDTH/8-1 downto 0);
-      M_AXIS_TLAST       : out std_logic;
-
-      BUSY_O             : out std_logic;
-      WEN_I              : in  std_logic;
-      LAST_I             : in  std_logic;
-      DATA_I             : in  std_logic_vector(C_AXIS_WIDTH-1 downto 0);
-      --
-      DEBUG_O            : out std_logic_vector(C_DEBUG_WIDTH-1 downto 0)
-    );
-  end component;
 
   signal clk       : std_logic;
   signal rst       : std_logic;
@@ -149,7 +127,7 @@ architecture behavioral of rx_buffer is
   signal frag   : integer range 0 to C_RX_FRAGS_PER_TURN-1 := 0;
   signal turn   : integer range 0 to (C_RX_NUM_CHAN)       := 0;
 
-  signal chan_select : std_logic_vector(C_SELECT_WIDTH-1 downto 0);
+  signal chan_select : std_logic_vector(C_SELECT_WIDTH-1 downto 0) := (others => '0');
   signal header      : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
   signal frag_a      : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
   signal frag_b      : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
@@ -166,7 +144,11 @@ begin
   --
   -- the stream writer outputs a stream assembled from buffered input
   -- data sourced from the uarts.
-  ar0: axis_write port map (
+  ar0: entity work.axis_write
+  generic map (
+    C_AXIS_WIDTH => C_RX_AXIS_WIDTH
+  )
+  port map (
     CLK_I           => clk,
     RST_I           => rst,
     M_AXIS_TDATA    => M_AXIS_TDATA,
@@ -177,7 +159,8 @@ begin
     BUSY_O          => busy,
     WEN_I           => wen,
     LAST_I          => last,
-    DATA_I          => data
+    DATA_I          => data,
+    DEBUG_O         => open
   );
   M_AXIS_TVALID <= tvalid;
   tready <= M_AXIS_TREADY;
@@ -227,9 +210,6 @@ begin
         else
           next_state <= TRAILER;
         end if;
-
-      when others =>
-        next_state <= IDLE;
     end case;
   end process;
 
@@ -297,7 +277,7 @@ begin
   end process;
 
   -- packet timeout: reset in IDLE, otherwise count down from configurable timeout
-  -- TTTT is timeout in nominal sweeps (1 sweep ~ 2^9 = 512 clock cycles)
+  -- TTTT is timeout in units of 512 clock cycles
   process(clk, rst)
     variable timeout_counter : integer range 0 to 16#1FFFFFF# := 0;
   begin
@@ -469,7 +449,5 @@ begin
       STATUS_O <= status;
     end if;
   end process;
-
-
 
 end;

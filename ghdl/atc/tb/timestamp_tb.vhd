@@ -1,43 +1,37 @@
+----------------------------------------------------------------------------------------------------
+-- timestamp_tb:  timestamp test bench
+--
+-- The timestamp counts the ENABLE strobes, stepping one clock after each.
+--
+-- Shows one line per clock: e = enable | timestamp.
+--
+-- Scenario: one ENABLE strobe every 3 clocks
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
+library work;
 use work.common.all;
-
+use work.tb_utils.all;
 
 entity timestamp_tb is
 end timestamp_tb;
 
 architecture behaviour of timestamp_tb is
-  component timestamp is
-    port (
-      CLK_I       : in  std_logic;
-      RST_I       : in  std_logic;
-      SYNC_I      : in  std_logic;
-      ENABLE_I    : in  std_logic;
-      TIMESTAMP_O     : out std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0)
-    );
-  end component;
-
-  signal clk              : std_logic;
-  signal rst              : std_logic;
-  signal enable           : std_logic;
-  signal ts               : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-
-  signal show_output      : std_logic := '0';
-  signal count            : integer := 0;
-
+  signal count  : integer := 0;
+  signal clk    : std_logic;
+  signal rst    : std_logic;
+  signal enable : std_logic;
+  signal ts     : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
 begin
-  uut: timestamp port map (
-    CLK_I        => clk,
-    RST_I        => rst,
-    SYNC_I       => '0',
-    ENABLE_I     => enable,
-    TIMESTAMP_O  => ts
+  uut: entity work.timestamp port map (
+    CLK_I       => clk,
+    RST_I       => rst,
+    SYNC_I      => '0',
+    ENABLE_I    => enable,
+    TIMESTAMP_O => ts
   );
 
-  areset_process : process
+  rst_process : process
   begin
     rst <= '1';
     wait for 20 ns;
@@ -63,32 +57,9 @@ begin
     wait for 20 ns;
   end process;
 
-  show_process : process
-  begin
-    show_output <= '1';
-    wait;
-  end process;
-
   output_process : process
-    variable l : line;
   begin
     wait for 10 ns;
-    if (show_output='1') then
-      write (l, String'("c: "));
-      write (l, count, left, 5);
-      write  (l, String'(" e: "));
-      write  (l, enable);
-      write  (l, String'("| timestamp: "));
-      hwrite  (l, ts);
-      if (rst = '1') then
-        write (l, String'(" (RESET)"));
-      end if;
-      writeline(output, l);
-    end if;
+    strip(count, "e " & bits(enable) & " | timestamp " & hex(ts) & mark(rst, "(RESET)"));
   end process;
-
-
-
-
-
 end behaviour;

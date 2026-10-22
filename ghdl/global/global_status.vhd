@@ -15,8 +15,8 @@ use work.register_map.all;
 
 entity global_status is
   port (
-    CLK_I	        : in std_logic;
-    RST_I	        : in std_logic;
+    CLK_I               : in std_logic;
+    RST_I               : in std_logic;
 
     LED_CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     GLOBAL_STATUS_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);

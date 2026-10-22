@@ -1,102 +1,82 @@
+----------------------------------------------------------------------------------------------------
+-- atc_mux_tb:  ATC multiplexer test bench
+--
+-- Route the ATC sources to the per-tile outputs G and H (and the markers M) by their destination
+-- registers.  The pokes reach G and H two clocks later, LEMO B reaches M one clock later.
+--
+-- Shows one line per clock: lemo a, b | poke c, d | g, h (10 tiles), m (markers).
+--
+-- Scenario: POKE C (all tiles) to G, POKE D (all tiles) to H, LEMO B to G and marker 0; clock 20 ns
+-- -- (alternatives in comments)
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
 library work;
 use work.common.all;
+use work.tb_utils.all;
 
-
---  Defines a testbench (without any ports)
 entity atc_mux_tb is
-  generic (
-    constant C_CONFIG_WIDTH     : integer := 32;
-    constant C_NUM_TILE         : integer := 10
-
-  );
 end atc_mux_tb;
 
-
 architecture behaviour of atc_mux_tb is
-  component atc_mux is
-    port (
-      CLK_I	   : in  std_logic;
-      RST_I	   : in  std_logic;
-      LEMO_A_I	   : in  std_logic;
-      LEMO_B_I	   : in  std_logic;
-      POKE_A_I	   : in  std_logic;
-      POKE_B_I	   : in  std_logic;
-      POKE_C_I	   : in  std_logic;
-      POKE_D_I	   : in  std_logic;
-      LOGIC_A_I	   : in  std_logic;
-      LOGIC_B_I	   : in  std_logic;
-      MASK_A_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      MASK_B_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      MASK_C_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      MASK_D_I       : in  std_logic_vector(C_NUM_TILE-1 downto 0);
-      DST_LEMO_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_LEMO_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_POKE_A_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_POKE_B_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_POKE_C_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_POKE_D_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_LOGIC_A_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DST_LOGIC_B_I  : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      G_O            : out std_logic_vector(9 downto 0) := (others => '0');
-      H_O            : out std_logic_vector(9 downto 0) := (others => '0');
-      M_O            : out std_logic_vector(C_NUM_MARKER-1 downto 0) := (others => '0')
-      );
-  end component;
-
-  signal count    : integer := 0;
-  signal show_output : std_logic := '0';
-
-  signal clk             : std_logic;
-  signal rst             : std_logic;
-
-  -- input stimuli:
-  signal update_lemo_a   : std_logic;
-  signal update_lemo_b   : std_logic;
-  signal update_poke_c   : std_logic;
-  signal update_poke_d   : std_logic;
-
-  -- mux outputs:
-  signal   h   :  std_logic_vector(9 downto 0) := (others => '0');
-  signal   g   :  std_logic_vector(9 downto 0) := (others => '0');
-  signal   m   :  std_logic_vector(3 downto 0) := (others => '0');
-
-
-
+  signal count  : integer := 0;
+  signal clk    : std_logic;
+  signal rst    : std_logic;
+  signal lemo_a : std_logic := '0';
+  signal lemo_b : std_logic;
+  signal poke_c : std_logic;
+  signal poke_d : std_logic;
+  signal h      : std_logic_vector(9 downto 0) := (others => '0');
+  signal g      : std_logic_vector(9 downto 0) := (others => '0');
+  signal m      : std_logic_vector(3 downto 0) := (others => '0');
+  signal mask_c     : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal mask_d     : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal dst_poke_c : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal dst_poke_d : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal dst_lemo_b : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 begin
-  uut: atc_mux port map (
+  -- the routing configuration (alternatives in comments):
+  mask_c     <= "1111111111";                                   -- POKE C mask:  all tiles
+  --mask_c     <= "0000011111";                                 -- POKE C mask:  tiles 0-4
+  mask_d     <= "1111111111";                                   -- POKE D mask:  all tiles
+  --mask_d     <= "0000011111";                                 -- POKE D mask:  tiles 0-4
+  dst_poke_c <= x"0002FFC1";                                    -- POKE C:  G of all tiles, 2 clocks
+  --dst_poke_c <= x"000207C1";                                  -- POKE C:  G of tiles 0-4, 2 clocks
+  --dst_poke_c <= x"0002FFC3";                                  -- POKE C:  G+H all tiles, 2 clocks
+  dst_poke_d <= x"0003FFC2";                                    -- POKE D:  H of all tiles, 3 clocks
+  --dst_poke_d <= x"0006FFC2";                                  -- POKE D:  H of all tiles, 6 clocks
+  dst_lemo_b <= x"0008FFC5";                                    -- LEMO B:  G all, marker 0, 8 clk
+  --dst_lemo_b <= x"00080004";                                  -- LEMO B:  marker 0 only, 8 clocks
+
+  uut: entity work.atc_mux port map (
     CLK_I         => clk,
-    RST_I         =>  rst,
-    LEMO_A_I	  =>   update_lemo_a,
-    LEMO_B_I	  =>   update_lemo_b,
-    POKE_A_I	  =>   '0',
-    POKE_B_I	  =>   '0',
-    POKE_C_I	  =>   update_poke_c,
-    POKE_D_I      =>   update_poke_d,
-    LOGIC_A_I	  =>    '0' ,
-    LOGIC_B_I	  =>    '0' ,
-    MASK_A_I      =>   (others => '0'),
-    MASK_B_I      =>   (others => '0'),
-    MASK_C_I      =>   "1111111111",
-    MASK_D_I      =>   "1111111111",
+    RST_I         => rst,
+    LEMO_A_I      => lemo_a,
+    LEMO_B_I      => lemo_b,
+    POKE_A_I      => '0',
+    POKE_B_I      => '0',
+    POKE_C_I      => poke_c,
+    POKE_D_I      => poke_d,
+    LOGIC_A_I     => '0',
+    LOGIC_B_I     => '0',
+    MASK_A_I      => (others => '0'),
+    MASK_B_I      => (others => '0'),
+    MASK_C_I      => mask_c,
+    MASK_D_I      => mask_d,
     DST_LEMO_A_I  => x"00000000",
-    DST_LEMO_B_I  => x"0008FFC5",
+    DST_LEMO_B_I  => dst_lemo_b,
     DST_POKE_A_I  => x"00000000",
     DST_POKE_B_I  => x"00000000",
-    DST_POKE_C_I  => x"0002FFC1",
-    DST_POKE_D_I  => x"0003FFC2",
+    DST_POKE_C_I  => dst_poke_c,
+    DST_POKE_D_I  => dst_poke_d,
     DST_LOGIC_A_I => x"00000000",
     DST_LOGIC_B_I => x"00000000",
     G_O           => g,
     H_O           => h,
     M_O           => m
-    );
+  );
 
-  aclk_process : process
+  clk_process : process
   begin
     count <= count + 1;
     clk <= '1';
@@ -105,7 +85,7 @@ begin
     wait for 10 ns;
   end process;
 
-  aresetn_process : process
+  rst_process : process
   begin
     rst <= '1';
     wait for 20 ns;
@@ -113,96 +93,29 @@ begin
     wait;
   end process;
 
-
-  update_a_process : process
+  stimulus_process : process
   begin
-    update_lemo_a <= '0';
-    --wait for 100 ns;
-    --update_lemo_a <= '1';
-    --wait for 20 ns;
-    update_lemo_a <= '0';
-    wait;
-
-  end process;
-
-
-  update_b_process : process
-  begin
-    wait for 1 ns;
-    update_lemo_b <= '0';
-    wait for 100 ns;
-    update_lemo_b <= '1';
-    wait for 20 ns;
-    update_lemo_b <= '0';
+    lemo_b <= '0';
+    poke_c <= '0';
+    poke_d <= '0';
+    wait for 21 ns;
+    poke_c <= '1'; wait for 30 ns;
+    poke_c <= '0'; poke_d <= '1'; wait for 20 ns;
+    poke_d <= '0'; wait for 30 ns;
+    lemo_b <= '1'; wait for 20 ns;
+    lemo_b <= '0';
     wait;
   end process;
 
-
-  update_c_process : process
+  output_process : process
   begin
-    wait for 1 ns;
-    update_poke_c <= '0';
-    wait for 20 ns;
-    update_poke_c <= '1';
-    wait for 30 ns;
-    update_poke_c<= '0';
+    fold(true);
+    while count < 100 loop
+      wait for 20 ns;
+      strip(count, "lemo a " & bits(lemo_a) & " b " & bits(lemo_b) & " | poke c " & bits(poke_c) & " d " & bits(poke_d)
+        & " | g " & bits(g) & " h " & bits(h) & " m " & bits(m) & mark(rst, "(RESET)"));
+    end loop;
+    fold(false);
     wait;
   end process;
-
-  update_d_process : process
-  begin
-    wait for 1 ns;
-    update_poke_d <= '0';
-    wait for 50 ns;
-    update_poke_d <= '1';
-    wait for 20 ns;
-    update_poke_d <= '0';
-    wait;
-  end process;
-
-  show_process : process
-  begin
-    show_output <= '1';
-    wait until (count = 100);
-    wait for 10 ns;
-    show_output <= '0';
-    wait;
-  end process;
-
-output_process : process
-    variable l : line;
-  begin
-    wait for 20 ns;
-
-    if (show_output='1') then
-      write (l, String'("c: "));
-      write (l, count, left, 5);
-      write  (l, String'(" uclk: "));
-      write  (l, clk);
-
-      write  (l, String'("| lemo a: "));
-      write  (l, update_lemo_a);
-      write  (l, String'(" b: "));
-      write  (l, update_lemo_b);
-      write  (l, String'("| poke c: "));
-      write  (l, update_poke_c);
-      write  (l, String'(" d: "));
-      write  (l, update_poke_d);
-
-      write  (l, String'("| output g: "));
-      write  (l, g);
-
-      write  (l, String'(" h: "));
-      write  (l, h);
-      write  (l, String'(" m: "));
-      write  (l, m);
-
-      if (rst = '1') then
-        write (l, String'(" (RESET)"));
-      end if;
-      writeline(output, l);
-    end if;
-  end process;
-
-
 end behaviour;

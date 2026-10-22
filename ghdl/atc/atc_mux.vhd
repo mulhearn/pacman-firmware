@@ -12,20 +12,20 @@ entity atc_mux is
 
   port (
     --clock and active-high reset:
-    CLK_I	: in  std_logic;
-    RST_I	: in  std_logic;
+    CLK_I       : in  std_logic;
+    RST_I       : in  std_logic;
 
     --Input stimuli: one-clock cycle long active high pulses. LEMO is
     --from front-panel, POKEs are register writes from the PS, LOGIC is
     --from the logic unit.
-    LEMO_A_I	: in  std_logic;
-    LEMO_B_I	: in  std_logic;
-    POKE_A_I	: in  std_logic;
-    POKE_B_I	: in  std_logic;
-    POKE_C_I	: in  std_logic;
-    POKE_D_I	: in  std_logic;
-    LOGIC_A_I	: in  std_logic;
-    LOGIC_B_I	: in  std_logic;
+    LEMO_A_I    : in  std_logic;
+    LEMO_B_I    : in  std_logic;
+    POKE_A_I    : in  std_logic;
+    POKE_B_I    : in  std_logic;
+    POKE_C_I    : in  std_logic;
+    POKE_D_I    : in  std_logic;
+    LOGIC_A_I   : in  std_logic;
+    LOGIC_B_I   : in  std_logic;
 
     -- Transient tile masks: each POKE (register write) carries a
     -- tag-along mask applicable to that poke only. LEMO/LOGIC have no

@@ -16,7 +16,7 @@ entity pattern is
   port (
     CLK_I           : in  std_logic;
     RST_I           : in  std_logic;
-    BAUD_I     : in  std_logic;
+    BAUD_I          : in  std_logic;
     PAYLOAD_I       : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
     CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     DELAY_I         : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -129,8 +129,6 @@ begin
                 delay_count <= unsigned(DELAY_I) - 1;
               end if;
             end if;
-          when others =>
-            state <= IDLE;
         end case;
       end if;
     end if;

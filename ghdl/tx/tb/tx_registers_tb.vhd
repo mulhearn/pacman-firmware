@@ -1,72 +1,68 @@
+----------------------------------------------------------------------------------------------------
+-- tx_registers_tb:  TX register file test bench
+--
+-- Shows one line per register access (W writes, R reads) and output lines
+-- showing how the modules output registers are driven.
+--
+-- Scenario: the inputs stand in for the rest of the TX unit:  UART status (the UART number in bits
+-- 31-24, events pulsed on bits 0, 2 and 3), the buffer status (AAAABBBB) and the look data (the
+-- select, in both halves:  BBBBBBss AAAAAAss)
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
+use ieee.numeric_std.all;
 library work;
 use work.common.all;
+use work.register_map.all;
+use work.tb_utils.all;
 
---  Defines a testbench (without any ports)
 entity tx_registers_tb is
 end tx_registers_tb;
 
 architecture behaviour of tx_registers_tb is
-  component tx_registers is
-    port (
-      CLK_I	             : in std_logic;
-      RST_I	             : in std_logic;
+  signal count       : integer := 0;
+  signal clk         : std_logic;
+  signal rst         : std_logic;
+  signal rb          : rb_t := RB_IDLE;
+  signal rbr         : rbr_t;
 
-      S_REGBUS_RB_RADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_RUPDATE    : in  std_logic;
-      S_REGBUS_RB_RACK       : out std_logic;
+  signal ustatus     : uart_reg_array_t;
+  signal look_data   : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
+  signal uart_config : uart_reg_array_t;
+  signal look_select : std_logic_vector(C_SELECT_WIDTH-1 downto 0);
 
-      S_REGBUS_RB_WUPDATE    : in  std_logic;
-      S_REGBUS_RB_WADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_WACK       : out std_logic;
+  constant G  : integer := C_CHAN_GLOBAL;
+  constant BC : integer := C_CHAN_BROADCAST;
+  function tx(chan, reg : integer) return std_logic_vector is
+  begin return addr(C_SCOPE_UPPER_TX, chan, reg); end function;
 
-      UART_STATUS_I          : in uart_reg_array_t;
-      UART_CONFIG_O          : out uart_reg_array_t;
-      BUFFER_STATUS_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
-    );
-  end component;
-
-  signal count    : integer := 0;
-  signal clk      : std_logic;
-  signal rst      : std_logic;
-  -- read signals:
-  signal raddr    : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal rupdate  : std_logic := '0';
-  signal rdata    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-  signal rack     : std_logic := '0';
-  -- write signals:
-  signal waddr    : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal wupdate  : std_logic := '0';
-  signal wdata    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
-  signal wack     : std_logic := '0';
-
-  signal config   : uart_reg_array_t;
-
+  function init_status return uart_reg_array_t is
+    variable s : uart_reg_array_t;
+  begin
+    for u in s'range loop s(u) := std_logic_vector(to_unsigned(u, 8)) & x"000000"; end loop;
+    return s;
+  end function;
 begin
-  uut0: tx_registers port map (
+  uut0: entity work.tx_registers port map (
     CLK_I               => clk,
     RST_I               => rst,
-    S_REGBUS_RB_RUPDATE => rupdate,
-    S_REGBUS_RB_RADDR   => raddr,
-    S_REGBUS_RB_RDATA   => rdata,
-    S_REGBUS_RB_RACK    => rack,
-    S_REGBUS_RB_WUPDATE => wupdate,
-    S_REGBUS_RB_WADDR   => waddr,
-    S_REGBUS_RB_WDATA   => wdata,
-    S_REGBUS_RB_WACK    => wack,
-    LOOK_UART_DATA_I  => x"DDDDDDDDCCCCCCCC",
-    UART_STATUS_I  => (others => x"1234ABCD"),
-    BUFFER_STATUS_I  => x"AABBCCDD",
-    UART_CONFIG_O  => config
+    S_REGBUS_RB_RUPDATE => rb.rupdate,
+    S_REGBUS_RB_RADDR   => rb.raddr,
+    S_REGBUS_RB_RDATA   => rbr.rdata,
+    S_REGBUS_RB_RACK    => rbr.rack,
+    S_REGBUS_RB_WUPDATE => rb.wupdate,
+    S_REGBUS_RB_WADDR   => rb.waddr,
+    S_REGBUS_RB_WDATA   => rb.wdata,
+    S_REGBUS_RB_WACK    => rbr.wack,
+    UART_STATUS_I       => ustatus,
+    UART_CONFIG_O       => uart_config,
+    BUFFER_STATUS_I     => x"AAAABBBB",
+    LOOK_SELECT_O       => look_select,
+    LOOK_UART_DATA_I    => look_data
   );
+
+  -- the selected UART's word, as the TX unit would supply it
+  look_data <= x"BBBBBB" & "00" & look_select & x"AAAAAA" & "00" & look_select;
 
   rst_process : process
   begin
@@ -85,150 +81,86 @@ begin
     wait for 5 ns;
   end process;
 
-  read_process : process
+  regbus_process : process
+    procedure wr(chan, reg : integer; d : std_logic_vector; txt : string) is
+    begin reg_write(clk, rb, rbr, tx(chan, reg), d, txt); end procedure;
+    procedure rd(chan, reg : integer; txt : string) is
+    begin reg_read(clk, rb, rbr, tx(chan, reg), txt); end procedure;
+    procedure tick(n : integer := 1) is
+    begin
+      for i in 1 to n loop wait until rising_edge(clk); end loop;
+      wait for 1 ns;
+    end procedure;
+    procedure outputs(s : string) is            -- one clock later:  UART config has an extra stage
+    begin tick; strip(count, "outputs:  " & s); end procedure;
+    -- n events on UART u:  the status bits in mask high for one clock, then low for one
+    procedure events(u : integer; mask : std_logic_vector(31 downto 0); n : integer) is
+      variable s : std_logic_vector(31 downto 0);
+    begin
+      s := ustatus(u);
+      for i in 1 to n loop
+        ustatus(u) <= s or mask; tick;
+        ustatus(u) <= s;         tick;
+      end loop;
+    end procedure;
+    constant EV_START : std_logic_vector(31 downto 0) := x"00000001";
+    constant EV_VALID : std_logic_vector(31 downto 0) := x"00000004";
+    constant EV_READY : std_logic_vector(31 downto 0) := x"00000008";
   begin
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 1 ns;
-    wait for 40 ns;
-    raddr   <= x"0C04";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0004";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0104";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    raddr   <= x"3FA0";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"3FA4";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"3FA8";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0C00";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    raddr   <= x"0020";
-    rupdate <= '1';
-    wait for 80 ns;
-    raddr   <= x"0C20";
-    rupdate <= '1';
-    wait for 50 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    raddr   <= x"3FB0";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
+    ustatus <= init_status;
+    wait until rst = '0';
+    tick;
+
+    note("UART config:  after reset, broadcast to every UART, then UART 1 alone");
+    rd(0,  C_ADDR_TX_UART_CONFIG, "UART 0 config");
+    rd(39, C_ADDR_TX_UART_CONFIG, "UART 39 config");
+    wr(BC, C_ADDR_TX_UART_CONFIG, x"00001602", "all UARTs:  config");
+    wr(1,  C_ADDR_TX_UART_CONFIG, x"00001601", "UART 1:  config");
+    rd(0,  C_ADDR_TX_UART_CONFIG, "UART 0 config");
+    rd(1,  C_ADDR_TX_UART_CONFIG, "UART 1 config");
+    rd(39, C_ADDR_TX_UART_CONFIG, "UART 39 config");
+    outputs("UART config 0 " & hex(uart_config(0)) & " | 1 " & hex(uart_config(1))
+      & " | 39 " & hex(uart_config(39)));
+
+    note("UART status:  the input as it is (UART number in bits 31-24)");
+    rd(0,  C_ADDR_TX_UART_STATUS, "UART 0 status");
+    rd(12, C_ADDR_TX_UART_STATUS, "UART 12 status");
+    rd(39, C_ADDR_TX_UART_STATUS, "UART 39 status");
+
+    note("counters, UART 12:  3 starts, 5 beats (valid and ready);  then 7 valid without ready,"
+      & " 2 ready without valid (not beats)");
+    events(12, EV_START, 3);
+    events(12, EV_VALID or EV_READY, 5);
+    events(12, EV_VALID, 7);
+    events(12, EV_READY, 2);
+    rd(12, C_ADDR_TX_UART_STARTS, "UART 12 starts");
+    rd(12, C_ADDR_TX_UART_BEATS,  "UART 12 beats");
+    rd(11, C_ADDR_TX_UART_STARTS, "UART 11 starts:  its neighbour's events are not its own");
+
+    note("ZERO_CNTS:  both counters, every UART");
+    wr(G,  C_ADDR_TX_ZERO_CNTS, x"00000000", "zero counters");
+    rd(12, C_ADDR_TX_UART_STARTS, "UART 12 starts, right after:  the old count (two stages)");
+    rd(12, C_ADDR_TX_UART_STARTS, "UART 12 starts");
+    rd(12, C_ADDR_TX_UART_BEATS,  "UART 12 beats");
+
+    note("buffer status, and look:  select a UART (6 bits kept), its word in look A and B");
+    rd(G, C_ADDR_TX_BUFFER_STATUS, "buffer status (input AAAABBBB)");
+    rd(G, C_ADDR_TX_LOOK_SELECT,   "look select");
+    rd(G, C_ADDR_TX_LOOK_UA,       "look A");
+    wr(G, C_ADDR_TX_LOOK_SELECT,   x"FFFFFFE7", "look select:  UART 39");
+    rd(G, C_ADDR_TX_LOOK_SELECT,   "look select");
+    rd(G, C_ADDR_TX_LOOK_UA,       "look A");
+    rd(G, C_ADDR_TX_LOOK_UB,       "look B");
+    outputs("look select " & hex("00" & look_select));
+
+    note("no ack:  read-only and write-only registers the wrong way, addresses not TX registers");
+    wr(G,  C_ADDR_TX_BUFFER_STATUS, x"FFFFFFFF", "buffer status");
+    wr(12, C_ADDR_TX_UART_STARTS,   x"FFFFFFFF", "UART 12 starts");
+    rd(G,  C_ADDR_TX_ZERO_CNTS,     "zero counters");
+    rd(BC, C_ADDR_TX_UART_CONFIG,   "broadcast channel, config");
+    rd(40, C_ADDR_TX_UART_CONFIG,   "channel 40 (no such UART), config");
+    reg_read(clk, rb, rbr, addr(C_SCOPE_UPPER_RX, 0, C_ADDR_TX_UART_CONFIG),
+             "RX scope, UART 0 config");
     wait;
   end process;
-
-  write_process : process
-  begin
-    waddr   <= x"0000";
-    wdata   <= x"00000000";
-    wupdate <= '0';
-    wait for 1 ns;
-    wait for 20 ns;
-    waddr   <= x"3B04";
-    wdata   <= x"00001601";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"0004";
-    wdata   <= x"AAAA1601";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"0000";
-    wdata   <= x"00000000";
-    wupdate <= '0';
-    wait for 130 ns;
-    waddr   <= x"3FF8";
-    wdata   <= x"00000000";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"0000";
-    wdata   <= x"00000000";
-    wupdate <= '0';
-    wait;
-  end process;
-
-  output_process : process
-    variable l : line;
-  begin
-    --wait for 1 ns;
-    wait for 10 ns;
-    write (l, String'("c: "));
-    write (l, count, left, 4);
-    write (l, String'(" || ra: 0x"));
-    hwrite (l, raddr);
-    write (l, String'(" ru:"));
-    write (l, rupdate);
-    write (l, String'(" rd: 0x"));
-    hwrite (l, rdata);
-    write (l, String'(" rk:"));
-    write (l, rack);
-    write (l, String'(" || wa: 0x"));
-    hwrite (l, waddr);
-    write (l, String'(" wu:"));
-    write (l, wupdate);
-    write (l, String'(" wd: 0x"));
-    hwrite (l, wdata);
-    write (l, String'(" wk:"));
-    write (l, wack);
-    write (l, String'(" || cfg(0):  0x"));
-    hwrite (l, config(0));
-    if (rst = '1') then
-      write (l, String'(" (RESET)"));
-    end if;
-    writeline(output, l);
-  end process;
-
-  comment_process : process
-    variable l : line;
-  begin
-    write(l, String'("INFO:  Resetting:"));
-    writeline(output, l);
-    wait until (count=3);
-    write(l, String'("INFO:  Setting TX config to 0x00001601 via broadcast, then channel 0 only to 0xAAAA1601:"));
-    writeline(output, l);
-    wait until (count=5);
-    write(l, String'("INFO:  Reading back TX config for several channels:"));
-    writeline(output, l);
-    wait until (count=9);
-    write(l, String'("INFO:  Reading TX look for several channels:  (Test pattern input: 0xCCCCCCCC 0xDDDDDDDD)"));
-    writeline(output, l);
-    wait until (count=14);
-    write(l, String'("INFO:  Reading TX status for several channels: (Test pattern input:  0x1234ABCD)"));
-    writeline(output, l);
-    wait until (count=17);
-    write(l, String'("INFO:  Reading TX counts repeatedly, it should increment and restart at zero with write to zero count register"));
-    writeline(output, l);
-    wait until (count=31);
-    write(l, String'("INFO:  Reading TX global status: (Test pattern input:  0xAABBCCDD)"));
-    writeline(output, l);
-    wait;
-  end process;
-
 end behaviour;
-

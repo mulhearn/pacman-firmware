@@ -74,24 +74,6 @@ entity tx_buffer is
 end;
 
 architecture behavioral of tx_buffer is
-  component axis_read is
-    generic (
-      constant C_AXIS_WIDTH  : integer  := C_TX_AXIS_WIDTH;
-      constant C_AXIS_BEATS   : integer  := C_TX_AXIS_BEATS
-      );
-    port (
-      CLK_I              : in std_logic;
-      RST_I              : in std_logic;
-      S_AXIS_TDATA       : in std_logic_vector(C_AXIS_WIDTH-1 downto 0);
-      S_AXIS_TVALID      : in std_logic;
-      S_AXIS_TREADY      : out std_logic;
-      S_AXIS_TKEEP       : in std_logic_vector(C_AXIS_WIDTH/8-1 downto 0);
-      S_AXIS_TLAST       : in std_logic;
-      DATA_O             : out std_logic_vector(C_AXIS_WIDTH*C_AXIS_BEATS-1 downto 0);
-      VALID_O            : out std_logic;
-      READY_I            : in std_logic
-    );
-  end component;
 
   signal clk, rst : std_logic;
 
@@ -118,7 +100,12 @@ architecture behavioral of tx_buffer is
   signal next_state : state_type := IDLE;
 
 begin
-  ar0: axis_read port map (
+  ar0: entity work.axis_read
+  generic map (
+    C_AXIS_WIDTH => C_TX_AXIS_WIDTH,
+    C_AXIS_BEATS => C_TX_AXIS_BEATS
+  )
+  port map (
     CLK_I           => clk,
     RST_I           => rst,
     S_AXIS_TDATA    => S_AXIS_TDATA,

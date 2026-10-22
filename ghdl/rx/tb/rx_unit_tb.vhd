@@ -1,47 +1,22 @@
+----------------------------------------------------------------------------------------------------
+-- rx_unit_tb: the whole RX unit, configured over the regbus.
+--
+-- Default scenario: Every UART is fed simulated RX data, and the resulting stream is shown for two
+-- cycles.  The status is then read showing two starts, beats, and updates with none lost.
+--
+-- (Alternative scenarios are in comments)
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
 library work;
 use work.common.all;
+use work.register_map.all;
+use work.tb_utils.all;
 
---  Defines a testbench (without any ports)
 entity rx_unit_tb is
 end rx_unit_tb;
 
 architecture behaviour of rx_unit_tb is
-  component rx_unit is
-    port (
-      ACLK                   : in std_logic;
-      RST_I                  : in std_logic;
-      BAUD_I                 : in std_logic;
-      M_AXIS_TDATA           : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
-      M_AXIS_TVALID          : out std_logic;
-      M_AXIS_TREADY          : in std_logic;
-      M_AXIS_TKEEP           : out std_logic_vector(C_RX_AXIS_WIDTH/8-1 downto 0);
-      M_AXIS_TLAST           : out std_logic;
-
-      S_REGBUS_RB_RADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_RUPDATE    : in  std_logic;
-      S_REGBUS_RB_RACK       : out std_logic;
-
-      S_REGBUS_RB_WUPDATE    : in  std_logic;
-      S_REGBUS_RB_WADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_WACK       : out std_logic;
-
-      TIMESTAMP_I            : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      RX_MARKER_I            : in std_logic_vector(C_NUM_MARKER-1 downto 0);
-
-      FIFO_COUNT_I           : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-
-      PISO_I                 : in  std_logic_vector(C_NUM_UART-1 downto 0);
-      LOOPBACK_I             : in  std_logic_vector(C_NUM_UART-1 downto 0)
-      );
-  end component;
-
   signal timestamp : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0) := (others => '0');
   signal count     : integer := 0;
   signal clk       : std_logic;
@@ -51,50 +26,38 @@ architecture behaviour of rx_unit_tb is
 
   signal tdata     : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0) := (others => '0');
   signal tvalid    : std_logic;
-  signal tready    : std_logic := '0';
+  signal tready    : std_logic := '1';
   signal tlast     : std_logic;
 
-  -- read signals:
-  signal raddr    : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal rupdate  : std_logic := '0';
-  signal rdata    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-  signal rack     : std_logic := '0';
-  -- write signals:
-  signal waddr    : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal wupdate  : std_logic := '0';
-  signal wdata    : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
-  signal wack     : std_logic := '0';
+  signal rb        : rb_t := RB_IDLE;
+  signal rbr       : rbr_t;
 
-  signal piso     : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');
-  signal rx       : std_logic := '1';
-
-  -- control the output for different stages of the demo:
-  signal show_regbus_output : std_logic := '0';
-  signal show_axis_output   : std_logic := '0';
-  signal show_rx_output     : std_logic := '0';
-
+  signal piso      : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');
+  signal rx        : std_logic := '1';
+  signal show_axis : boolean := false;
 begin
-  uut: rx_unit port map (
-    ACLK            => clk,
-    RST_I           => rst,
-    BAUD_I          => baud,
-    M_AXIS_TDATA    => tdata,
-    M_AXIS_TVALID   => tvalid,
-    M_AXIS_TREADY   => tready,
-    M_AXIS_TLAST    => tlast,
-    S_REGBUS_RB_RUPDATE => rupdate,
-    S_REGBUS_RB_RADDR   => raddr,
-    S_REGBUS_RB_RDATA   => rdata,
-    S_REGBUS_RB_RACK    => rack,
-    S_REGBUS_RB_WUPDATE => wupdate,
-    S_REGBUS_RB_WADDR   => waddr,
-    S_REGBUS_RB_WDATA   => wdata,
-    S_REGBUS_RB_WACK    => wack,
+  uut: entity work.rx_unit port map (
+    ACLK                => clk,
+    RST_I               => rst,
+    BAUD_I              => baud,
+    M_AXIS_TDATA        => tdata,
+    M_AXIS_TVALID       => tvalid,
+    M_AXIS_TREADY       => tready,
+    M_AXIS_TLAST        => tlast,
+    S_REGBUS_RB_RUPDATE => rb.rupdate,
+    S_REGBUS_RB_RADDR   => rb.raddr,
+    S_REGBUS_RB_RDATA   => rbr.rdata,
+    S_REGBUS_RB_RACK    => rbr.rack,
+    S_REGBUS_RB_WUPDATE => rb.wupdate,
+    S_REGBUS_RB_WADDR   => rb.waddr,
+    S_REGBUS_RB_WDATA   => rb.wdata,
+    S_REGBUS_RB_WACK    => rbr.wack,
     TIMESTAMP_I         => timestamp,
     RX_MARKER_I         => x"0",
     FIFO_COUNT_I        => x"CCCCCCCC",
     PISO_I              => piso,
-    LOOPBACK_I          => piso
+    LOOPBACK_I          => piso,
+    M_AXIS_TKEEP        => open
   );
 
   clk_process : process
@@ -104,17 +67,6 @@ begin
     wait for 5 ns;
     clk <= '0';
     wait for 5 ns;
-  end process;
-
-  timestamp_process : process
-  begin
-    timestamp <= x"0000000000000123";
-    --choose valid just in time, or one frag too late...
-    --test protection against mid-word valid.
-    --wait until count=958;
-    wait until count=959;
-    timestamp <= x"0000000000000ABC";
-    wait;
   end process;
 
   rst_process : process
@@ -141,274 +93,107 @@ begin
     wait for 90 ns;
   end process;
 
-  read_process : process
+  timestamp_process : process
   begin
-    show_regbus_output <= '1';
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 1 ns;
-    wait for 30 ns;
-    -- uart status
-    raddr   <= x"4000";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FB0";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FB4";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FB8";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"4004";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"4020";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    show_regbus_output <= '0';
-    -- long pause for transmission
-    wait for 20 us;
-    show_regbus_output <= '1';
-    raddr   <= x"4000";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FB0";
-    rupdate <= '1';
-    wait for 30 ns;
-    raddr   <= x"7FA4";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FA8";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"4020";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"4024";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"4028";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"402C";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FF0";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7FF4";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7F8C";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"7F94";
-    rupdate <= '1';
-    wait for 10 ns;
-    raddr   <= x"0000";
-    rupdate <= '0';
-    wait for 10 ns;
-    show_regbus_output <= '0';
+    timestamp <= x"0000000000000123";
+    --choose valid just in time, or one frag too late...
+    --test protection against mid-word valid.
+    --wait until count=958;
+    wait until count=959;
+    timestamp <= x"0000000000000ABC";
     wait;
   end process;
 
-  write_process : process
+  regbus_process : process
+    -- RX registers:  chan 0-39 (one UART), C_CHAN_BROADCAST (write all UARTs), C_CHAN_GLOBAL
+    procedure wr(chan, reg : integer; d : std_logic_vector; txt : string) is
+    begin reg_write(clk, rb, rbr, addr(C_SCOPE_UPPER_RX, chan, reg), d, txt); end procedure;
+    procedure rd(chan, reg : integer; txt : string) is
+    begin reg_read(clk, rb, rbr, addr(C_SCOPE_UPPER_RX, chan, reg), txt); end procedure;
+    constant G : integer := C_CHAN_GLOBAL;
   begin
-    waddr   <= x"0000";
-    wdata   <= x"00000000";
-    wupdate <= '0';
-    wait for 1 ns;
-    wait for 20 ns;
-    waddr   <= x"7F80";
-    wdata   <= x"CCCCDDDD";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"7F84";
-    wdata   <= x"AAAABBBB";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- enable RX testpattern:
-    waddr   <= x"7F8C";
-    wdata   <= x"00000101";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- broadcasting RX config:
-    waddr   <= x"7B04";
-    wdata   <= x"00000401";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- setting buffer config:
-    waddr   <= x"7FB4";
-    wdata   <= x"00000001";
-    --wdata   <= x"000A0000";
-    wupdate <= '1';
-    wait for 10 ns;
-    -- setting buffer enables:
-    waddr   <= x"7FB8";
-    wdata   <= x"00000004";
-    --wdata   <= x"00000003";
-    --wdata   <= x"00000000";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"7FBC";
-    wdata <= x"000000AB";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"7FC0";
-    wdata   <= x"00000001";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"7FC4";
-    wdata   <= x"00000ABC";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"7FC8";
-    wdata <= x"43434445";
-    wupdate <= '1';
-    wait for 10 ns;
-    waddr   <= x"0000";
-    wdata   <= x"00000000";
-    wupdate <= '0';
+    wait until rst = '0';
+    wait until rising_edge(clk);
+
+    wr(C_CHAN_BROADCAST, C_ADDR_RX_UART_CONFIG, x"000A1104",
+       "all UARTs:  period 0A, edge mode, PISO input, phase 4");
+    wr(G, C_ADDR_RX_BUFFER_CONFIG,    x"00000001", "buffer:  timeout 1, no max words");
+    wr(G, C_ADDR_RX_BUFFER_ENABLES,   x"00000000",
+       "enables:  no extra channels (heartbeat, rollover, markers off)");
+    wr(G, C_ADDR_RX_PACMAN,           x"000000AB", "PACMAN id");
+    wr(G, C_ADDR_RX_HEARTBEAT_CONFIG, x"00000001", "heartbeat config");
+    wr(G, C_ADDR_RX_ROLLOVER_CONFIG,  x"00000ABC", "rollover config");
+    wr(G, C_ADDR_RX_WORD_TYPE_LUT,    x"43434445", "word type LUT");
+    rd(0, C_ADDR_RX_UART_STATUS,     "UART 0 status");
+    rd(G, C_ADDR_RX_BUFFER_STATUS,   "buffer status");
+    rd(0, C_ADDR_RX_UART_CONFIG,     "UART 0 config");
+
+    -- test pattern:
+    --wr(G, C_ADDR_RX_PATTERN_A,        x"CCCCDDDD", "pattern payload A");
+    --wr(G, C_ADDR_RX_PATTERN_B,        x"AAAABBBB", "pattern payload B");
+    --wr(G, C_ADDR_RX_PATTERN_CONFIG,   x"00000101", "pattern on, phase 1");
+    --wr(C_CHAN_BROADCAST, C_ADDR_RX_UART_CONFIG, x"000A1404", "all UARTs:  period 0A, edge mode, pattern input, phase 4");
+
+    -- alternative settings:
+    --wr(C_CHAN_BROADCAST, C_ADDR_RX_UART_CONFIG, x"000A0404", "all UARTs:  mode 0 (off)");
+    --wr(5, C_ADDR_RX_UART_CONFIG, x"000A1104", "UART chan 6 only");
+    --wr(G, C_ADDR_RX_BUFFER_ENABLES,   x"00000002", "enables:  rollover");
+    --wr(G, C_ADDR_RX_BUFFER_CONFIG,    x"00030001", "buffer:  timeout 1, at most 3 words per packet");
+
+    note("AXI stream out (beats only):");
+    show_axis <= true;
+    wait until count = 2000;
+    show_axis <= false;
+    note("at 20 us:");
+    rd(0, C_ADDR_RX_UART_STATUS,     "UART 0 status");
+    rd(G, C_ADDR_RX_BUFFER_STATUS,   "buffer status");
+    rd(G, C_ADDR_RX_LOOK_UA,         "look A (UART 0)");
+    rd(G, C_ADDR_RX_LOOK_UB,         "look B (UART 0)");
+    rd(0, C_ADDR_RX_UART_STARTS,     "UART 0 starts");
+    rd(0, C_ADDR_RX_UART_BEATS,      "UART 0 beats");
+    rd(0, C_ADDR_RX_UART_UPDATES,    "UART 0 updates");
+    rd(0, C_ADDR_RX_UART_LOST,       "UART 0 lost");
+    rd(G, C_ADDR_RX_FIFO_CNT,        "FIFO count");
+    rd(G, C_ADDR_RX_FIFO_MAX,        "FIFO max");
+    rd(G, C_ADDR_RX_PATTERN_CONFIG,  "pattern config");
+    rd(G, C_ADDR_RX_PATTERN_STARTS,  "pattern starts");
     wait;
   end process;
 
-  regbus_output_process : process
-    variable l : line;
-  begin
-    wait for 10 ns;
-    if (show_regbus_output='1') then
-      write (l, String'("c: "));
-      write (l, count, left, 4);
-      write (l, String'(" || ra: 0x"));
-      hwrite (l, raddr);
-      write (l, String'(" ru:"));
-      write (l, rupdate);
-      write (l, String'(" rd: 0x"));
-      hwrite (l, rdata);
-      write (l, String'(" rk:"));
-      write (l, rack);
-      write (l, String'(" || wa: 0x"));
-      hwrite (l, waddr);
-      write (l, String'(" wu:"));
-      write (l, wupdate);
-      write (l, String'(" wd: 0x"));
-      hwrite (l, wdata);
-      write (l, String'(" wk:"));
-      write (l, wack);
-      if (rst = '1') then
-        write (l, String'(" (RESET)"));
-      end if;
-      writeline(output, l);
-    end if;
-  end process;
-
-  axis_process : process
-  begin
-    tready <= '1';
-    wait;
-  end process;
-
-  show_axis_output_process : process
-  begin
-    show_axis_output<='0';
-    wait until (count=740);
-    show_axis_output<='1';
-    wait until (count=3000);
-    wait for 10 ns;
-    show_axis_output<='0';
-    wait;
-  end process;
-
-
+  -- one line per 192-bit word (three beats:  header, timestamp, data):
+  -- header = channel (16 bits) | PACMAN id | word type;  the trailer (TLAST) carries the word count
   axis_output_process : process
-    variable suppress_zero : std_logic := '1';
-    variable l : line;
+    variable h, t : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
+    variable f    : integer := 0;
   begin
-    wait for 10 ns;
-    if (show_axis_output='1') then
-      if (suppress_zero='0' or ((tvalid='1') and (tready='1'))) then
-        write (l, String'("c: "));
-        write (l, count, left, 4);
-        --write (l, String'("aclk: "));
-        --write (l, aclk);
-        write (l, String'("|| tdata: 0x"));
-        hwrite (l, tdata);
-        write (l, String'(" tval: "));
-        write (l, tvalid);
-        write (l, String'(" trdy: "));
-        write (l, tready);
-        write (l, String'(" ltast: "));
-        write (l, tlast);
-        if ((tvalid='1') and (tready='1')) then
-          write (l, String'(" - "));
-        end if;
-
-        if (tlast = '1') then
-          write (l, String'(" *** "));
-        end if;
-        if (rst = '1') then
-          write (l, String'(" (RESET)"));
-        end if;
-        writeline(output, l);
+    wait until rising_edge(clk);
+    wait for 1 ns;
+    if (tvalid = '1') and (tready = '1') then
+      if f = 0 then h := tdata; end if;
+      if f = 1 then t := tdata; end if;
+      if f = 2 and show_axis then
+        strip(count, "ch " & hex(h(31 downto 16)) & " id " & hex(h(15 downto 8)) & " type " & hex(h(7 downto 0))
+          & " | t " & hex(t) & " | d " & hex(tdata) & mark(tlast, "(TLAST)") & mark(rst, "(RESET)"));
       end if;
+      f := (f + 1) mod 3;
     end if;
   end process;
 
-  piso(C_NUM_UART-1 downto 0)  <= (others => rx);
+  piso(C_NUM_UART-1 downto 0) <= (others => rx);
 
+  -- PISO stimulus (not selected while the UARTs are on the pattern input)
   rx_process : process
-    variable i      : integer := 0;
-    variable rxdata : std_logic_vector(159 downto 0) := x"FF33332222000011117FFF33331111000011117F";
+    constant rxdata : std_logic_vector(159 downto 0) := x"FF33332222000011117FFF33331111000011117F";
   begin
     wait for 20 ns;
+    for i in 0 to 159 loop
+      wait until rising_edge(uclk);
+      wait for 1 ns;
+      rx <= rxdata(i);
+    end loop;
     wait until rising_edge(uclk);
     wait for 1 ns;
-    if (i<160) then
-      rx <= rxdata(i);
-      i := i+1;
-    else
-      rx <= '1';
-      wait;
-      wait for 500 ns;
-      i := 0;
-    end if;
-  end process;
-
-  show_rx_process : process
-  begin
-    show_rx_output<='0';
-    wait;
-    wait until (count=100);
-    show_rx_output<='1';
-    wait until (count=700);
-    wait for 10 ns;
-    show_rx_output<='0';
+    rx <= '1';
     wait;
   end process;
-
-  rx_output_process : process
-    variable l : line;
-  begin
-    wait for 100 ns;
-    if (show_rx_output='1') then
-      write (l, String'("c: "));
-      write (l, count, left, 4);
-      --write (l, String'("aclk: "));
-      --write (l, aclk);
-      write (l, String'("|| PISO: 0x"));
-      hwrite (l, piso);
-      --write (l, String'("|| NOT: 0x"));
-      --hwrite (l, not piso);
-      writeline(output, l);
-    end if;
-  end process;
-
-
-
-
 end behaviour;

@@ -1,59 +1,50 @@
+----------------------------------------------------------------------------------------------------
+-- rx_chan_tb:  RX UART channel test bench
+--
+-- One RX UART channel fed two 64-bit words (repeated), READY high only once:  word 1 is taken, word
+-- 2 waits, word 1 again is lost ((LOST) on the third word).  The data shifts in bit by bit,
+-- (UPDATE) at each word.
+--
+-- Shows one line per sample point: state, v: valid, r: ready, ph = phase, d = the received data, rx
+-- = the input and the three taps, vden = vote, dissent, sample enable, noise;  (START) a start bit,
+-- (UPDATE) a word complete, (LOST) a word overwritten before it was taken.
+--
+-- Scenario: period 0A, edge mode, input RX_I, phase 4  -- (alternatives in comments)
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
+use ieee.numeric_std.all;
 library work;
 use work.common.all;
+use work.tb_utils.all;
 
---  Defines a testbench (without any ports)
 entity rx_chan_tb is
 end rx_chan_tb;
 
 architecture behaviour of rx_chan_tb is
-  component rx_chan is
-    port (
-      -- clock and active-high reset
-      CLK_I          : in std_logic;
-      RST_I          : in std_logic;
-      -- sync the start of each baud period:
-      BAUD_I         : in std_logic;
-      CONFIG_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      STATUS_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DATA_O         : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O    : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O        : out  std_logic;
-      READY_I        : in std_logic;
-      RX_I           : in std_logic;
-      LOOPBACK_I     : in std_logic;
-      PATTERN_I      : in std_logic;
-      EMUL_I         : in std_logic;
-      TIMESTAMP_I    : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  signal count      : integer := 0;
-  signal clk        : std_logic;
-  signal rst        : std_logic;
-  signal baud       : std_logic;
-  signal status     : std_logic_vector(C_RB_DATA_WIDTH-1  downto 0);
-  signal data       : std_logic_vector(C_UART_DATA_WIDTH-1 DOWNTO 0);
-  signal tstamp     : std_logic_vector(C_UART_DATA_WIDTH-1 DOWNTO 0);
-  signal rx         : std_logic := '1';
-  signal valid      : std_logic;
-  signal ready      : std_logic;
-
-  signal show_output : std_logic := '0';
-
-
+  signal count  : integer := 0;
+  signal clk    : std_logic;
+  signal rst    : std_logic;
+  signal baud   : std_logic;
+  signal status : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal data   : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
+  signal tstamp : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+  signal rx     : std_logic := '1';
+  signal valid  : std_logic;
+  signal ready  : std_logic;
+  signal config : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 begin
-  uut: rx_chan port map (
+  -- the channel configuration (alternatives in comments):
+  config <= x"000A1104";                                        -- period 0A, edge, RX_I, phase 4
+  --config <= x"000A2104";                                      -- period 0A, fixed, RX_I, phase 4
+  --config <= x"000A5108";                                      -- edge, phase 8 (noisy), flag 0
+  --config <= x"000A0104";                                      -- mode off:  nothing received
+
+  uut: entity work.rx_chan port map (
     CLK_I       => clk,
     RST_I       => rst,
     BAUD_I      => baud,
---    CONFIG_I    => x"000A5108", -- inject noise ...
-    CONFIG_I    => x"000A1104",
+    CONFIG_I    => config,
     DATA_O      => data,
     TIMESTAMP_O => tstamp,
     VALID_O     => valid,
@@ -63,7 +54,8 @@ begin
     PATTERN_I   => '1',
     EMUL_I      => '1',
     TIMESTAMP_I => x"0000000012345678",
-    DEBUG_O     => status
+    DEBUG_O     => status,
+    STATUS_O    => open
   );
 
   clk_process : process
@@ -95,123 +87,54 @@ begin
   begin
     ready <= '0';
     wait until count=753;
+    note("READY high for 10 clocks:  word 1 is taken");
     ready <='1';
     wait for 100 ns;
     ready <='0';
     wait;
   end process;
 
+  -- LSB first:  7F (idle, start bit), word 1 (3333111100001111), FF 7F, word 2 (3333222200001111), FF
   rx_process : process
-    variable i      : integer := 0;
-    variable rxdata : std_logic_vector(159 downto 0) := x"FF33332222000011117FFF33331111000011117F";
+    constant rxdata : std_logic_vector(159 downto 0) := x"FF33332222000011117FFF33331111000011117F";
   begin
-    wait until rising_edge(baud);
-    wait for 1 ns;
-    if (i<160) then
-      rx <= rxdata(i);
-      i := i+1;
-    else
+    fold(true);
+    loop
+      note("sending word 1 and word 2");
+      for i in 0 to 159 loop
+        wait until rising_edge(baud);
+        wait for 1 ns;
+        rx <= rxdata(i);
+      end loop;
+      wait until rising_edge(baud);
+      wait for 1 ns;
       rx <= '1';
       wait for 500 ns;
-      i := 0;
-    end if;
+    end loop;
   end process;
 
-  show_process : process
+  -- print any folded lines still pending, just before the Makefile's --stop-time=30us
+  end_process : process
   begin
-    show_output <= '1';
+    wait for 29995 ns;
+    fold(false);
     wait;
   end process;
 
+  -- at each sample point:  state, valid/ready, phase, data, rx taps, vote/dissent/sample/noise, markers
+  -- (status bits:  rx_chan.vhd, end of file)
   output_process : process
-    variable l : line;
-
-    variable sample_en  : std_logic := '0';
-    variable fall    : std_logic := '0';
-    variable start   : std_logic := '0';
-    variable update  : std_logic := '0';
-    variable lost    : std_logic := '0';
-    variable vote    : std_logic := '0';
-    variable dissent : std_logic := '0';
-    variable noise   : std_logic := '0';
+    type names_t is array (0 to 3) of string(1 to 5);
+    constant STATE : names_t := ("IDLE ", "FIRST", "DATA ", "STOP ");
   begin
-
-
     wait until status(10)='1';
-    wait for 10 ns;
-    wait for 1 ns;
-
-    sample_en  := status(10);
-    start   := status(4);
-    update  := status(5);
-    lost    := status(6);
-    vote    := status(15);
-    dissent := status(11);
-    noise   := status(8);
-
-    if (show_output='1') then
-
-      case status(1 downto 0) is
-        when "00" => write (l, String'("IDLE "));
-        when "01" => write (l, String'("FIRST"));
-        when "10" => write (l, String'("DATA "));
-        when "11" => write (l, String'("STOP "));
-        when others => write (l, String'("???? "));
-      end case;
-
-      write (l, String'(" c: "));
-      write (l, count, left, 5);
-      write  (l, String'("clk: "));
-      write  (l, clk);
-      write  (l, String'(" vr: "));
-      write (l, valid);
-      write (l, ready);
-
-      write  (l, String'(" s: "));
-      write (l, start);
-      write  (l, String'(" u: "));
-      write (l, update);
-      write  (l, String'(" l: "));
-      write (l, lost);
-
-      write  (l, String'("| ph: 0x"));
-      hwrite (l, status(31 downto 24));
-      write  (l, String'(" | d: 0x"));
-      hwrite (l, data);
-      --write  (l, String'(" | ts: 0x"));
-      --hwrite (l, tstamp);
-      write  (l, String'(" | rx: "));
-      write  (l, rx);
-      write  (l, status(12));
-      write  (l, status(13));
-      write  (l, status(14));
-
-      write  (l, String'(" b: "));
-      write  (l, baud);
-
-      write  (l, String'(" vden: "));
-      write  (l, vote);
-      write  (l, dissent);
-      write  (l, sample_en);
-      write  (l, noise);
-
-      if (start = '1') then
-        write (l, String'(" --- "));
-      end if;
-      if (update = '1') then
-        write (l, String'(" *** "));
-      end if;
-      if (lost = '1') then
-        write (l, String'(" !!! "));
-      end if;
-      if (rst = '1') then
-        write (l, String'(" (RESET)"));
-      end if;
-      writeline(output, l);
-    end if;
+    wait for 11 ns;
+    strip(count, STATE(to_integer(unsigned(status(1 downto 0))))
+      & " v: " & bits(valid) & " r: " & bits(ready)
+      & " | ph " & hex(status(31 downto 24))
+      & " | d " & hex(data)
+      & " | rx " & bits(rx & status(12) & status(13) & status(14))
+      & " | vden " & bits(status(15) & status(11) & status(10) & status(8))
+      & mark(status(4), "(START)") & mark(status(5), "(UPDATE)") & mark(status(6), "(LOST)") & mark(rst, "(RESET)"));
   end process;
-
-
-
 end behaviour;
-

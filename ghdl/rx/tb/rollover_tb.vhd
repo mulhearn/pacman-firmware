@@ -1,61 +1,58 @@
+----------------------------------------------------------------------------------------------------
+-- rollover_tb:  rollover source test bench
+--
+-- When the low 32 timestamp bits reach CONFIG the rollover source raises VALID with the timestamp,
+-- held until READY, then once per wrap of the timestamp input.
+--
+-- Shows one line per clock: ts in = the timestamp input, v: valid, r: ready, ts = the timestamp
+-- out, (BEAT) when taken.
+--
+-- Scenario: rollover at 3, timestamp input = clock count mod 16, READY from clock 15  --
+-- (alternatives in comments)
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
+use ieee.numeric_std.all;
 library work;
 use work.common.all;
+use work.tb_utils.all;
 
---  Defines a testbench (without any ports)
 entity rollover_tb is
 end rollover_tb;
 
 architecture behaviour of rollover_tb is
-  component rollover is
-    port (
-      CLK_I         : in  std_logic;
-      RST_I         : in  std_logic;
-      EN_I          : in  std_logic;
-      CONFIG_I      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O   : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O       : out std_logic;
-      READY_I       : in  std_logic;
-      TIMESTAMP_I   : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
-  end component;
-
-  signal count      : integer := 0;
-  signal tstep_ns   : integer := 10;
-  signal clk        : std_logic;
-  signal rst        : std_logic;
-  signal uclk       : std_logic;
-  signal tstamp     : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-  signal tstamp_in  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0) := (others => '0');
+  signal count     : integer := 0;
+  signal clk       : std_logic;
+  signal rst       : std_logic;
+  signal tstamp    : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+  signal tstamp_in : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0) := (others => '0');
   signal valid     : std_logic;
   signal ready     : std_logic;
-
-  signal show_output : std_logic := '0';
-
+  signal en     : std_logic;
+  signal config : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 begin
-  ts_process: process
+  -- the rollover configuration (alternatives in comments):
+  en     <= '1';                                                -- enabled
+  --en     <= '0';                                              -- disabled:  no rollover
+  config <= x"00000003";                                        -- rollover at timestamp 3
+  --config <= x"0000000A";                                      -- rollover at timestamp 0A
 
+  ts_process: process
   begin
-    tstamp_in <= std_logic_vector(to_unsigned(count, tstamp_in'length))
-                 and std_logic_vector(to_unsigned(16#F#, tstamp_in'length));
+    tstamp_in <= std_logic_vector(to_unsigned(count mod 16, tstamp_in'length));
     wait for 10 ns;
   end process;
 
-
-  uut: rollover port map (
+  uut: entity work.rollover port map (
     CLK_I       => clk,
     RST_I       => rst,
-    EN_I        => '1',
-    CONFIG_I    => x"00000003",
+    EN_I        => en,
+    CONFIG_I    => config,
     TIMESTAMP_O => tstamp,
     VALID_O     => valid,
     READY_I     => ready,
-    TIMESTAMP_I => tstamp_in
+    TIMESTAMP_I => tstamp_in,
+    DEBUG_O     => open
   );
 
   clk_process : process
@@ -80,48 +77,22 @@ begin
     ready <= '0';
     wait until (count=15);
     wait for 1 ns;
+    note("READY high from here on");
     ready <='1';
     wait;
   end process;
 
-  show_process : process
-  begin
-    show_output <= '1';
-    wait until (count = 35);
-    show_output <= '0';
-    wait;
-  end process;
-
+  -- one line per clock up to clock 34:  valid, ready, timestamp out;  (BEAT) when taken (VALID and READY)
   output_process : process
-    variable l : line;
-    variable start   : std_logic := '0';
-    variable update  : std_logic := '0';
-    variable lost    : std_logic := '0';
   begin
+    fold(true);
     wait for 10 ns;
-
-    if (show_output='1') then
-      write (l, String'("c: "));
-      write (l, count, left, 5);
-      write (l, String'("ts: "));
-      hwrite (l, tstamp_in);
-      --write  (l, String'("clk: "));
-      --write  (l, clk);
-      write  (l, String'(" v: "));
-      write (l, valid);
-      write  (l, String'(" r: "));
-      write (l, ready);
-      write  (l, String'(" | ts: 0x"));
-      hwrite (l, tstamp);
-      if (rst = '1') then
-        write (l, String'(" (RESET)"));
-      end if;
-      writeline(output, l);
+    if count < 35 then
+      strip(count, "ts in " & hex(tstamp_in(3 downto 0)) & " | v: " & bits(valid) & " r: " & bits(ready) & " | ts " & hex(tstamp)
+        & mark(valid and ready, "(BEAT)") & mark(rst, "(RESET)"));
+    else
+      fold(false);
+      wait;
     end if;
   end process;
-
-
-
-
-
 end behaviour;

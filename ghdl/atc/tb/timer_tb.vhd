@@ -1,51 +1,43 @@
+----------------------------------------------------------------------------------------------------
+-- timer_tb:  timer test bench
+--
+-- A strobe every CONFIG clocks.
+--
+-- Shows one line per clock: strobe, (STROBE) on each strobe.
+--
+-- Scenario: a strobe every 3 clocks  -- (alternatives in comments)
+----------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.std_logic_textio.all;
-use std.textio.all;
+library work;
 use work.common.all;
+use work.tb_utils.all;
 
 entity timer_tb is
 end;
 
 architecture behavioral of timer_tb is
-
-  component timer is
-    port (
-      CLK_I      : in  std_logic;
-      RST_I      : in  std_logic;
-      CONFIG_I   : in  std_logic_vector(31 downto 0);
-      STROBE_O   : out std_logic
-    );
-  end component;
-
-  signal count       : integer := 0;
-  signal show_output : std_logic := '0';
-
-  signal clk         : std_logic := '0';
-  signal rst         : std_logic := '1';
-  signal config      : std_logic_vector(31 downto 0) := x"00000003";
-  signal strobe      : std_logic;
-
+  signal count  : integer := 0;
+  signal clk    : std_logic := '0';
+  signal rst    : std_logic := '1';
+  signal strobe : std_logic;
+  signal config : std_logic_vector(31 downto 0);
 begin
+  -- the timer configuration (alternatives in comments):
+  config <= x"00000003";                                        -- a strobe every 3 clocks
+  --config <= x"00000005";                                      -- a strobe every 5 clocks
+  --config <= x"00000001";                                      -- a strobe every clock
 
-  uut: timer port map (
-    CLK_I      => clk,
-    RST_I      => rst,
-    CONFIG_I   => config,
-    STROBE_O   => strobe
+  uut: entity work.timer port map (
+    CLK_I    => clk,
+    RST_I    => rst,
+    CONFIG_I => config,
+    STROBE_O => strobe
   );
 
-  -- clock: 10 ns period
   clk <= not clk after 5 ns;
-
-  -- reset: deassert after 2 cycles
   rst <= '0' after 21 ns;
 
-  -- show output after reset
-  show_output <= '1' after 21 ns;
-
-  -- count clock cycles
   count_process : process
   begin
     wait until rising_edge(clk);
@@ -53,22 +45,11 @@ begin
   end process;
 
   output_process : process
-    variable l : line;
   begin
-    wait for 10 ns;
-    if show_output = '1' then
-      write  (l, String'("c: "));
-      write  (l, count, left, 5);
-      write  (l, String'(" clk: "));
-      write  (l, clk);
-      write  (l, String'("| strobe: "));
-      write  (l, strobe);
-      write  (l, String'(" config: "));
-      write  (l, config);
-      if rst = '1' then
-        write (l, String'(" (RESET)"));
-      end if;
-      writeline(output, l);
-    end if;
+    wait for 21 ns;
+    loop
+      wait for 10 ns;
+      strip(count, "strobe " & bits(strobe) & mark(strobe, "(STROBE)"));
+    end loop;
   end process;
 end;

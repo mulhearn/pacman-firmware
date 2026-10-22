@@ -72,7 +72,7 @@ architecture behavioral of rx_chan is
   signal valid      : std_logic := '0';  --AXI valid
   signal lost       : std_logic;
   signal frame_err  : std_logic;
-  signal noise      : std_logic;  -- majority vote non-unanimous and sample enable
+  signal noisy      : std_logic;  -- majority vote non-unanimous and sample enable
 
   signal start      : std_logic;
   signal update     : std_logic;
@@ -122,7 +122,7 @@ begin
 
   rx_dissent <= '1' when (rx_taps(0) /= rx_taps(1)) or (rx_taps(1) /= rx_taps(2)) else '0';
 
-  noise <= '1' when rx_dissent='1' and sample_en='1' else '0';
+  noisy <= '1' when rx_dissent='1' and sample_en='1' else '0';
 
   rx_fall <= '1' when (rx_taps(0) = '0' and rx_taps(1) = '0' and rx_taps(2) = '1') else '0';
 
@@ -216,8 +216,6 @@ begin
           if sample_en = '1' then
             state <= IDLE;
           end if;
-        when others =>
-          state <= IDLE;
       end case;
     end if;
   end process;
@@ -283,7 +281,7 @@ begin
     6      => lost,
     7      => frame_err,
 
-    8      => noise,
+    8      => noisy,
     9      => BAUD_I,
     10     => sample_en,
     11     => rx_dissent,

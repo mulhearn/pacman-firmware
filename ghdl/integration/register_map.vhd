@@ -11,6 +11,10 @@ package register_map is
   constant C_SCOPE_UPPER_TX : integer := 2#00#;   -- TX     =     = 0b00XX
   constant C_SCOPE_UPPER_RX : integer := 2#01#;   -- RX     =     = 0b01XX
 
+  -- TX and RX address:  scope (2 bits), chan (6 bits), register (8 bits).  Special channels:
+  constant C_CHAN_BROADCAST : integer := 16#3B#;  -- write to every UART
+  constant C_CHAN_GLOBAL    : integer := 16#3F#;  -- registers not specific to a UART
+
   --
   -- Registers with SCOPE=GLOBAL
   --
@@ -65,7 +69,7 @@ package register_map is
   --
   -- Per UART registers, with chan = 0x00-0x28, and broadcast chan=0x3B (if writable):
   constant C_ADDR_TX_UART_STATUS    : integer := 16#00#; -- Read Only
-  constant C_ADDR_TX_UART_CONFIG    : integer := 16#04#; -- Read Only
+  constant C_ADDR_TX_UART_CONFIG    : integer := 16#04#;
   constant C_ADDR_TX_UART_STARTS    : integer := 16#20#;
   constant C_ADDR_TX_UART_BEATS     : integer := 16#24#; -- count valid='1' & ready='1'
 

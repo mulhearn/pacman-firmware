@@ -1,42 +1,36 @@
+----------------------------------------------------------------------------------------------------
+-- tx_data_mux_tb:  TX data multiplexer test bench
+--
+-- Select one of the 40 UART TX data words.  The output follows the select one clock later
+-- (registered);  select 3F (no UART) gives zero.
+--
+-- Shows one line per clock: sel | out.
+--
+-- Scenario: selects 1, 2, then 3F
+----------------------------------------------------------------------------------------------------
 library ieee;
-use std.textio.all;
-use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use IEEE.std_logic_textio.all;  -- use -fsynopsys or --std=08
 library work;
 use work.common.all;
+use work.tb_utils.all;
 
---  Defines a testbench (without any ports)
 entity tx_data_mux_tb is
 end tx_data_mux_tb;
 
 architecture behaviour of tx_data_mux_tb is
-  component tx_data_mux is
-    port (
-      CLK_I      : in std_logic;
-      RST_I      : in std_logic;
-      SEL_I      : in  std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      DATA_I     : in  uart_data_array_t;
-      DATA_O     : out std_logic_vector(C_UART_DATA_WIDTH-1 downto 0)
-    );
-  end component;
-
-  signal count    : integer := 0;
-  signal clk      : std_logic;
-  signal rst      : std_logic;
-
-  signal sel      : std_logic_vector(C_SELECT_WIDTH-1 downto 0) := (others => '0');
-  signal data     : uart_data_array_t := (others => (others => '0'));
-  signal dout     : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-
+  signal count : integer := 0;
+  signal clk   : std_logic;
+  signal rst   : std_logic;
+  signal sel   : std_logic_vector(C_SELECT_WIDTH-1 downto 0) := (others => '0');
+  signal data  : uart_data_array_t := (others => (others => '0'));
+  signal dout  : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
 begin
-
-  uut: tx_data_mux port map (
-    CLK_I           => clk,
-    RST_I           => rst,
-    SEL_I           => sel,
-    DATA_I          => data,
-    DATA_O          => dout
+  uut: entity work.tx_data_mux port map (
+    CLK_I  => clk,
+    RST_I  => rst,
+    SEL_I  => sel,
+    DATA_I => data,
+    DATA_O => dout
   );
 
   rst_process : process
@@ -58,7 +52,6 @@ begin
 
   data_process : process
   begin
-    data <= (others => (others => '0'));
     data(0)(15 downto 0) <= x"1234";
     data(1)(15 downto 0) <= x"AAAA";
     data(2)(15 downto 0) <= x"BBBB";
@@ -69,8 +62,7 @@ begin
   select_process : process
   begin
     sel <= (others => '0');
-    wait for 1 ns;
-    wait for 20 ns;
+    wait for 21 ns;
     sel(3 downto 0) <= x"1";
     wait for 10 ns;
     sel(3 downto 0) <= x"2";
@@ -80,21 +72,13 @@ begin
   end process;
 
   output_process : process
-    variable l : line;
   begin
-    wait for 10 ns;
-
-    write (l, String'("c: "));
-    write (l, count, left, 4);
-    write (l, String'(" sel: 0x"));
-    hwrite (l, "00" & sel);
-    write (l, String'(" out: 0x"));
-    hwrite (l, dout);
-    if (rst = '1') then
-      write (l, String'(" (RESET)"));
-    end if;
-
-    writeline(output, l);
+    fold(true);
+    while count < 10 loop
+      wait for 10 ns;
+      strip(count, "sel " & hex("00" & sel) & " | out " & hex(dout) & mark(rst, "(RESET)"));
+    end loop;
+    fold(false);
+    wait;
   end process;
-
 end behaviour;
