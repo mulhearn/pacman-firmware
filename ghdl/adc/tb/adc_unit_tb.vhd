@@ -38,7 +38,10 @@ architecture behaviour of adc_unit_tb is
       ADC_EN_O            : out std_logic;
       ADC_CLK_O           : out std_logic;
       ADC_DATA_I          : in  std_logic_vector(ADC_DATA_WIDTH-1 downto 0);
-      ADC_DOF_I           : in  std_logic
+      ADC_DOF_I           : in  std_logic;
+      TIMESTAMP_I         : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      CROSS_TRIGGER_I     : in  std_logic;
+      CROSS_TRIGGER_O     : out std_logic
     );
   end component;
 
@@ -84,7 +87,10 @@ begin
     ADC_DATA_I          => di,
     ADC_DOF_I           => diof,
     ADC_EN_O            => adc_en,
-    ADC_CLK_O           => adc_clk
+    ADC_CLK_O           => adc_clk,
+    TIMESTAMP_I         => (others => '0'),
+    CROSS_TRIGGER_I     => '0',
+    CROSS_TRIGGER_O     => open
     --BRAM_DATA_O         => do,
     --BRAM_ADDR_O         => addr,
     --BRAM_WEN_O          => wen

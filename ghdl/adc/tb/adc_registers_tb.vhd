@@ -28,7 +28,30 @@ architecture behaviour of adc_registers_tb is
 
       CONFIG_O            : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       --STATUS_I            : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      LOOK_I              : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+      LOOK_I              : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+
+      EMUL_MIN_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      EMUL_MAX_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      EMUL_STEP_O         : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      EMUL_PERIOD_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      MUX_SELECT_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CMP_THRESH_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CMP_SWING_O         : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      CMP_LEVEL_I         : in  std_logic;
+
+      PERIOD_O            : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      MODE_O              : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      TRIG_O              : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      POST_O              : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      ARM_O               : out std_logic;
+      FORCE_O             : out std_logic;
+      START_O             : out std_logic;
+      NEXT_O              : out std_logic;
+      CAPTURE_STATUS_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      TRIG_POS_I          : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      COUNT_I             : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      TS_I                : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
+      DATA_I              : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
       );
   end component;
   signal count     : integer := 0;
@@ -61,7 +84,30 @@ begin
       S_REGBUS_RB_WACK    => wack,
 
       CONFIG_O            => config,
-      LOOK_I              => x"00000123"
+      LOOK_I              => x"00000123",
+
+      EMUL_MIN_O          => open,
+      EMUL_MAX_O          => open,
+      EMUL_STEP_O         => open,
+      EMUL_PERIOD_O       => open,
+      MUX_SELECT_O        => open,
+      CMP_THRESH_O        => open,
+      CMP_SWING_O         => open,
+      CMP_LEVEL_I         => '0',
+
+      PERIOD_O            => open,
+      MODE_O              => open,
+      TRIG_O              => open,
+      POST_O              => open,
+      ARM_O               => open,
+      FORCE_O             => open,
+      START_O             => open,
+      NEXT_O              => open,
+      CAPTURE_STATUS_I    => x"00000004",
+      TRIG_POS_I          => x"0000002A",
+      COUNT_I             => x"00004000",
+      TS_I                => x"1111111122222222",
+      DATA_I              => x"00002ABC"
       );
 
   rst_process : process
