@@ -41,6 +41,9 @@ entity tx_unit is
     -- POSI output for all registers:
     POSI_O               : out std_logic_vector(C_NUM_UART-1 downto 0);
 
+    -- status to the logic analyzer unit (none defined yet:  zero)
+    STATUS_O             : out std_logic_vector(C_STATUS_BITS-1 downto 0);
+
     -- Debugging:
     DEBUG_O              : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
   );
@@ -65,6 +68,8 @@ architecture behaviour of tx_unit is
   signal look_uart_data    : std_logic_vector(C_UART_DATA_WIDTH-1 downto 0)  := (others => '0');
 
 begin
+  STATUS_O <= (others => '0');
+
   clk <= ACLK;
   rst <= RST_I;
 

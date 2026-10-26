@@ -51,7 +51,8 @@ begin
     TIMESTAMP_O         => timestamp,
     G_O                 => atc_g,
     H_O                 => atc_h,
-    RX_MARKER_O         => atc_m
+    RX_MARKER_O         => atc_m,
+    STATUS_O            => open
   );
 
   rst_process : process

@@ -34,15 +34,6 @@ architecture behaviour of regbus_hub_tb is
       PA_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       PA_REGBUS_RB_WACK    : in   std_logic;
 
-      PB_REGBUS_RB_RUPDATE : out  std_logic;
-      PB_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      PB_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PB_REGBUS_RB_RACK    : in   std_logic;
-      PB_REGBUS_RB_WUPDATE : out  std_logic;
-      PB_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      PB_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PB_REGBUS_RB_WACK    : in   std_logic;
-
       PL_REGBUS_RB_RUPDATE : out  std_logic;
       PL_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
       PL_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -70,6 +61,23 @@ architecture behaviour of regbus_hub_tb is
       PN_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       PN_REGBUS_RB_WACK    : in   std_logic;
 
+      PO_REGBUS_RB_RUPDATE : out  std_logic;
+      PO_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      PO_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PO_REGBUS_RB_RACK    : in   std_logic;
+      PO_REGBUS_RB_WUPDATE : out  std_logic;
+      PO_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      PO_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PO_REGBUS_RB_WACK    : in   std_logic;
+      PP_REGBUS_RB_RUPDATE : out  std_logic;
+      PP_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      PP_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PP_REGBUS_RB_RACK    : in   std_logic;
+      PP_REGBUS_RB_WUPDATE : out  std_logic;
+      PP_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      PP_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      PP_REGBUS_RB_WACK    : in   std_logic;
+
       DEBUG                 : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
     );
   end component;
@@ -91,18 +99,13 @@ architecture behaviour of regbus_hub_tb is
   signal s_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal s_wack    : std_logic;
 
-  -- PA/PB: unused in this TB, tied inert (no ack, no data)
+  -- PA: unused in this TB, tied inert (no ack, no data)
   signal pa_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
   signal pa_rupdate : std_logic;
   signal pa_wupdate : std_logic;
   signal pa_waddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
   signal pa_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
-  signal pb_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-  signal pb_rupdate : std_logic;
-  signal pb_wupdate : std_logic;
-  signal pb_waddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-  signal pb_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
   -- PL: the one primary under test
   signal pl_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
@@ -114,7 +117,7 @@ architecture behaviour of regbus_hub_tb is
   signal pl_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal pl_wack    : std_logic := '0';
 
-  -- PM/PN: unused in this TB, tied inert
+  -- PM/PN/PO/PP: unused in this TB, tied inert
   signal pm_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
   signal pm_rupdate : std_logic;
   signal pm_wupdate : std_logic;
@@ -126,6 +129,17 @@ architecture behaviour of regbus_hub_tb is
   signal pn_wupdate : std_logic;
   signal pn_waddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
   signal pn_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+
+  signal po_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+  signal po_rupdate : std_logic;
+  signal po_wupdate : std_logic;
+  signal po_waddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+  signal po_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal pp_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+  signal pp_rupdate : std_logic;
+  signal pp_wupdate : std_logic;
+  signal pp_waddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+  signal pp_wdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
   signal pl_resp_toggle : std_logic := '0';
 
@@ -155,14 +169,6 @@ begin
       PA_REGBUS_RB_WDATA   => pa_wdata,
       PA_REGBUS_RB_WACK    => '0',
 
-      PB_REGBUS_RB_RUPDATE => pb_rupdate,
-      PB_REGBUS_RB_RADDR   => pb_raddr,
-      PB_REGBUS_RB_RDATA   => x"00000000",
-      PB_REGBUS_RB_RACK    => '0',
-      PB_REGBUS_RB_WUPDATE => pb_wupdate,
-      PB_REGBUS_RB_WADDR   => pb_waddr,
-      PB_REGBUS_RB_WDATA   => pb_wdata,
-      PB_REGBUS_RB_WACK    => '0',
 
       PL_REGBUS_RB_RUPDATE => pl_rupdate,
       PL_REGBUS_RB_RADDR   => pl_raddr,
@@ -190,6 +196,23 @@ begin
       PN_REGBUS_RB_WADDR   => pn_waddr,
       PN_REGBUS_RB_WDATA   => pn_wdata,
       PN_REGBUS_RB_WACK    => '0',
+
+      PO_REGBUS_RB_RUPDATE => po_rupdate,
+      PO_REGBUS_RB_RADDR   => po_raddr,
+      PO_REGBUS_RB_RDATA   => x"00000000",
+      PO_REGBUS_RB_RACK    => '0',
+      PO_REGBUS_RB_WUPDATE => po_wupdate,
+      PO_REGBUS_RB_WADDR   => po_waddr,
+      PO_REGBUS_RB_WDATA   => po_wdata,
+      PO_REGBUS_RB_WACK    => '0',
+      PP_REGBUS_RB_RUPDATE => pp_rupdate,
+      PP_REGBUS_RB_RADDR   => pp_raddr,
+      PP_REGBUS_RB_RDATA   => x"00000000",
+      PP_REGBUS_RB_RACK    => '0',
+      PP_REGBUS_RB_WUPDATE => pp_wupdate,
+      PP_REGBUS_RB_WADDR   => pp_waddr,
+      PP_REGBUS_RB_WDATA   => pp_wdata,
+      PP_REGBUS_RB_WACK    => '0',
 
       DEBUG => open
       );

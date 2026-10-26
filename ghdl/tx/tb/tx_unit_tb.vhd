@@ -57,6 +57,7 @@ begin
     S_REGBUS_RB_WDATA   => rb.wdata,
     S_REGBUS_RB_WACK    => rbr.wack,
     POSI_O              => posi,
+    STATUS_O            => open,
     DEBUG_O             => debug
   );
 

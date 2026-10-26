@@ -5,11 +5,11 @@ use work.common.all;
 
 entity regbus_hub is
   port (
-    -- Secondary REGBUS domain clock/reset (also PA/PB/PC domain)
+    -- Secondary REGBUS domain clock/reset (also the secondary-domain ports)
     S_CLK_I               : in  std_logic;
     S_RST_I               : in  std_logic;
 
-    -- Primary PL/PM/PN domain clock/reset
+    -- Primary domain clock/reset (the primary-domain ports)
     P_CLK_I                : in  std_logic;
     P_RST_I                : in  std_logic;
 
@@ -35,27 +35,16 @@ entity regbus_hub is
     PA_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     PA_REGBUS_RB_WACK    : in   std_logic;
 
-    -- Primary B REGBUS (S_CLK_I domain)
-    PB_REGBUS_RB_RUPDATE : out  std_logic;
-    PB_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    PB_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    PB_REGBUS_RB_RACK    : in   std_logic;
+    -- Primary B REGBUS (S_CLK_I domain):  not in use;  to add it, uncomment here and below, N_SEC 3
+    --PB_REGBUS_RB_RUPDATE : out  std_logic;
+    --PB_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    --PB_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    --PB_REGBUS_RB_RACK    : in   std_logic;
 
-    PB_REGBUS_RB_WUPDATE : out  std_logic;
-    PB_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    PB_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    PB_REGBUS_RB_WACK    : in   std_logic;
-
-    -- Primary C REGBUS (S_CLK_I domain) -- future addition
-    --PC_REGBUS_RB_RUPDATE : out  std_logic;
-    --PC_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    --PC_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    --PC_REGBUS_RB_RACK    : in   std_logic;
-
-    --PC_REGBUS_RB_WUPDATE : out  std_logic;
-    --PC_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    --PC_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-    --PC_REGBUS_RB_WACK    : in   std_logic;
+    --PB_REGBUS_RB_WUPDATE : out  std_logic;
+    --PB_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    --PB_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    --PB_REGBUS_RB_WACK    : in   std_logic;
 
     -- Primary L REGBUS (P_CLK_I domain)
     PL_REGBUS_RB_RUPDATE : out  std_logic;
@@ -89,6 +78,28 @@ entity regbus_hub is
     PN_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
     PN_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     PN_REGBUS_RB_WACK    : in   std_logic;
+
+    -- Primary O REGBUS (P_CLK_I domain)
+    PO_REGBUS_RB_RUPDATE : out  std_logic;
+    PO_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    PO_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    PO_REGBUS_RB_RACK    : in   std_logic;
+
+    PO_REGBUS_RB_WUPDATE : out  std_logic;
+    PO_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    PO_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    PO_REGBUS_RB_WACK    : in   std_logic;
+
+    -- Primary P REGBUS (P_CLK_I domain)
+    PP_REGBUS_RB_RUPDATE : out  std_logic;
+    PP_REGBUS_RB_RADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    PP_REGBUS_RB_RDATA   : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    PP_REGBUS_RB_RACK    : in   std_logic;
+
+    PP_REGBUS_RB_WUPDATE : out  std_logic;
+    PP_REGBUS_RB_WADDR   : out  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    PP_REGBUS_RB_WDATA   : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    PP_REGBUS_RB_WACK    : in   std_logic;
 
     DEBUG                 : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
     );
@@ -143,30 +154,29 @@ architecture behavioral of regbus_hub is
       );
   end component;
 
-  -- Top-level fanout: secondary -> PA, PB, CDC branch
-  constant N_TOP : integer := 3;  -- future PC -> 4
+  -- Secondary-domain fanout (S_CLK_I):  secondary -> the secondary-domain ports, CDC branch (last index)
+  constant N_SEC : integer := 2;
 
-  signal top_rupdate : std_logic_vector(0 to N_TOP-1);
-  signal top_raddr   : regbus_addr_array_t(0 to N_TOP-1);
-  signal top_rdata   : regbus_data_array_t(0 to N_TOP-1);
-  signal top_rack    : std_logic_vector(0 to N_TOP-1);
-  signal top_wupdate : std_logic_vector(0 to N_TOP-1);
-  signal top_waddr   : regbus_addr_array_t(0 to N_TOP-1);
-  signal top_wdata   : regbus_data_array_t(0 to N_TOP-1);
-  signal top_wack    : std_logic_vector(0 to N_TOP-1);
+  signal sec_rupdate : std_logic_vector(0 to N_SEC-1);
+  signal sec_raddr   : regbus_addr_array_t(0 to N_SEC-1);
+  signal sec_rdata   : regbus_data_array_t(0 to N_SEC-1);
+  signal sec_rack    : std_logic_vector(0 to N_SEC-1);
+  signal sec_wupdate : std_logic_vector(0 to N_SEC-1);
+  signal sec_waddr   : regbus_addr_array_t(0 to N_SEC-1);
+  signal sec_wdata   : regbus_data_array_t(0 to N_SEC-1);
+  signal sec_wack    : std_logic_vector(0 to N_SEC-1);
 
-  -- P_CLK_I-domain fanout: CDC branch -> PL, PM, PN
-  constant N_PLMN : integer := 3;
+  -- Primary-domain fanout (P_CLK_I):  CDC branch -> the primary-domain ports
+  constant N_PRI : integer := 5;
 
-  -- PL/PM/PN-side of the PLMN fanout
-  signal plmn_rupdate : std_logic_vector(0 to N_PLMN-1);
-  signal plmn_raddr   : regbus_addr_array_t(0 to N_PLMN-1);
-  signal plmn_rdata   : regbus_data_array_t(0 to N_PLMN-1);
-  signal plmn_rack    : std_logic_vector(0 to N_PLMN-1);
-  signal plmn_wupdate : std_logic_vector(0 to N_PLMN-1);
-  signal plmn_waddr   : regbus_addr_array_t(0 to N_PLMN-1);
-  signal plmn_wdata   : regbus_data_array_t(0 to N_PLMN-1);
-  signal plmn_wack    : std_logic_vector(0 to N_PLMN-1);
+  signal pri_rupdate : std_logic_vector(0 to N_PRI-1);
+  signal pri_raddr   : regbus_addr_array_t(0 to N_PRI-1);
+  signal pri_rdata   : regbus_data_array_t(0 to N_PRI-1);
+  signal pri_rack    : std_logic_vector(0 to N_PRI-1);
+  signal pri_wupdate : std_logic_vector(0 to N_PRI-1);
+  signal pri_waddr   : regbus_addr_array_t(0 to N_PRI-1);
+  signal pri_wdata   : regbus_data_array_t(0 to N_PRI-1);
+  signal pri_wack    : std_logic_vector(0 to N_PRI-1);
 
     -- u_regbus_cdc's P_CLK_I-domain interface
   signal p_rupdate : std_logic;
@@ -211,10 +221,10 @@ begin
   end process;
 
 
-  -- Top fanout: secondary -> {PA, PB, CDC branch}
-  u_fanout_top : regbus_fanout
+  -- Secondary-domain fanout:  secondary -> {PA, CDC branch}
+  u_fanout_sec : regbus_fanout
     generic map (
-      N_PRIMARY => N_TOP
+      N_PRIMARY => N_SEC
       )
     port map (
       S_REGBUS_RB_RUPDATE  => s_rupdate_reg,
@@ -227,54 +237,44 @@ begin
       S_REGBUS_RB_WDATA    => s_wdata_reg,
       S_REGBUS_RB_WACK     => S_REGBUS_RB_WACK,
 
-      P_REGBUS_RB_RUPDATE  => top_rupdate,
-      P_REGBUS_RB_RADDR    => top_raddr,
-      P_REGBUS_RB_RDATA    => top_rdata,
-      P_REGBUS_RB_RACK     => top_rack,
+      P_REGBUS_RB_RUPDATE  => sec_rupdate,
+      P_REGBUS_RB_RADDR    => sec_raddr,
+      P_REGBUS_RB_RDATA    => sec_rdata,
+      P_REGBUS_RB_RACK     => sec_rack,
 
-      P_REGBUS_RB_WUPDATE  => top_wupdate,
-      P_REGBUS_RB_WADDR    => top_waddr,
-      P_REGBUS_RB_WDATA    => top_wdata,
-      P_REGBUS_RB_WACK     => top_wack
+      P_REGBUS_RB_WUPDATE  => sec_wupdate,
+      P_REGBUS_RB_WADDR    => sec_waddr,
+      P_REGBUS_RB_WDATA    => sec_wdata,
+      P_REGBUS_RB_WACK     => sec_wack
       );
 
   -- PA <-> index 0
-  PA_REGBUS_RB_RUPDATE <= top_rupdate(0);
-  PA_REGBUS_RB_RADDR   <= top_raddr(0);
-  top_rdata(0)          <= PA_REGBUS_RB_RDATA;
-  top_rack(0)           <= PA_REGBUS_RB_RACK;
-  PA_REGBUS_RB_WUPDATE <= top_wupdate(0);
-  PA_REGBUS_RB_WADDR   <= top_waddr(0);
-  PA_REGBUS_RB_WDATA   <= top_wdata(0);
-  top_wack(0)           <= PA_REGBUS_RB_WACK;
+  PA_REGBUS_RB_RUPDATE <= sec_rupdate(0);
+  PA_REGBUS_RB_RADDR   <= sec_raddr(0);
+  sec_rdata(0)          <= PA_REGBUS_RB_RDATA;
+  sec_rack(0)           <= PA_REGBUS_RB_RACK;
+  PA_REGBUS_RB_WUPDATE <= sec_wupdate(0);
+  PA_REGBUS_RB_WADDR   <= sec_waddr(0);
+  PA_REGBUS_RB_WDATA   <= sec_wdata(0);
+  sec_wack(0)           <= PA_REGBUS_RB_WACK;
 
-  -- PB <-> index 1
-  PB_REGBUS_RB_RUPDATE <= top_rupdate(1);
-  PB_REGBUS_RB_RADDR   <= top_raddr(1);
-  top_rdata(1)          <= PB_REGBUS_RB_RDATA;
-  top_rack(1)           <= PB_REGBUS_RB_RACK;
-  PB_REGBUS_RB_WUPDATE <= top_wupdate(1);
-  PB_REGBUS_RB_WADDR   <= top_waddr(1);
-  PB_REGBUS_RB_WDATA   <= top_wdata(1);
-  top_wack(1)           <= PB_REGBUS_RB_WACK;
-
-  -- future: PC <-> index 3, bump N_TOP to 4 above and uncomment the port
-  --PC_REGBUS_RB_RUPDATE <= top_rupdate(3);
-  --PC_REGBUS_RB_RADDR   <= top_raddr(3);
-  --top_rdata(3)          <= PC_REGBUS_RB_RDATA;
-  --top_rack(3)           <= PC_REGBUS_RB_RACK;
-  --PC_REGBUS_RB_WUPDATE <= top_wupdate(3);
-  --PC_REGBUS_RB_WADDR   <= top_waddr(3);
-  --PC_REGBUS_RB_WDATA   <= top_wdata(3);
-  --top_wack(3)           <= PC_REGBUS_RB_WACK;
+  -- PB (not in use) <-> index 1, the CDC branch then index 2
+  --PB_REGBUS_RB_RUPDATE <= sec_rupdate(1);
+  --PB_REGBUS_RB_RADDR   <= sec_raddr(1);
+  --sec_rdata(1)          <= PB_REGBUS_RB_RDATA;
+  --sec_rack(1)           <= PB_REGBUS_RB_RACK;
+  --PB_REGBUS_RB_WUPDATE <= sec_wupdate(1);
+  --PB_REGBUS_RB_WADDR   <= sec_waddr(1);
+  --PB_REGBUS_RB_WDATA   <= sec_wdata(1);
+  --sec_wack(1)           <= PB_REGBUS_RB_WACK;
 
   ---------------------------------------------------------------------------
-  -- CDC: S_CLK_I -> P_CLK_I strobes, index 2. RDATA masking (zero until this
+  -- CDC: S_CLK_I -> P_CLK_I strobes, index N_SEC-1. RDATA masking (zero until this
   -- branch's own ack lands) happens inside regbus_cdc. ADDR/WDATA cross as
   -- plain combinational wires below, held stable by the req/ack handshake.
   --
-  -- Assumption: every request enters the CDC, including those for PA/PB,
-  -- which get no ack from this branch.  After a PA/PB access the S side moves
+  -- Assumption: every request enters the CDC, including those for PA,
+  -- which get no ack from this branch.  After a PA access the S side moves
   -- on while that strobe is still crossing (about 4 P_CLK_I cycles); if the
   -- next request arrived within that time, the strobe would pick up its
   -- address.  But the AXI-Lite from the PS is not that fast to cause this race
@@ -287,11 +287,11 @@ begin
     port map (
       S_CLK_I               => S_CLK_I,
       S_RST_I                => S_RST_I,
-      S_REGBUS_RB_RUPDATE   => top_rupdate(2),
-      S_REGBUS_RB_RACK      => top_rack(2),
-      S_REGBUS_RB_RDATA     => top_rdata(2),
-      S_REGBUS_RB_WUPDATE   => top_wupdate(2),
-      S_REGBUS_RB_WACK      => top_wack(2),
+      S_REGBUS_RB_RUPDATE   => sec_rupdate(N_SEC-1),
+      S_REGBUS_RB_RACK      => sec_rack(N_SEC-1),
+      S_REGBUS_RB_RDATA     => sec_rdata(N_SEC-1),
+      S_REGBUS_RB_WUPDATE   => sec_wupdate(N_SEC-1),
+      S_REGBUS_RB_WACK      => sec_wack(N_SEC-1),
 
       P_CLK_I                => P_CLK_I,
       P_RST_I                => P_RST_I,
@@ -303,9 +303,9 @@ begin
       );
 
   -- ADDR/WDATA passthrough into the P_CLK_I domain (quasi-static, no register)
-  p_raddr <= top_raddr(2);
-  p_waddr <= top_waddr(2);
-  p_wdata <= top_wdata(2);
+  p_raddr <= sec_raddr(N_SEC-1);
+  p_waddr <= sec_waddr(N_SEC-1);
+  p_wdata <= sec_wdata(N_SEC-1);
 
   process(P_CLK_I, P_RST_I)
   begin
@@ -325,11 +325,11 @@ begin
   end process;
 
   ---------------------------------------------------------------------------
-  -- PL/PM/PN fanout (P_CLK_I domain, behind the CDC)
+  -- Primary-domain fanout (P_CLK_I domain, behind the CDC)
   ---------------------------------------------------------------------------
-  u_fanout_plmn : regbus_fanout
+  u_fanout_pri : regbus_fanout
     generic map (
-      N_PRIMARY => N_PLMN
+      N_PRIMARY => N_PRI
       )
     port map (
       S_REGBUS_RB_RUPDATE  => p_rupdate_reg,
@@ -342,46 +342,66 @@ begin
       S_REGBUS_RB_WDATA    => p_wdata_reg,
       S_REGBUS_RB_WACK     => p_wack,
 
-      P_REGBUS_RB_RUPDATE  => plmn_rupdate,
-      P_REGBUS_RB_RADDR    => plmn_raddr,
-      P_REGBUS_RB_RDATA    => plmn_rdata,
-      P_REGBUS_RB_RACK     => plmn_rack,
+      P_REGBUS_RB_RUPDATE  => pri_rupdate,
+      P_REGBUS_RB_RADDR    => pri_raddr,
+      P_REGBUS_RB_RDATA    => pri_rdata,
+      P_REGBUS_RB_RACK     => pri_rack,
 
-      P_REGBUS_RB_WUPDATE  => plmn_wupdate,
-      P_REGBUS_RB_WADDR    => plmn_waddr,
-      P_REGBUS_RB_WDATA    => plmn_wdata,
-      P_REGBUS_RB_WACK     => plmn_wack
+      P_REGBUS_RB_WUPDATE  => pri_wupdate,
+      P_REGBUS_RB_WADDR    => pri_waddr,
+      P_REGBUS_RB_WDATA    => pri_wdata,
+      P_REGBUS_RB_WACK     => pri_wack
       );
 
   -- PL <-> index 0
-  PL_REGBUS_RB_RUPDATE <= plmn_rupdate(0);
-  PL_REGBUS_RB_RADDR   <= plmn_raddr(0);
-  plmn_rdata(0)         <= PL_REGBUS_RB_RDATA;
-  plmn_rack(0)          <= PL_REGBUS_RB_RACK;
-  PL_REGBUS_RB_WUPDATE <= plmn_wupdate(0);
-  PL_REGBUS_RB_WADDR   <= plmn_waddr(0);
-  PL_REGBUS_RB_WDATA   <= plmn_wdata(0);
-  plmn_wack(0)          <= PL_REGBUS_RB_WACK;
+  PL_REGBUS_RB_RUPDATE <= pri_rupdate(0);
+  PL_REGBUS_RB_RADDR   <= pri_raddr(0);
+  pri_rdata(0)         <= PL_REGBUS_RB_RDATA;
+  pri_rack(0)          <= PL_REGBUS_RB_RACK;
+  PL_REGBUS_RB_WUPDATE <= pri_wupdate(0);
+  PL_REGBUS_RB_WADDR   <= pri_waddr(0);
+  PL_REGBUS_RB_WDATA   <= pri_wdata(0);
+  pri_wack(0)          <= PL_REGBUS_RB_WACK;
 
   -- PM <-> index 1
-  PM_REGBUS_RB_RUPDATE <= plmn_rupdate(1);
-  PM_REGBUS_RB_RADDR   <= plmn_raddr(1);
-  plmn_rdata(1)         <= PM_REGBUS_RB_RDATA;
-  plmn_rack(1)          <= PM_REGBUS_RB_RACK;
-  PM_REGBUS_RB_WUPDATE <= plmn_wupdate(1);
-  PM_REGBUS_RB_WADDR   <= plmn_waddr(1);
-  PM_REGBUS_RB_WDATA   <= plmn_wdata(1);
-  plmn_wack(1)          <= PM_REGBUS_RB_WACK;
+  PM_REGBUS_RB_RUPDATE <= pri_rupdate(1);
+  PM_REGBUS_RB_RADDR   <= pri_raddr(1);
+  pri_rdata(1)         <= PM_REGBUS_RB_RDATA;
+  pri_rack(1)          <= PM_REGBUS_RB_RACK;
+  PM_REGBUS_RB_WUPDATE <= pri_wupdate(1);
+  PM_REGBUS_RB_WADDR   <= pri_waddr(1);
+  PM_REGBUS_RB_WDATA   <= pri_wdata(1);
+  pri_wack(1)          <= PM_REGBUS_RB_WACK;
 
   -- PN <-> index 2
-  PN_REGBUS_RB_RUPDATE <= plmn_rupdate(2);
-  PN_REGBUS_RB_RADDR   <= plmn_raddr(2);
-  plmn_rdata(2)         <= PN_REGBUS_RB_RDATA;
-  plmn_rack(2)          <= PN_REGBUS_RB_RACK;
-  PN_REGBUS_RB_WUPDATE <= plmn_wupdate(2);
-  PN_REGBUS_RB_WADDR   <= plmn_waddr(2);
-  PN_REGBUS_RB_WDATA   <= plmn_wdata(2);
-  plmn_wack(2)          <= PN_REGBUS_RB_WACK;
+  PN_REGBUS_RB_RUPDATE <= pri_rupdate(2);
+  PN_REGBUS_RB_RADDR   <= pri_raddr(2);
+  pri_rdata(2)         <= PN_REGBUS_RB_RDATA;
+  pri_rack(2)          <= PN_REGBUS_RB_RACK;
+  PN_REGBUS_RB_WUPDATE <= pri_wupdate(2);
+  PN_REGBUS_RB_WADDR   <= pri_waddr(2);
+  PN_REGBUS_RB_WDATA   <= pri_wdata(2);
+  pri_wack(2)          <= PN_REGBUS_RB_WACK;
+
+  -- PO <-> index 3
+  PO_REGBUS_RB_RUPDATE <= pri_rupdate(3);
+  PO_REGBUS_RB_RADDR   <= pri_raddr(3);
+  pri_rdata(3)         <= PO_REGBUS_RB_RDATA;
+  pri_rack(3)          <= PO_REGBUS_RB_RACK;
+  PO_REGBUS_RB_WUPDATE <= pri_wupdate(3);
+  PO_REGBUS_RB_WADDR   <= pri_waddr(3);
+  PO_REGBUS_RB_WDATA   <= pri_wdata(3);
+  pri_wack(3)          <= PO_REGBUS_RB_WACK;
+
+  -- PP <-> index 4
+  PP_REGBUS_RB_RUPDATE <= pri_rupdate(4);
+  PP_REGBUS_RB_RADDR   <= pri_raddr(4);
+  pri_rdata(4)         <= PP_REGBUS_RB_RDATA;
+  pri_rack(4)          <= PP_REGBUS_RB_RACK;
+  PP_REGBUS_RB_WUPDATE <= pri_wupdate(4);
+  PP_REGBUS_RB_WADDR   <= pri_waddr(4);
+  PP_REGBUS_RB_WDATA   <= pri_wdata(4);
+  pri_wack(4)          <= PP_REGBUS_RB_WACK;
 
   DEBUG <= (others => '0');
 

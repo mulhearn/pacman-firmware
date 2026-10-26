@@ -56,7 +56,9 @@ begin
     RX_MARKER_I         => x"0",
     FIFO_COUNT_I        => x"CCCCCCCC",
     PISO_I              => piso,
+    PISO_SYNC_O         => open,
     LOOPBACK_I          => piso,
+    STATUS_O            => open,
     M_AXIS_TKEEP        => open
   );
 

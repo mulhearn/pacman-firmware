@@ -6,7 +6,7 @@ all: modules-a modules-e testbenches
 modules-a:
 	ghdl -a --warn-all ../integration/common.vhd
 	ghdl -a --warn-all ../integration/register_map.vhd
-	ghdl -a --warn-all rising_edge_sync.vhd
+	ghdl -a --warn-all rising_edge_detect.vhd
 	ghdl -a --warn-all timestamp.vhd
 	ghdl -a --warn-all timer.vhd
 	ghdl -a --warn-all atc_timer.vhd
@@ -18,7 +18,7 @@ modules-a:
 	ghdl -a --warn-all atc_unit.vhd
 
 modules-e:
-	ghdl -e --warn-all rising_edge_sync
+	ghdl -e --warn-all rising_edge_detect
 	ghdl -e --warn-all timer
 	ghdl -e --warn-all atc_timer
 	ghdl -e --warn-all timestamp
@@ -31,8 +31,8 @@ modules-e:
 
 testbenches:
 	ghdl -a --warn-all -fsynopsys ../integration/tb/tb_utils.vhd
-	ghdl -a --warn-all -fsynopsys tb/rising_edge_sync_tb.vhd
-	ghdl -e --warn-all -fsynopsys rising_edge_sync_tb
+	ghdl -a --warn-all -fsynopsys tb/rising_edge_detect_tb.vhd
+	ghdl -e --warn-all -fsynopsys rising_edge_detect_tb
 	ghdl -a --warn-all -fsynopsys tb/atc_registers_tb.vhd
 	ghdl -e --warn-all -fsynopsys atc_registers_tb
 	ghdl -a --warn-all -fsynopsys tb/timer_tb.vhd
@@ -53,7 +53,7 @@ testbenches:
 	ghdl -e --warn-all -fsynopsys atc_unit_tb
 
 # stop time of each testbench
-STOP_rising_edge_sync_tb = 2us
+STOP_rising_edge_detect_tb = 2us
 STOP_atc_registers_tb    = 10us
 STOP_timer_tb            = 300ns
 STOP_counter_tb          = 300ns
@@ -64,7 +64,7 @@ STOP_timestamp_tb        = 200ns
 STOP_atc_timer_tb        = 300ns
 STOP_atc_unit_tb         = 1us
 
-TESTBENCHES = rising_edge_sync_tb atc_registers_tb timer_tb counter_tb atc_buffer_tb atc_mux_tb atc_counter_tb timestamp_tb atc_timer_tb
+TESTBENCHES = rising_edge_detect_tb atc_registers_tb timer_tb counter_tb atc_buffer_tb atc_mux_tb atc_counter_tb timestamp_tb atc_timer_tb
 
 # a requested name with no stop time is not a testbench here:  stop before building anything
 $(foreach t,$(patsubst run-%,%,$(filter run-%_tb,$(MAKECMDGOALS))),$(if $(STOP_$(t)),,\

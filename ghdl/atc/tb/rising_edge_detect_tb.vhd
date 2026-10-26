@@ -1,10 +1,9 @@
 ----------------------------------------------------------------------------------------------------
--- rising_edge_sync_tb:  rising edge synchronizer test bench
+-- rising_edge_detect_tb:  rising edge detector test bench
 --
--- Rising edge detection on an asynchronous input, synchronized to UCLK (100 ns) with a 4-cycle
--- debounce.
+-- Rising edge detection on an input synchronous to UCLK (100 ns), with a 4-cycle debounce.
 --
--- Shows one line per clock: uclk | asig = the input, update;  (UPDATE) once per accepted edge.
+-- Shows one line per clock: uclk | sig = the input, update;  (UPDATE) once per accepted edge.
 --
 -- Scenario: rising edges;  the input high 100 ns, low 100, high 200, low 100, high 200  --
 -- (alternatives in comments)
@@ -15,44 +14,44 @@ library work;
 use work.common.all;
 use work.tb_utils.all;
 
-entity rising_edge_sync_tb is
-end rising_edge_sync_tb;
+entity rising_edge_detect_tb is
+end rising_edge_detect_tb;
 
-architecture behaviour of rising_edge_sync_tb is
+architecture behaviour of rising_edge_detect_tb is
   signal count  : integer := 0;
   signal clk    : std_logic;
   signal rst    : std_logic;
   signal uclk   : std_logic;
-  signal asig   : std_logic := '0';
+  signal sig   : std_logic := '0';
   signal update : std_logic := '0';
   signal invert : std_logic;
 begin
-  -- the synchronizer configuration (alternatives in comments):
+  -- the detector configuration (alternatives in comments):
   invert <= '0';                                                -- rising edges
   --invert <= '1';                                              -- falling edges
 
-  dut0: entity work.rising_edge_sync
+  dut0: entity work.rising_edge_detect
     generic map (
       DEBOUNCE_CYCLES => 4
     )
     port map (
       CLK_I          => uclk,
       RST_I          => rst,
-      ASYNC_SIGNAL_I => asig,
+      SIGNAL_I       => sig,
       INVERT_I       => invert,
       UPDATE_O       => update
     );
 
   signal_process : process
   begin
-    asig <= '0';
+    sig <= '0';
     wait for 160 ns;
-    asig <= '1'; wait for 100 ns;
-    asig <= '0'; wait for 100 ns;
-    asig <= '1'; wait for 200 ns;
-    asig <= '0'; wait for 100 ns;
-    asig <= '1'; wait for 200 ns;
-    asig <= '0';
+    sig <= '1'; wait for 100 ns;
+    sig <= '0'; wait for 100 ns;
+    sig <= '1'; wait for 200 ns;
+    sig <= '0'; wait for 100 ns;
+    sig <= '1'; wait for 200 ns;
+    sig <= '0';
     wait;
   end process;
 
@@ -86,7 +85,7 @@ begin
     fold(true);
     while count < 120 loop
       wait for 10 ns;
-      strip(count, "uclk " & bits(uclk) & " | asig " & bits(asig) & " update " & bits(update)
+      strip(count, "uclk " & bits(uclk) & " | sig " & bits(sig) & " update " & bits(update)
         & mark(update, "(UPDATE)") & mark(rst, "(RESET)"));
     end loop;
     fold(false);

@@ -14,6 +14,9 @@ use work.common.all;
 -- timestamp output for marking incoming data (TIMESTAMP_O)
 -- markers sent to RX unit to be recorded in data stream (RX_MARKER_O)
 -- front panel LEMO inputs
+-- status output to the logic analyzer unit (STATUS_O):  bit 0 UCLK, 1 BAUD, 2 LEMO A, 3 LEMO B (the input
+--   levels, synchronized, before CONFIG_INPUT's inversion), 7-4 markers M0-M3 (one-clock pulses,
+--   as sent to the RX unit)
 
 entity atc_unit is
   port (
@@ -46,7 +49,10 @@ entity atc_unit is
     -- ASIC clock and abstract control signals
     UCLK_O                : out std_logic;
     G_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0);
-    H_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0)
+    H_O                   : out std_logic_vector(C_NUM_TILE-1 downto 0);
+
+    -- status to the logic analyzer unit
+    STATUS_O              : out std_logic_vector(C_STATUS_BITS-1 downto 0)
     );
 end atc_unit;
 
@@ -63,6 +69,13 @@ architecture behaviour of atc_unit is
   -- stimuli:
   signal lemo_a     : std_logic;
   signal lemo_b     : std_logic;
+  -- the LEMO inputs, synchronized (the only synchronizer on them;  bit 0 A, 1 B), and the ASIC clock
+  signal lemo_meta  : std_logic_vector(1 downto 0) := (others => '1');
+  signal lemo_sync  : std_logic_vector(1 downto 0) := (others => '1');
+  attribute ASYNC_REG : string;
+  attribute ASYNC_REG of lemo_meta : signal is "TRUE";
+  attribute ASYNC_REG of lemo_sync : signal is "TRUE";
+  signal uclk       : std_logic;
   signal poke_a     : std_logic;
   signal mask_a     : std_logic_vector(C_NUM_TILE-1 downto 0);
   signal poke_b     : std_logic;
@@ -128,8 +141,10 @@ begin
     CONFIG_BAUD_I => config_baud,
     UART_O     => uart,
     BAUD_O     => baud,
-    UCLK_O     => UCLK_O
+    UCLK_O     => uclk
   );
+
+  UCLK_O <= uclk;
 
   logic_a_timer: entity work.timer
     port map (
@@ -188,7 +203,19 @@ begin
     TIMESTAMP_I         => ts
   );
 
- lemoa0: entity work.rising_edge_sync
+ -- double flop synchronization of the LEMO inputs:  reset high, as the edge detectors' history
+  process(clk, rst)
+  begin
+    if (rst = '1') then
+      lemo_meta <= (others => '1');
+      lemo_sync <= (others => '1');
+    elsif rising_edge(clk) then
+      lemo_meta <= LEMO_B_I & LEMO_A_I;
+      lemo_sync <= lemo_meta;
+    end if;
+  end process;
+
+ lemoa0: entity work.rising_edge_detect
    generic map(
      DEBOUNCE_CYCLES => 4
      )
@@ -196,19 +223,19 @@ begin
    port map (
      CLK_I  => clk,
      RST_I  => rst,
-     ASYNC_SIGNAL_I => LEMO_A_I,
+     SIGNAL_I => lemo_sync(0),
      INVERT_I => config_input(0),
      UPDATE_O => lemo_a
    );
 
-  lemob0: entity work.rising_edge_sync
+  lemob0: entity work.rising_edge_detect
     generic map(
       DEBOUNCE_CYCLES => 4
      )
    port map (
      CLK_I  => clk,
      RST_I  => rst,
-     ASYNC_SIGNAL_I => LEMO_B_I,
+     SIGNAL_I => lemo_sync(1),
      INVERT_I => config_input(1),
      UPDATE_O => lemo_b
    );
@@ -259,6 +286,8 @@ begin
   );
 
   BAUD_O <= baud;
+
+  STATUS_O <= m & lemo_sync & baud & uclk;
 
   gbuf0: entity work.atc_buffer port map (
     CLK_I       => clk,

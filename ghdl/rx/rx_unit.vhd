@@ -49,9 +49,14 @@ entity rx_unit is
 
     -- RX input (PISO) for each UART channel:
     PISO_I                 : in  std_logic_vector(C_NUM_UART-1 downto 0);
+    -- PISO, synchronized (rx_chan), for the logic analyzer unit:
+    PISO_SYNC_O            : out std_logic_vector(C_NUM_UART-1 downto 0);
 
     -- TX output (POSI) from TX unit for loopback option:
-    LOOPBACK_I             : in  std_logic_vector(C_NUM_UART-1 downto 0)
+    LOOPBACK_I             : in  std_logic_vector(C_NUM_UART-1 downto 0);
+
+    -- status to the logic analyzer unit (none defined yet:  zero)
+    STATUS_O               : out std_logic_vector(C_STATUS_BITS-1 downto 0)
      );
 end rx_unit;
 
@@ -100,6 +105,8 @@ architecture behaviour of rx_unit is
   signal test_pattern       : std_logic;
 
 begin
+  STATUS_O <= (others => '0');
+
   clk <= ACLK;
   rst <= RST_I;
 
@@ -171,6 +178,7 @@ begin
         VALID_O       => valid(i),
         READY_I       => ready(i),
         RX_I          => PISO_I(i),
+        RX_SYNC_O     => PISO_SYNC_O(i),
         LOOPBACK_I    => LOOPBACK_I(i),
         PATTERN_I     => test_pattern,
         EMUL_I        => '1',

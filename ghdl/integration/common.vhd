@@ -14,6 +14,8 @@ package common is
   constant C_UART_SELECT_WIDTH   : integer  := 6;
   -- number of marker bits sent from ATC to RX
   constant C_NUM_MARKER          : integer  := 4;
+  -- status output of each unit (ATC, RX, TX) to the logic analyzer unit:
+  constant C_STATUS_BITS         : integer  := 8;
 
   -- register bus data is 32 bits, address 16 bits.
   constant C_RB_ADDR_WIDTH       : integer  := 16;
