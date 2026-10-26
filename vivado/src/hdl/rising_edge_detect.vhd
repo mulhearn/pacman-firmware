@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.common.all;
 
-entity rising_edge_sync is
+entity rising_edge_detect is
   -- DEBOUNCE_CYCLES: minimum clock-cycles before next pulse
   --
   -- Note that only values > 3 have any effect, as rising edge
@@ -11,12 +11,12 @@ entity rising_edge_sync is
   generic ( DEBOUNCE_CYCLES : integer := 4 );
 
   port (
-    --clock and active-high reset in receiver clock-domain
+    --clock and active-high reset
     CLK_I  : in  std_logic;
     RST_I  : in  std_logic;
 
-    --asynchronous signal in
-    ASYNC_SIGNAL_I : in std_logic;  --CDC
+    --signal in, synchronous to CLK_I (an asynchronous input is synchronized before this, e.g. atc_unit's LEMO)
+    SIGNAL_I       : in std_logic;
 
     --invert input signal (0 means rising edge, 1 means falling edge)
     INVERT_I     : in std_logic;
@@ -27,17 +27,11 @@ entity rising_edge_sync is
   );
 end;
 
-architecture behavioral of rising_edge_sync is
+architecture behavioral of rising_edge_detect is
   signal clk    : std_logic;
   signal rst    : std_logic;
 
-  -- double flopping at clock domain crossing:
-  signal signal_meta : std_logic; -- metastable
-  signal signal_sync : std_logic; -- likely stable
-
-  attribute ASYNC_REG : string;
-  attribute ASYNC_REG of signal_meta: signal is "TRUE";
-  attribute ASYNC_REG of signal_sync: signal is "TRUE";
+  signal signal_in : std_logic;
 
   type debounce_pipe_t is array (natural range <>) of std_logic;
   signal signal_pipe : debounce_pipe_t(1 downto 0);
@@ -49,19 +43,15 @@ begin
   rst <= RST_I;
   UPDATE_O <= pulse;
 
-  -- double flop synchronization of update signal
-  -- synchronize request into board domain
+  signal_in <= SIGNAL_I xor INVERT_I;
+
   signal_process : process(clk, rst)
 
   begin
     if (rst = '1') then
-      signal_meta <= '1';
-      signal_sync <= '1';
       signal_pipe <= (others => '1');
     elsif (rising_edge(clk)) then
-      signal_meta    <= ASYNC_SIGNAL_I xor INVERT_I;
-      signal_sync    <= signal_meta;
-      signal_pipe(0) <= signal_sync;
+      signal_pipe(0) <= signal_in;
       signal_pipe(1) <= signal_pipe(0);
     end if;
   end process;
@@ -74,7 +64,7 @@ begin
     if (rst = '1') then
       pulse <= '0';
     elsif (rising_edge(clk)) then
-      if (signal_sync = '1' and signal_pipe(0) = '1' and signal_pipe(1) = '0' and timeout=0) then
+      if (signal_in = '1' and signal_pipe(0) = '1' and signal_pipe(1) = '0' and timeout=0) then
         timeout := DEBOUNCE_CYCLES;
         pulse <= '1';
       else

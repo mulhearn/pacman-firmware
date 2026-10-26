@@ -126,9 +126,6 @@ begin
               state <= IDLE;
             end if;
           end if;
-
-        when others =>
-          state <= IDLE;
       end case;
     end if;
   end process;
@@ -166,8 +163,6 @@ begin
           if clk_en = '1' then
             tx <= '1';
           end if;
-
-        when others => null;
       end case;
     end if;
   end process;

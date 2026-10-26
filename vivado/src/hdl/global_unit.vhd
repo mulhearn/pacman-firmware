@@ -17,14 +17,14 @@ entity global_unit is
     RST_I                : in std_logic;
 
     --register bus interface
-    S_REGBUS_RB_RADDR	 : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_RDATA	 : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_RADDR    : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_RDATA    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RUPDATE  : in  std_logic;
     S_REGBUS_RB_RACK     : out std_logic;
 
     S_REGBUS_RB_WUPDATE  : in  std_logic;
-    S_REGBUS_RB_WADDR	 : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	 : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR    : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK     : out std_logic;
 
     --register controlled power enables:
@@ -39,47 +39,11 @@ end global_unit;
 -- global_status, and connects them appropriately.
 
 architecture behaviour of global_unit is
-  component global_registers is
-    port (
-      --clock and active-high reset
-      CLK_I                  : in std_logic;
-      RST_I                  : in std_logic;
-
-      S_REGBUS_RB_RADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_RUPDATE    : in  std_logic;
-      S_REGBUS_RB_RACK       : out std_logic;
-
-      S_REGBUS_RB_WUPDATE    : in  std_logic;
-      S_REGBUS_RB_WADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_WACK       : out std_logic;
-
-      ANALOG_PWR_EN_O        : out std_logic;
-      TILE_EN_O              : out std_logic_vector(C_NUM_TILE-1 downto 0);
-      LED_CONFIG_O           : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-
-      GLOBAL_STATUS_I        : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
-  end component;
-
-  component global_status is
-    port (
-      --clock and active-high reset
-      CLK_I              : in std_logic;
-      RST_I              : in std_logic;
-
-      LED_CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      GLOBAL_STATUS_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-
-      LED_O               : out std_logic_vector(C_NUM_LED-1 downto 0)
-    );
-  end component;
 
   signal status         : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
   signal led_config     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0) := (others => '0');
 begin
-  gr0: global_registers port map (
+  gr0: entity work.global_registers port map (
     CLK_I               => ACLK,
     RST_I               => RST_I,
     S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
@@ -96,7 +60,7 @@ begin
     LED_CONFIG_O        => led_config
   );
 
-  gs0: global_status port map (
+  gs0: entity work.global_status port map (
     CLK_I             => ACLK,
     RST_I             => RST_I,
     LED_CONFIG_I      => led_config,

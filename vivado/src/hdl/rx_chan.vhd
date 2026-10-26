@@ -21,6 +21,7 @@ entity rx_chan is
     VALID_O        : out  std_logic;
     READY_I        : in std_logic;
     RX_I           : in std_logic;
+    RX_SYNC_O      : out std_logic;   -- RX_I, synchronized (the only synchronizer on it)
     LOOPBACK_I     : in std_logic;
     PATTERN_I      : in std_logic;
     EMUL_I         : in std_logic;
@@ -33,9 +34,9 @@ architecture behavioral of rx_chan is
   signal clk : std_logic;
   signal rst : std_logic;
 
-  signal rx_comb : std_logic;  -- mux: RX_I / LOOPBACK_I / PATTERN_I / EMUL_I
-  signal rx_meta : std_logic;  -- first sync stage: metastability risk
-  signal rx_sync : std_logic;  -- second sync stage: should be stable
+  signal rx_meta : std_logic;  -- first sync stage of RX_I: metastability risk
+  signal rx_sync : std_logic;  -- second sync stage of RX_I: should be stable
+  signal rx_comb : std_logic;  -- mux: rx_sync / LOOPBACK_I / PATTERN_I / EMUL_I (all synchronous)
   -- pipeline rx_sync history for edge detection and majority voting
   signal rx_taps : std_logic_vector(2 downto 0);
 
@@ -72,7 +73,7 @@ architecture behavioral of rx_chan is
   signal valid      : std_logic := '0';  --AXI valid
   signal lost       : std_logic;
   signal frame_err  : std_logic;
-  signal noise      : std_logic;  -- majority vote non-unanimous and sample enable
+  signal noisy      : std_logic;  -- majority vote non-unanimous and sample enable
 
   signal start      : std_logic;
   signal update     : std_logic;
@@ -82,29 +83,31 @@ begin
   rst <= RST_I;
   VALID_O <= valid;
 
-  -- input mux: selects rx source
-  with cfg_input select rx_comb <=
-    '1'        when "0000",
-    RX_I       when "0001",
-    LOOPBACK_I when "0010",
-    PATTERN_I  when "0100",
-    EMUL_I     when "1000",
-    '1'        when others;
-
-  -- double flop synchronization of RX input (with unknown cable delay phase)
+  -- double flop synchronization of the RX input (with unknown cable delay phase);  the other sources are
+  -- synchronous already
   process(clk, rst)
   begin
     if rst='1' then
       rx_meta <= '1';
       rx_sync <= '1';
     elsif rising_edge(clk) then
-      rx_meta <= rx_comb;
+      rx_meta <= RX_I;
       rx_sync <= rx_meta;
     end if;
   end process;
+  RX_SYNC_O <= rx_sync;
+
+  -- input mux: selects rx source
+  with cfg_input select rx_comb <=
+    '1'        when "0000",
+    rx_sync    when "0001",
+    LOOPBACK_I when "0010",
+    PATTERN_I  when "0100",
+    EMUL_I     when "1000",
+    '1'        when others;
 
   -- pipeline RX input:
-  rx_taps(0) <= rx_sync;  -- alias rx_taps(0) to rx_sync for convenient notation:
+  rx_taps(0) <= rx_comb;  -- alias rx_taps(0) to rx_comb for convenient notation:
   process(clk, rst)
   begin
     if (rst='1') then
@@ -122,7 +125,7 @@ begin
 
   rx_dissent <= '1' when (rx_taps(0) /= rx_taps(1)) or (rx_taps(1) /= rx_taps(2)) else '0';
 
-  noise <= '1' when rx_dissent='1' and sample_en='1' else '0';
+  noisy <= '1' when rx_dissent='1' and sample_en='1' else '0';
 
   rx_fall <= '1' when (rx_taps(0) = '0' and rx_taps(1) = '0' and rx_taps(2) = '1') else '0';
 
@@ -216,8 +219,6 @@ begin
           if sample_en = '1' then
             state <= IDLE;
           end if;
-        when others =>
-          state <= IDLE;
       end case;
     end if;
   end process;
@@ -283,7 +284,7 @@ begin
     6      => lost,
     7      => frame_err,
 
-    8      => noise,
+    8      => noisy,
     9      => BAUD_I,
     10     => sample_en,
     11     => rx_dissent,

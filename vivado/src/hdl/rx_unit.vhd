@@ -49,9 +49,14 @@ entity rx_unit is
 
     -- RX input (PISO) for each UART channel:
     PISO_I                 : in  std_logic_vector(C_NUM_UART-1 downto 0);
+    -- PISO, synchronized (rx_chan), for the logic analyzer unit:
+    PISO_SYNC_O            : out std_logic_vector(C_NUM_UART-1 downto 0);
 
     -- TX output (POSI) from TX unit for loopback option:
-    LOOPBACK_I             : in  std_logic_vector(C_NUM_UART-1 downto 0)
+    LOOPBACK_I             : in  std_logic_vector(C_NUM_UART-1 downto 0);
+
+    -- status to the logic analyzer unit (none defined yet:  zero)
+    STATUS_O               : out std_logic_vector(C_STATUS_BITS-1 downto 0)
      );
 end rx_unit;
 
@@ -98,192 +103,14 @@ architecture behaviour of rx_unit is
   signal pattern_delay      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal pattern_config     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal test_pattern       : std_logic;
-  component rx_buffer is
-    port (
-      CLK_I              : in std_logic;
-      RST_I              : in std_logic;
-      M_AXIS_TDATA       : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
-      M_AXIS_TVALID      : out std_logic;
-      M_AXIS_TREADY      : in  std_logic;
-      M_AXIS_TKEEP       : out std_logic_vector(C_RX_AXIS_WIDTH/8-1 downto 0);
-      M_AXIS_TLAST       : out std_logic;
-      STATUS_O           : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      CONFIG_I           : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      CHAN_SELECT_O      : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      HEADER_I           : in  std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
-      FRAG_A_I           : in  std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
-      FRAG_B_I           : in  std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
-      VALID_I            : in  std_logic_vector(C_RX_NUM_CHAN-1 downto 0);
-      READY_O            : out std_logic_vector(C_RX_NUM_CHAN-1 downto 0);
-      EOP_HEADER_I       : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DEBUG_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  component rx_registers is
-    port (
-      CLK_I	          : in std_logic;
-      RST_I	          : in std_logic;
-
-      S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_RUPDATE : in  std_logic;
-      S_REGBUS_RB_RACK    : out std_logic;
-
-      S_REGBUS_RB_WUPDATE : in  std_logic;
-      S_REGBUS_RB_WADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	  : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      S_REGBUS_RB_WACK    : out std_logic;
-
-      UART_STATUS_I       : in  uart_reg_array_t;
-      UART_CONFIG_O       : out uart_reg_array_t;
-      UART_CHAN_O         : out uart_small_array_t;
-
-      BUFFER_STATUS_I     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      FIFO_COUNT_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      BUFFER_CONFIG_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      BUFFER_ENABLES_O    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PACMAN_O            : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEARTBEAT_CONFIG_O  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      ROLLOVER_CONFIG_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      WORD_TYPE_LUT_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_A_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_B_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_C_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_D_O          : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      EOP_HEADER_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
-      PATTERN_STATUS_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PATTERN_PAYLOAD_O   : out std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      PATTERN_DELAY_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PATTERN_CONFIG_O    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  component rx_chan is
-    port (
-      -- clock and active-high reset
-      CLK_I          : in std_logic;
-      RST_I          : in std_logic;
-      -- sync the start of each baud period:
-      BAUD_I         : in std_logic;
-      CONFIG_I       : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      STATUS_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DATA_O         : out  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O    : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O        : out  std_logic;
-      READY_I        : in std_logic;
-      RX_I           : in std_logic;
-      LOOPBACK_I     : in std_logic;
-      PATTERN_I      : in std_logic;
-      EMUL_I         : in std_logic;
-      TIMESTAMP_I    : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      DEBUG_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  component rx_header is
-    port (
-      CLK_I      : in std_logic;
-      RST_I      : in std_logic;
-      SEL_I      : in  std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      WTYPE_I    : in  std_logic_vector(C_BYTE-1 downto 0);
-      HEADER_A_I : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_B_I : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_C_I : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      HEADER_D_I : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PACMAN_I   : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      CHAN_I     : in uart_small_array_t;
-      HEADER_O   : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
-    );
-  end component;
-
-  component pattern is
-    port (
-      CLK_I           : in  std_logic;
-      RST_I           : in  std_logic;
-      BAUD_I          : in  std_logic;
-      PAYLOAD_I       : in  std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      CONFIG_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      DELAY_I         : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      PATTERN_O       : out std_logic;
-      STATUS_O        : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  component rx_timestamp_mux is
-    port (
-      CLK_I       : in std_logic;
-      RST_I       : in std_logic;
-      SEL_I       : in  std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      TIMESTAMP_I : in  rx_timestamp_array_t;
-      TIMESTAMP_O : out std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
-    );
-  end component;
-
-  component rx_data_mux is
-    port (
-      CLK_I      : in std_logic;
-      RST_I      : in std_logic;
-      SEL_A_I    : in  std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      SEL_B_I    : in  std_logic_vector(C_SELECT_WIDTH-1 downto 0);
-      DATA_I     : in  uart_data_array_t;
-      DATA_A_O   : out std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      DATA_B_O   : out std_logic_vector(C_UART_DATA_WIDTH-1 downto 0);
-      LUT_I      : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      WTYPE_A_O  : out std_logic_vector(C_BYTE-1 downto 0)
-    );
-  end component;
-
-
-  component heartbeat is
-    port (
-      CLK_I       : in  std_logic;
-      RST_I       : in  std_logic;
-      EN_I        : in  std_logic;
-      CONFIG_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O     : out std_logic;
-      READY_I     : in  std_logic;
-      TIMESTAMP_I : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      DEBUG_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  component rollover is
-    port (
-      CLK_I       : in  std_logic;
-      RST_I       : in  std_logic;
-      EN_I        : in  std_logic;
-      CONFIG_I    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
-      TIMESTAMP_O : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O     : out std_logic;
-      READY_I     : in  std_logic;
-      TIMESTAMP_I : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      DEBUG_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
-  end component;
-
-  component marker is
-    port (
-      CLK_I         : in  std_logic;
-      RST_I         : in  std_logic;
-      EN_I          : in  std_logic;
-      TIMESTAMP_O   : out  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      VALID_O       : out std_logic;
-      READY_I       : in  std_logic;
-      TIMESTAMP_I   : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
-      MARKER_I       : in  std_logic;
-      DEBUG_O       : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
-  end component;
 
 begin
+  STATUS_O <= (others => '0');
+
   clk <= ACLK;
   rst <= RST_I;
 
-  uut: rx_buffer port map (
+  uut: entity work.rx_buffer port map (
     CLK_I           => clk,
     RST_I           => rst,
     M_AXIS_TDATA    => M_AXIS_TDATA,
@@ -299,10 +126,11 @@ begin
     FRAG_B_I        => buffer_frag_b,
     VALID_I         => valid,
     READY_O         => ready,
-    EOP_HEADER_I    => eop_header
+    EOP_HEADER_I    => eop_header,
+    DEBUG_O         => open
     );
 
-  reg0: rx_registers port map (
+  reg0: entity work.rx_registers port map (
     CLK_I               => clk,
     RST_I               => rst,
     S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
@@ -338,7 +166,7 @@ begin
     );
 
   grxchan0: for i in 0 to C_NUM_UART-1 generate
-    rxchan0: rx_chan
+    rxchan0: entity work.rx_chan
       port map(
         CLK_I         => clk,
         RST_I         => rst,
@@ -350,14 +178,16 @@ begin
         VALID_O       => valid(i),
         READY_I       => ready(i),
         RX_I          => PISO_I(i),
+        RX_SYNC_O     => PISO_SYNC_O(i),
         LOOPBACK_I    => LOOPBACK_I(i),
         PATTERN_I     => test_pattern,
         EMUL_I        => '1',
-        TIMESTAMP_I   => TIMESTAMP_I
+        TIMESTAMP_I   => TIMESTAMP_I,
+        DEBUG_O       => open
         );
   end generate grxchan0;
 
-  pat0: pattern port map (
+  pat0: entity work.pattern port map (
     CLK_I       => clk,
     RST_I       => rst,
     BAUD_I      => BAUD_I,
@@ -368,8 +198,7 @@ begin
     STATUS_O    => pattern_status
   );
 
-
-  h0: rx_header port map (
+  h0: entity work.rx_header port map (
     CLK_I      => clk,
     RST_I      => rst,
     SEL_I      => buffer_chan_select,
@@ -383,7 +212,7 @@ begin
     HEADER_O   => buffer_header
   );
 
-  ts0: rx_timestamp_mux port map (
+  ts0: entity work.rx_timestamp_mux port map (
     CLK_I           => clk,
     RST_I           => rst,
     SEL_I           => buffer_chan_select,
@@ -391,7 +220,7 @@ begin
     TIMESTAMP_O     => buffer_frag_a
   );
 
-  dm0: rx_data_mux port map (
+  dm0: entity work.rx_data_mux port map (
     CLK_I           => clk,
     RST_I           => rst,
     SEL_A_I         => buffer_chan_select,
@@ -403,7 +232,7 @@ begin
     WTYPE_A_O       => word_type
   );
 
-  hb0: heartbeat port map (
+  hb0: entity work.heartbeat port map (
     CLK_I         => clk,
     RST_I         => rst,
     EN_I          => buffer_enables(0),
@@ -411,10 +240,11 @@ begin
     TIMESTAMP_O   => timestamp(C_NUM_UART),
     VALID_O       => valid(C_NUM_UART),
     READY_I       => ready(C_NUM_UART),
-    TIMESTAMP_I   => TIMESTAMP_I
+    TIMESTAMP_I   => TIMESTAMP_I,
+    DEBUG_O       => open
     );
 
-  ro0: rollover port map (
+  ro0: entity work.rollover port map (
     CLK_I         => clk,
     RST_I         => rst,
     EN_I          => buffer_enables(1),
@@ -422,10 +252,11 @@ begin
     TIMESTAMP_O   => timestamp(C_NUM_UART+1),
     VALID_O       => valid(C_NUM_UART+1),
     READY_I       => ready(C_NUM_UART+1),
-    TIMESTAMP_I   => TIMESTAMP_I
+    TIMESTAMP_I   => TIMESTAMP_I,
+    DEBUG_O       => open
     );
 
-  m0: marker port map (
+  m0: entity work.marker port map (
     CLK_I         => clk,
     RST_I         => rst,
     EN_I          => buffer_enables(2),
@@ -433,10 +264,11 @@ begin
     VALID_O       => valid(C_NUM_UART+2),
     READY_I       => ready(C_NUM_UART+2),
     TIMESTAMP_I   => TIMESTAMP_I,
-    MARKER_I      => RX_MARKER_I(2)
+    MARKER_I      => RX_MARKER_I(2),
+    DEBUG_O       => open
     );
 
-  m1: marker port map (
+  m1: entity work.marker port map (
     CLK_I         => clk,
     RST_I         => rst,
     EN_I          => buffer_enables(3),
@@ -444,9 +276,8 @@ begin
     VALID_O       => valid(C_NUM_UART+3),
     READY_I       => ready(C_NUM_UART+3),
     TIMESTAMP_I   => TIMESTAMP_I,
-    MARKER_I      => RX_MARKER_I(3)
+    MARKER_I      => RX_MARKER_I(3),
+    DEBUG_O       => open
     );
-
-
 
 end behaviour;

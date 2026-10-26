@@ -10,7 +10,9 @@ set_false_path -to [get_pins zsys_i/regbus_hub_0/U0/u_regbus_cdc/wr_ack_sync_s_r
 set_max_delay -datapath_only 20 \
   -from [get_cells {zsys_i/rx_unit_0/U0/reg0/S_REGBUS_RB_RDATA_reg[*] \
                      zsys_i/tx_unit_0/U0/reg0/S_REGBUS_RB_RDATA_reg[*] \
-                     zsys_i/atc_unit_0/U0/atcreg0/rdata_reg[*]}] \
+                     zsys_i/atc_unit_0/U0/atcreg0/rdata_reg[*] \
+                     zsys_i/adc_unit_0/U0/registers/rdata_reg[*] \
+                     zsys_i/la_unit_0/U0/registers/rdata_reg[*]}] \
   -to   [get_cells zsys_i/axil_to_regbus_0/U0/rdata_reg[*]]
 
 # RADDR/WADDR/WDATA, handshake-protected

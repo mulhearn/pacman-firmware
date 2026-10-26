@@ -45,16 +45,6 @@ entity atc_counter is
 end;
 
 architecture behavioral of atc_counter is
-  component counter is
-    port (
-      CLK_I	   : in  std_logic;
-      RST_I 	   : in  std_logic;
-      INCREMENT_I  : in  std_logic;
-      RUN_I        : in  std_logic;
-      CLEAR_I      : in  std_logic;
-      COUNT_O      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
-  end component;
 
 signal clk           : std_logic;
   signal rst           : std_logic;
@@ -103,7 +93,7 @@ begin
   rst  <= RST_I;
 
   gen_gout:for i in 0 to C_NUM_TILE -1 generate
-    out_g:counter
+    out_g: entity work.counter
       port map (
         CLK_I        => clk,
         RST_I        => rst,
@@ -115,7 +105,7 @@ begin
   end generate;
 
   gen_hout:for i in 0 to C_NUM_TILE -1 generate
-    out_h:counter
+    out_h: entity work.counter
       port map (
         CLK_I        => clk,
         RST_I        => rst,
@@ -127,7 +117,7 @@ begin
   end generate;
 
   gen_mout:for i in 0 to C_NUM_MARKER -1 generate
-    out_m:counter
+    out_m: entity work.counter
       port map (
         CLK_I        => clk,
         RST_I        => rst,
@@ -139,7 +129,7 @@ begin
   end generate;
 
   --output of lemo_a
-  out_lemo_a:counter
+  out_lemo_a: entity work.counter
     port map (
       CLK_I          => clk,
       RST_I          => rst,
@@ -150,7 +140,7 @@ begin
     );
 
   --Counter for lemo_b
-  out_lemo_b:counter
+  out_lemo_b: entity work.counter
     port map (
       CLK_I          => clk,
       RST_I          => rst,
@@ -161,7 +151,7 @@ begin
     );
 
   --output of poke_a
-  out_poke_a:counter
+  out_poke_a: entity work.counter
     port map (
       CLK_I          => clk,
       RST_I          => rst,
@@ -172,7 +162,7 @@ begin
     );
 
   --output of poke_b
-  out_poke_b:counter
+  out_poke_b: entity work.counter
     port map (
       CLK_I          => clk,
       RST_I          => rst,
@@ -183,7 +173,7 @@ begin
     );
 
   --output of poke_c
-  out_poke_c:counter
+  out_poke_c: entity work.counter
     port map (
       CLK_I          => clk,
       RST_I          => rst,
@@ -194,7 +184,7 @@ begin
     );
 
   --output of poke_d
-  out_poke_d:counter
+  out_poke_d: entity work.counter
     port map (
       CLK_I          => clk,
       RST_I          => rst,
@@ -203,7 +193,6 @@ begin
       CLEAR_I        => clear_reg,
       COUNT_O        => count_poke_d
       );
-
 
   -- register upper and lower nibbles of command byte as cmd_code and
   -- cmd_chan:
@@ -290,7 +279,6 @@ begin
       count_next <= (others => '0');
     end if;
   end process;
-
 
   -- register the count:
   proc_count : process(rst,clk)

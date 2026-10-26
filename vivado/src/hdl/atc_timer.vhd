@@ -24,15 +24,6 @@ end entity atc_timer;
 
 architecture rtl of atc_timer is
 
-  component timer is
-    port (
-      CLK_I      : in  std_logic;
-      RST_I      : in  std_logic;
-      CONFIG_I   : in  std_logic_vector(31 downto 0);
-      STROBE_O   : out std_logic
-    );
-  end component;
-
   signal uart        : std_logic;
   signal baud        : std_logic;
   signal cfg_period  : unsigned(31 downto 0);
@@ -45,7 +36,7 @@ begin
   cfg_period  <= unsigned(CONFIG_UART_I);
   half_period <= '0' & cfg_period(31 downto 1);
 
-  uart_timer: timer
+  uart_timer: entity work.timer
     port map (
       CLK_I      => CLK_I,
       RST_I      => RST_I,
@@ -53,7 +44,7 @@ begin
       STROBE_O   => uart
     );
 
-  baud_timer: timer
+  baud_timer: entity work.timer
     port map (
       CLK_I      => CLK_I,
       RST_I      => RST_I,
