@@ -183,16 +183,16 @@ begin
 
   end process;
 
-show_process : process
-  variable l : line;
-begin
-  show_output <= '0';
-  wait for 550 ns;
-  show_output <= '1';
-  wait;
-end process;
+  show_process : process
+    variable l : line;
+  begin
+    show_output <= '0';
+    wait for 550 ns;
+    show_output <= '1';
+    wait;
+  end process;
 
-output_process : process
+  output_process : process
     variable l : line;
     variable iturn  : integer;
     variable iword  : integer;

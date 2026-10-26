@@ -95,7 +95,7 @@ begin
           n := -1;
         end if;
         strip(count, " tx " & bits(tx) & " | peek " & bits(status(8))
-          & mark(s, "(START)") & mark(e, "(STOP)") & mark(rst, "(RESET)"));
+              & mark(s, "(START)") & mark(e, "(STOP)") & mark(rst, "(RESET)"));
         s := '0';
         e := '0';
       end if;

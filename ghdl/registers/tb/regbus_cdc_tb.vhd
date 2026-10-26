@@ -47,21 +47,21 @@ architecture behaviour of regbus_cdc_tb is
 
 begin
   uut: regbus_cdc port map (
-      S_CLK_I              => s_clk,
-      S_RST_I              => s_rst,
-      S_REGBUS_RB_RUPDATE  => s_rupdate,
-      S_REGBUS_RB_RACK     => s_rack,
-      S_REGBUS_RB_WUPDATE  => s_wupdate,
-      S_REGBUS_RB_WACK     => s_wack,
+    S_CLK_I              => s_clk,
+    S_RST_I              => s_rst,
+    S_REGBUS_RB_RUPDATE  => s_rupdate,
+    S_REGBUS_RB_RACK     => s_rack,
+    S_REGBUS_RB_WUPDATE  => s_wupdate,
+    S_REGBUS_RB_WACK     => s_wack,
 
-      P_CLK_I               => p_clk,
-      P_RST_I               => p_rst,
-      P_REGBUS_RB_RUPDATE   => p_rupdate,
-      P_REGBUS_RB_RDATA     => (others => '0'),
-      P_REGBUS_RB_RACK     => p_rack,
-      P_REGBUS_RB_WUPDATE  => p_wupdate,
-      P_REGBUS_RB_WACK     => p_wack
-      );
+    P_CLK_I               => p_clk,
+    P_RST_I               => p_rst,
+    P_REGBUS_RB_RUPDATE   => p_rupdate,
+    P_REGBUS_RB_RDATA     => (others => '0'),
+    P_REGBUS_RB_RACK     => p_rack,
+    P_REGBUS_RB_WUPDATE  => p_wupdate,
+    P_REGBUS_RB_WACK     => p_wack
+  );
 
   s_rst_process : process
   begin

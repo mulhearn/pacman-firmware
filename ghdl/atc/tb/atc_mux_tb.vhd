@@ -113,7 +113,7 @@ begin
     while count < 100 loop
       wait for 20 ns;
       strip(count, "lemo a " & bits(lemo_a) & " b " & bits(lemo_b) & " | poke c " & bits(poke_c) & " d " & bits(poke_d)
-        & " | g " & bits(g) & " h " & bits(h) & " m " & bits(m) & mark(rst, "(RESET)"));
+            & " | g " & bits(g) & " h " & bits(h) & " m " & bits(m) & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

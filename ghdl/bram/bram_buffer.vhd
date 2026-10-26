@@ -97,7 +97,7 @@ architecture rtl of bram_buffer is
 begin
 
   assert C_WIDTH >= 1 and C_WIDTH <= 32
-    report "bram_buffer:  C_WIDTH must be 1 to 32" severity failure;
+                                     report "bram_buffer:  C_WIDTH must be 1 to 32" severity failure;
 
   -- capture
   cap <= SE_I when (state = S_ARMED) or (state = S_TRIGGERED and remaining /= 0) else '0';

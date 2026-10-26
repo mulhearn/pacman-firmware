@@ -98,7 +98,7 @@ begin
     while count < 10 loop
       wait for 10 ns;
       strip(count, "sel a " & hex("00" & sel_a) & " b " & hex("00" & sel_b) & " | a " & hex(out_a) & " b " & hex(out_b)
-        & " | wtype " & hex(wtype) & mark(rst, "(RESET)"));
+            & " | wtype " & hex(wtype) & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

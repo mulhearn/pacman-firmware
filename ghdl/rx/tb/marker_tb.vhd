@@ -93,7 +93,7 @@ begin
     wait for 10 ns;
     if count < 35 then
       strip(count, "v: " & bits(valid) & " r: " & bits(ready) & " | ts " & hex(tstamp)
-        & mark(valid and ready, "(BEAT)") & mark(rst, "(RESET)"));
+            & mark(valid and ready, "(BEAT)") & mark(rst, "(RESET)"));
     else
       fold(false);
       wait;

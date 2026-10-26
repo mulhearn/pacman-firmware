@@ -23,18 +23,18 @@ entity adc_unit is
     C_DEPTH_LOG2        : integer := 14      -- 16K samples
   );
   port (
-    ACLK	        : in std_logic;
-    RST_I	        : in std_logic;
+    ACLK                : in std_logic;
+    RST_I               : in std_logic;
 
     -- REGBUS Ports
     S_REGBUS_RB_RUPDATE : in  std_logic;
-    S_REGBUS_RB_RADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_RDATA	: out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_RADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_RDATA   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RACK    : out std_logic;
 
     S_REGBUS_RB_WUPDATE : in  std_logic;
-    S_REGBUS_RB_WADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	: in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK    : out std_logic;
 
     -- ADC
@@ -47,7 +47,7 @@ entity adc_unit is
     TIMESTAMP_I         : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
     CROSS_TRIGGER_I     : in  std_logic;
     CROSS_TRIGGER_O     : out std_logic
-    );
+  );
 end adc_unit;
 
 architecture behavioral of adc_unit is
@@ -87,47 +87,47 @@ begin
   ADC_CLK_O <= ACLK;
 
   registers: entity work.adc_registers
-  generic map (
-    C_DEPTH             => 2**C_DEPTH_LOG2
-  )
-  port map (
-    CLK_I               => ACLK,
-    RST_I               => RST_I,
-    S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
-    S_REGBUS_RB_RADDR   => S_REGBUS_RB_RADDR,
-    S_REGBUS_RB_RDATA   => S_REGBUS_RB_RDATA,
-    S_REGBUS_RB_RACK    => S_REGBUS_RB_RACK,
-    S_REGBUS_RB_WUPDATE => S_REGBUS_RB_WUPDATE,
-    S_REGBUS_RB_WADDR   => S_REGBUS_RB_WADDR,
-    S_REGBUS_RB_WDATA   => S_REGBUS_RB_WDATA,
-    S_REGBUS_RB_WACK    => S_REGBUS_RB_WACK,
+    generic map (
+      C_DEPTH             => 2**C_DEPTH_LOG2
+    )
+    port map (
+      CLK_I               => ACLK,
+      RST_I               => RST_I,
+      S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
+      S_REGBUS_RB_RADDR   => S_REGBUS_RB_RADDR,
+      S_REGBUS_RB_RDATA   => S_REGBUS_RB_RDATA,
+      S_REGBUS_RB_RACK    => S_REGBUS_RB_RACK,
+      S_REGBUS_RB_WUPDATE => S_REGBUS_RB_WUPDATE,
+      S_REGBUS_RB_WADDR   => S_REGBUS_RB_WADDR,
+      S_REGBUS_RB_WDATA   => S_REGBUS_RB_WDATA,
+      S_REGBUS_RB_WACK    => S_REGBUS_RB_WACK,
 
-    CONFIG_O            => config,
-    LOOK_I              => look,
+      CONFIG_O            => config,
+      LOOK_I              => look,
 
-    EMUL_MIN_O          => emul_min,
-    EMUL_MAX_O          => emul_max,
-    EMUL_STEP_O         => emul_step,
-    EMUL_PERIOD_O       => emul_period,
-    MUX_SELECT_O        => mux_select,
-    CMP_THRESH_O        => cmp_thresh,
-    CMP_SWING_O         => cmp_swing,
-    CMP_LEVEL_I         => level,
+      EMUL_MIN_O          => emul_min,
+      EMUL_MAX_O          => emul_max,
+      EMUL_STEP_O         => emul_step,
+      EMUL_PERIOD_O       => emul_period,
+      MUX_SELECT_O        => mux_select,
+      CMP_THRESH_O        => cmp_thresh,
+      CMP_SWING_O         => cmp_swing,
+      CMP_LEVEL_I         => level,
 
-    PERIOD_O            => period,
-    MODE_O              => mode,
-    TRIG_O              => trig,
-    POST_O              => post,
-    ARM_O               => arm,
-    FORCE_O             => frc,
-    START_O             => start,
-    NEXT_O              => nxt,
-    CAPTURE_STATUS_I    => capture_status,
-    TRIG_POS_I          => trig_pos,
-    COUNT_I             => count,
-    TS_I                => trig_ts,
-    DATA_I              => cap_data
-  );
+      PERIOD_O            => period,
+      MODE_O              => mode,
+      TRIG_O              => trig,
+      POST_O              => post,
+      ARM_O               => arm,
+      FORCE_O             => frc,
+      START_O             => start,
+      NEXT_O              => nxt,
+      CAPTURE_STATUS_I    => capture_status,
+      TRIG_POS_I          => trig_pos,
+      COUNT_I             => count,
+      TS_I                => trig_ts,
+      DATA_I              => cap_data
+    );
 
   emul: entity work.adc_emul port map (
     CLK_I       => ACLK,

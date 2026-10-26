@@ -109,8 +109,8 @@ begin
     while count < 50 loop
       wait for 10 ns;
       strip(count, "sel " & hex("00" & cselect) & " | h " & hex(header(31 downto 16)) & " " & hex(header(15 downto 8))
-        & " " & hex(header(7 downto 0)) & mark(header(63) or header(62), "upper: " & hex(header(63 downto 32)))
-        & mark(rst, "(RESET)"));
+            & " " & hex(header(7 downto 0)) & mark(header(63) or header(62), "upper: " & hex(header(63 downto 32)))
+            & mark(rst, "(RESET)"));
     end loop;
     wait;
   end process;

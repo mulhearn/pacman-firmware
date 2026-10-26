@@ -143,10 +143,10 @@ begin
           wtype := character'val(to_integer(unsigned(tdata(7 downto 0))));
         end if;
         strip(count, STATE(to_integer(unsigned(status(1 downto 0))))
-          & " t " & dec(to_integer(unsigned(status(13 downto 8))), 2) & " w " & dec(to_integer(unsigned(status(15 downto 14))))
-          & " | ch0 " & bits(uvalid(0) & uready(0)) & " ch1 " & bits(uvalid(1) & uready(1)) & " ch2 " & bits(uvalid(2) & uready(2))
-          & " | valid " & dec(n, 2) & " | tv " & bits(tvalid) & " " & hex(tdata) & " " & wtype
-          & mark(tvalid and tready, "(BEAT)") & mark(tlast, "(TLAST)") & mark(rst, "(RESET)"));
+              & " t " & dec(to_integer(unsigned(status(13 downto 8))), 2) & " w " & dec(to_integer(unsigned(status(15 downto 14))))
+              & " | ch0 " & bits(uvalid(0) & uready(0)) & " ch1 " & bits(uvalid(1) & uready(1)) & " ch2 " & bits(uvalid(2) & uready(2))
+              & " | valid " & dec(n, 2) & " | tv " & bits(tvalid) & " " & hex(tdata) & " " & wtype
+              & mark(tvalid and tready, "(BEAT)") & mark(tlast, "(TLAST)") & mark(rst, "(RESET)"));
       end if;
     end loop;
     fold(false);

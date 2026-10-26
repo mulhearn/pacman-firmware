@@ -41,12 +41,12 @@ entity atc_counter is
 
     --selected counter output
     COUNT_O   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of atc_counter is
 
-signal clk           : std_logic;
+  signal clk           : std_logic;
   signal rst           : std_logic;
 
   -- input stimuli counters:
@@ -192,7 +192,7 @@ begin
       RUN_I          => run_reg,
       CLEAR_I        => clear_reg,
       COUNT_O        => count_poke_d
-      );
+    );
 
   -- register upper and lower nibbles of command byte as cmd_code and
   -- cmd_chan:

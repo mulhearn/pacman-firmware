@@ -111,7 +111,7 @@ begin
     while count < 24 loop
       wait for 10 ns;
       strip(count, "n " & hex(std_logic_vector(n)) & " | se " & bits(se) & " | sample " & hex(sample) &
-                   " | ts " & hex(ts_out(15 downto 0)) & mark(rst, "(RESET)"));
+            " | ts " & hex(ts_out(15 downto 0)) & mark(rst, "(RESET)"));
     end loop;
     wait;
   end process;

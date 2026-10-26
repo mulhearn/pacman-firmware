@@ -165,13 +165,13 @@ begin
     rd(1,  C_ADDR_RX_UART_CONFIG, "UART 1 config");
     rd(39, C_ADDR_RX_UART_CONFIG, "UART 39 config");
     outputs("UART config 0 " & hex(uart_config(0)) & " | 1 " & hex(uart_config(1))
-      & " | 39 " & hex(uart_config(39)));
+            & " | 39 " & hex(uart_config(39)));
     note("channel id:  16 bits, one UART at a time (no broadcast)");
     wr(1,  C_ADDR_RX_UART_CHAN, x"ABCD1234", "UART 1:  channel id");
     rd(1,  C_ADDR_RX_UART_CHAN, "UART 1 channel id:  the low 16 bits");
     wr(BC, C_ADDR_RX_UART_CHAN, x"00005555", "all UARTs:  channel id");
     outputs("channel id 0 " & hex(uart_chan(0)) & " | 1 " & hex(uart_chan(1))
-      & " | 39 " & hex(uart_chan(39)));
+            & " | 39 " & hex(uart_chan(39)));
 
     note("UART status:  the input as it is (UART number in bits 31-24)");
     rd(0,  C_ADDR_RX_UART_STATUS, "UART 0 status");
@@ -179,7 +179,7 @@ begin
     rd(39, C_ADDR_RX_UART_STATUS, "UART 39 status");
 
     note("counters, UART 12:  1 start, 2 beats (valid and ready), 3 updates, 4 lost, 5 frame"
-      & " errors, 6 noise;  then 7 valid without ready (not beats)");
+         & " errors, 6 noise;  then 7 valid without ready (not beats)");
     events(12, EV_START, 1);
     events(12, EV_VALID or EV_READY, 2);
     events(12, EV_UPDATE, 3);
@@ -213,7 +213,7 @@ begin
     rd(G, C_ADDR_RX_PATTERN_DELAY,  "pattern delay");
     rd(G, C_ADDR_RX_PATTERN_CONFIG, "pattern config");
     outputs("pattern payload " & hex(p_payload) & " | delay " & hex(p_delay)
-      & " | config " & hex(p_config));
+            & " | config " & hex(p_config));
 
     note("ZERO_CNTS:  every counter, the pattern counters and the FIFO maximum (count still 10)");
     wr(G, C_ADDR_RX_ZERO_CNTS, x"00000000", "zero counters");
@@ -248,17 +248,17 @@ begin
     rd(G, C_ADDR_RX_HEARTBEAT_CONFIG, "heartbeat config");
     rd(G, C_ADDR_RX_ROLLOVER_CONFIG,  "rollover config");
     outputs("buffer config " & hex(bconfig) & " | enables " & hex(benables) & " | LUT " & hex(wlut)
-      & " | heartbeat " & hex(hb_config) & " | rollover " & hex(ro_config));
+            & " | heartbeat " & hex(hb_config) & " | rollover " & hex(ro_config));
     note("headers:  the PACMAN id goes into bits 15-8 of each header out, not into the registers");
     wr(G, C_ADDR_RX_HEADER_D,   x"11223344", "header D");
     rd(G, C_ADDR_RX_HEADER_D,   "header D");
     outputs("headers A " & hex(hdr_a) & " | B " & hex(hdr_b) & " | C " & hex(hdr_c)
-      & " | D " & hex(hdr_d) & " | EOP " & hex(hdr_eop));
+            & " | D " & hex(hdr_d) & " | EOP " & hex(hdr_eop));
     wr(G, C_ADDR_RX_PACMAN,     x"000000AB", "PACMAN id");
     rd(G, C_ADDR_RX_PACMAN,     "PACMAN id");
     rd(G, C_ADDR_RX_HEADER_D,   "header D");
     outputs("headers A " & hex(hdr_a) & " | B " & hex(hdr_b) & " | C " & hex(hdr_c)
-      & " | D " & hex(hdr_d) & " | EOP " & hex(hdr_eop));
+            & " | D " & hex(hdr_d) & " | EOP " & hex(hdr_eop));
 
     note("look:  select a UART (6 bits kept), its word in look A and B");
     rd(G, C_ADDR_RX_LOOK_SELECT, "look select");

@@ -26,17 +26,17 @@ architecture behaviour of la_unit_tb is
       C_DEPTH_LOG2        : integer := 15
     );
     port (
-      ACLK	          : in std_logic;
-      RST_I	          : in std_logic;
+      ACLK                : in std_logic;
+      RST_I               : in std_logic;
 
       -- REGBUS Ports
       S_REGBUS_RB_RUPDATE : in  std_logic;
-      S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_RADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RACK    : out std_logic;
 
       S_REGBUS_RB_WUPDATE : in  std_logic;
-      S_REGBUS_RB_WADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
       S_REGBUS_RB_WDATA   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK    : out std_logic;
 
@@ -85,28 +85,28 @@ begin
       C_DEPTH_LOG2        => 6
     )
     port map (
-    ACLK                => clk,
-    RST_I               => rst,
-    S_REGBUS_RB_RUPDATE => rupdate,
-    S_REGBUS_RB_RADDR   => raddr,
-    S_REGBUS_RB_RDATA   => rdata,
-    S_REGBUS_RB_RACK    => rack,
-    S_REGBUS_RB_WUPDATE => wupdate,
-    S_REGBUS_RB_WADDR   => waddr,
-    S_REGBUS_RB_WDATA   => wdata,
-    S_REGBUS_RB_WACK    => wack,
-    PISO_I              => (others => '0'),
-    POSI_I              => posi,
-    G_I                 => (others => '0'),
-    H_I                 => (others => '0'),
-    BAUD_I              => baud,
-    ATC_STATUS_I        => atc,
-    RX_STATUS_I         => (others => '0'),
-    TX_STATUS_I         => (others => '0'),
-    TIMESTAMP_I         => ts,
-    CROSS_TRIGGER_I     => '0',
-    CROSS_TRIGGER_O     => open
-  );
+      ACLK                => clk,
+      RST_I               => rst,
+      S_REGBUS_RB_RUPDATE => rupdate,
+      S_REGBUS_RB_RADDR   => raddr,
+      S_REGBUS_RB_RDATA   => rdata,
+      S_REGBUS_RB_RACK    => rack,
+      S_REGBUS_RB_WUPDATE => wupdate,
+      S_REGBUS_RB_WADDR   => waddr,
+      S_REGBUS_RB_WDATA   => wdata,
+      S_REGBUS_RB_WACK    => wack,
+      PISO_I              => (others => '0'),
+      POSI_I              => posi,
+      G_I                 => (others => '0'),
+      H_I                 => (others => '0'),
+      BAUD_I              => baud,
+      ATC_STATUS_I        => atc,
+      RX_STATUS_I         => (others => '0'),
+      TX_STATUS_I         => (others => '0'),
+      TIMESTAMP_I         => ts,
+      CROSS_TRIGGER_I     => '0',
+      CROSS_TRIGGER_O     => open
+    );
 
   posi <= std_logic_vector(to_unsigned(count * 16, C_NUM_UART));     -- tile 1 (POSI 4-7):  count
   baud <= '1' when count mod 10 = 0 else '0';

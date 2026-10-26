@@ -6,8 +6,8 @@ use work.common.all;
 entity regbus_cdc is
   port (
     -- Secondary REGBUS:
-    S_CLK_I	         : in std_logic;
-    S_RST_I	         : in std_logic;
+    S_CLK_I              : in std_logic;
+    S_RST_I              : in std_logic;
 
     S_REGBUS_RB_RUPDATE  : in   std_logic;
     S_REGBUS_RB_RDATA    : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -17,8 +17,8 @@ entity regbus_cdc is
     S_REGBUS_RB_WACK     : out  std_logic;
 
     -- Primary REGBUS
-    P_CLK_I	         : in std_logic;
-    P_RST_I	         : in std_logic;
+    P_CLK_I              : in std_logic;
+    P_RST_I              : in std_logic;
 
     P_REGBUS_RB_RUPDATE  : out  std_logic;
     P_REGBUS_RB_RDATA    : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -26,7 +26,7 @@ entity regbus_cdc is
 
     P_REGBUS_RB_WUPDATE  : out  std_logic;
     P_REGBUS_RB_WACK     : in   std_logic
-    );
+  );
 end;
 
 

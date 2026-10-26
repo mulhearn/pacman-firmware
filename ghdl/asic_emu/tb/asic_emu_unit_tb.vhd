@@ -16,7 +16,7 @@ architecture behaviour of asic_emu_unit_tb is
       H_I     : in  std_logic_vector(C_NUM_TILE-1 downto 0);
       POSI_I  : in  std_logic_vector(C_NUM_UART-1 downto 0);
       PISO_O  : out std_logic_vector(C_NUM_UART-1 downto 0)
-      );
+    );
   end component;
   signal count   : integer := 0;
   signal clk     : std_logic;

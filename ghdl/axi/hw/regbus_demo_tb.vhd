@@ -11,7 +11,7 @@ entity regbus_demo_tb is
   generic (
     constant C_DATA_WIDTH  : integer := C_RB_DATA_WIDTH;
     constant C_ADDR_WIDTH  : integer := C_RB_ADDR_WIDTH
-    );
+  );
 begin
   assert(C_DATA_WIDTH=32) severity failure; --assumed by test
 end regbus_demo_tb;
@@ -21,7 +21,7 @@ architecture behaviour of regbus_demo_tb is
     generic (
       constant C_DATA_WIDTH  : integer := C_DATA_WIDTH;
       constant C_ADDR_WIDTH  : integer := C_ADDR_WIDTH
-      );
+    );
     port (
       S_AXI_ACLK         : in std_logic;
       S_AXI_ARESETN      : in std_logic;

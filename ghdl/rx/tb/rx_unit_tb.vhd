@@ -175,7 +175,7 @@ begin
       if f = 1 then t := tdata; end if;
       if f = 2 and show_axis then
         strip(count, "ch " & hex(h(31 downto 16)) & " id " & hex(h(15 downto 8)) & " type " & hex(h(7 downto 0))
-          & " | t " & hex(t) & " | d " & hex(tdata) & mark(tlast, "(TLAST)") & mark(rst, "(RESET)"));
+              & " | t " & hex(t) & " | d " & hex(tdata) & mark(tlast, "(TLAST)") & mark(rst, "(RESET)"));
       end if;
       f := (f + 1) mod 3;
     end if;

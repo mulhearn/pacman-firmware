@@ -13,17 +13,17 @@ end adc_registers_tb;
 architecture behaviour of adc_registers_tb is
   component adc_registers is
     port (
-      CLK_I	           : in std_logic;
-      RST_I	           : in std_logic;
+      CLK_I                : in std_logic;
+      RST_I                : in std_logic;
 
-      S_REGBUS_RB_RADDR	   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_RADDR    : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA    : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RUPDATE  : in  std_logic;
       S_REGBUS_RB_RACK     : out std_logic;
 
       S_REGBUS_RB_WUPDATE  : in  std_logic;
-      S_REGBUS_RB_WADDR	   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR    : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WDATA    : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK     : out std_logic;
 
       CONFIG_O            : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -52,7 +52,7 @@ architecture behaviour of adc_registers_tb is
       COUNT_I             : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       TS_I                : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
       DATA_I              : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
+    );
   end component;
   signal count     : integer := 0;
   signal clk      : std_logic;
@@ -72,43 +72,43 @@ architecture behaviour of adc_registers_tb is
   signal wack    : std_logic := '0';
 begin
   uut: adc_registers port map (
-      CLK_I               => clk,
-      RST_I               => rst,
-      S_REGBUS_RB_RUPDATE => rupdate,
-      S_REGBUS_RB_RADDR   => raddr,
-      S_REGBUS_RB_RDATA   => rdata,
-      S_REGBUS_RB_RACK    => rack,
-      S_REGBUS_RB_WUPDATE => wupdate,
-      S_REGBUS_RB_WADDR   => waddr,
-      S_REGBUS_RB_WDATA   => wdata,
-      S_REGBUS_RB_WACK    => wack,
+    CLK_I               => clk,
+    RST_I               => rst,
+    S_REGBUS_RB_RUPDATE => rupdate,
+    S_REGBUS_RB_RADDR   => raddr,
+    S_REGBUS_RB_RDATA   => rdata,
+    S_REGBUS_RB_RACK    => rack,
+    S_REGBUS_RB_WUPDATE => wupdate,
+    S_REGBUS_RB_WADDR   => waddr,
+    S_REGBUS_RB_WDATA   => wdata,
+    S_REGBUS_RB_WACK    => wack,
 
-      CONFIG_O            => config,
-      LOOK_I              => x"00000123",
+    CONFIG_O            => config,
+    LOOK_I              => x"00000123",
 
-      EMUL_MIN_O          => open,
-      EMUL_MAX_O          => open,
-      EMUL_STEP_O         => open,
-      EMUL_PERIOD_O       => open,
-      MUX_SELECT_O        => open,
-      CMP_THRESH_O        => open,
-      CMP_SWING_O         => open,
-      CMP_LEVEL_I         => '0',
+    EMUL_MIN_O          => open,
+    EMUL_MAX_O          => open,
+    EMUL_STEP_O         => open,
+    EMUL_PERIOD_O       => open,
+    MUX_SELECT_O        => open,
+    CMP_THRESH_O        => open,
+    CMP_SWING_O         => open,
+    CMP_LEVEL_I         => '0',
 
-      PERIOD_O            => open,
-      MODE_O              => open,
-      TRIG_O              => open,
-      POST_O              => open,
-      ARM_O               => open,
-      FORCE_O             => open,
-      START_O             => open,
-      NEXT_O              => open,
-      CAPTURE_STATUS_I    => x"00000004",
-      TRIG_POS_I          => x"0000002A",
-      COUNT_I             => x"00004000",
-      TS_I                => x"1111111122222222",
-      DATA_I              => x"00002ABC"
-      );
+    PERIOD_O            => open,
+    MODE_O              => open,
+    TRIG_O              => open,
+    POST_O              => open,
+    ARM_O               => open,
+    FORCE_O             => open,
+    START_O             => open,
+    NEXT_O              => open,
+    CAPTURE_STATUS_I    => x"00000004",
+    TRIG_POS_I          => x"0000002A",
+    COUNT_I             => x"00004000",
+    TS_I                => x"1111111122222222",
+    DATA_I              => x"00002ABC"
+  );
 
   rst_process : process
   begin
@@ -161,7 +161,7 @@ begin
     wait;
   end process;
 
-output_process : process
+  output_process : process
     variable l : line;
   begin
     if (count < 15) then

@@ -13,20 +13,20 @@ end registers_scratch_tb;
 architecture behaviour of registers_scratch_tb is
   component registers_scratch is
     port (
-      ACLK	             : in std_logic;
-      ARESETN	             : in std_logic;
+      ACLK                   : in std_logic;
+      ARESETN                : in std_logic;
 
-      S_REGBUS_RB_RADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_RADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RUPDATE    : in  std_logic;
       S_REGBUS_RB_RACK       : out std_logic;
 
       S_REGBUS_RB_WUPDATE    : in  std_logic;
-      S_REGBUS_RB_WADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WDATA      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK       : out std_logic;
       DEBUG                  : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
+    );
   end component;
   signal count    : integer := 0;
   signal aclk     : std_logic;
@@ -43,17 +43,17 @@ architecture behaviour of registers_scratch_tb is
   signal wack    : std_logic := '0';
 begin
   uut: registers_scratch port map (
-      ACLK           => aclk,
-      ARESETN        => aresetn,
-      S_REGBUS_RB_RUPDATE => rupdate,
-      S_REGBUS_RB_RADDR   => raddr,
-      S_REGBUS_RB_RDATA   => rdata,
-      S_REGBUS_RB_RACK    => rack,
-      S_REGBUS_RB_WUPDATE => wupdate,
-      S_REGBUS_RB_WADDR   => waddr,
-      S_REGBUS_RB_WDATA   => wdata,
-      S_REGBUS_RB_WACK    => wack
-      );
+    ACLK           => aclk,
+    ARESETN        => aresetn,
+    S_REGBUS_RB_RUPDATE => rupdate,
+    S_REGBUS_RB_RADDR   => raddr,
+    S_REGBUS_RB_RDATA   => rdata,
+    S_REGBUS_RB_RACK    => rack,
+    S_REGBUS_RB_WUPDATE => wupdate,
+    S_REGBUS_RB_WADDR   => waddr,
+    S_REGBUS_RB_WDATA   => wdata,
+    S_REGBUS_RB_WACK    => wack
+  );
 
   aresetn_process : process
   begin

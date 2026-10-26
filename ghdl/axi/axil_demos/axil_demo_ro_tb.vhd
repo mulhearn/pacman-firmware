@@ -21,7 +21,7 @@ architecture behaviour of axil_demo_ro_tb is
       S_AXI_RRESP         : out std_logic_vector(1 downto 0);
       S_AXI_RVALID        : out std_logic;
       S_AXI_RREADY        : in std_logic
-      );
+    );
   end component;
   signal aclk     : std_logic;
   signal aresetn    : std_logic;
@@ -33,14 +33,14 @@ architecture behaviour of axil_demo_ro_tb is
   signal rready   : std_logic;
 begin
   uut: axil_demo_ro port map (
-      S_AXI_ACLK          => aclk,
-      S_AXI_ARESETN       => aresetn,
-      S_AXI_ARADDR        => araddr,
-      S_AXI_ARVALID       => arvalid,
-      S_AXI_ARREADY       => arready,
-      S_AXI_RDATA         => rdata,
-      S_AXI_RVALID        => rvalid,
-      S_AXI_RREADY        => rready);
+    S_AXI_ACLK          => aclk,
+    S_AXI_ARESETN       => aresetn,
+    S_AXI_ARADDR        => araddr,
+    S_AXI_ARVALID       => arvalid,
+    S_AXI_ARREADY       => arready,
+    S_AXI_RDATA         => rdata,
+    S_AXI_RVALID        => rvalid,
+    S_AXI_RREADY        => rready);
 
   aresetn_process : process
   begin
@@ -60,7 +60,7 @@ begin
 
 
 
-rapid_read_process : process
+  rapid_read_process : process
   begin
     araddr <= x"00";
     arvalid  <= '0';
@@ -115,37 +115,37 @@ rapid_read_process : process
 
   --challenging_read_process : process
   --begin
-    --araddr <= x"00";
-    --arvalid  <= '0';
-    --rready <= '0';
-    --wait for 20 ns;
-    --araddr <= x"01";
-    --arvalid  <= '1';
-    --wait for 10 ns;
-    --araddr <= x"00";
-    --arvalid  <= '0';
-    --wait for 60 ns;
-    --rready <= '1';
-    --wait for 10 ns;
-    --rready <= '0';
-    --wait;
+  --araddr <= x"00";
+  --arvalid  <= '0';
+  --rready <= '0';
+  --wait for 20 ns;
+  --araddr <= x"01";
+  --arvalid  <= '1';
+  --wait for 10 ns;
+  --araddr <= x"00";
+  --arvalid  <= '0';
+  --wait for 60 ns;
+  --rready <= '1';
+  --wait for 10 ns;
+  --rready <= '0';
+  --wait;
   --end process;
 
 
   --single_read_process : process
   --begin
-    --araddr <= x"00";
-    --arvalid  <= '0';
-    --rready <= '0';
-    --wait for 20 ns;
-    --araddr <= x"01";
-    --arvalid  <= '1';
-    --rready <= '1';
-    --wait for 20 ns;
-    --araddr <= x"00";
-    --arvalid  <= '0';
-    --rready <= '0';
-    --wait;
+  --araddr <= x"00";
+  --arvalid  <= '0';
+  --rready <= '0';
+  --wait for 20 ns;
+  --araddr <= x"01";
+  --arvalid  <= '1';
+  --rready <= '1';
+  --wait for 20 ns;
+  --araddr <= x"00";
+  --arvalid  <= '0';
+  --rready <= '0';
+  --wait;
   --end process;
 
   output_process : process

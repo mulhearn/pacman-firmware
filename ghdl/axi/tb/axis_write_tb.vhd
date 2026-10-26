@@ -9,7 +9,7 @@ entity axis_write_tb is
   generic (
     constant C_AXIS_WIDTH  : integer  := 32;
     constant C_DEBUG_WIDTH : integer  := 8
-    );
+  );
 begin
   assert(C_AXIS_WIDTH >= 16) severity failure; -- Assumed for test output
 end axis_write_tb;
@@ -36,7 +36,7 @@ architecture behaviour of axis_write_tb is
       LAST_I             : in  std_logic;
       DATA_I             : in  std_logic_vector(C_AXIS_WIDTH-1 downto 0);
       DEBUG_O            : out std_logic_vector(C_DEBUG_WIDTH-1 downto 0)
-      );
+    );
   end component;
 
   signal clk      : std_logic;
@@ -65,7 +65,7 @@ begin
     LAST_I   => '1',
     DATA_I   => idat,
     DEBUG_O  => debug
-    );
+  );
 
   rst_process : process
   begin

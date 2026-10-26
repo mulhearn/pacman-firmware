@@ -16,17 +16,17 @@ end regbus_diagram_tb;
 architecture behaviour of regbus_diagram_tb is
   component global_registers is
     port (
-      CLK_I	             : in std_logic;
-      RST_I	             : in std_logic;
+      CLK_I                  : in std_logic;
+      RST_I                  : in std_logic;
 
-      S_REGBUS_RB_RADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_RADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RUPDATE    : in  std_logic;
       S_REGBUS_RB_RACK       : out std_logic;
 
       S_REGBUS_RB_WUPDATE    : in  std_logic;
-      S_REGBUS_RB_WADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WDATA      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK       : out std_logic;
 
       ANALOG_PWR_EN_O        : out std_logic;
@@ -34,7 +34,7 @@ architecture behaviour of regbus_diagram_tb is
       LED_CONFIG_O           : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
       GLOBAL_STATUS_I        : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
+    );
   end component;
 
   signal count    : integer := 0;
@@ -73,7 +73,7 @@ begin
     TILE_EN_O           => tile_en,
     GLOBAL_STATUS_I     => x"0000ABCD",
     LED_CONFIG_O        => led_config
-    );
+  );
 
   rst_process : process
   begin

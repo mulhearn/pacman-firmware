@@ -10,17 +10,17 @@ entity adc_registers is
     C_DEPTH             : integer := 16384
   );
   port (
-    CLK_I	        : in std_logic;
-    RST_I	        : in std_logic;
+    CLK_I               : in std_logic;
+    RST_I               : in std_logic;
 
     S_REGBUS_RB_RUPDATE : in  std_logic;
-    S_REGBUS_RB_RADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_RDATA	: out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_RADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_RDATA   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RACK    : out std_logic;
 
     S_REGBUS_RB_WUPDATE : in  std_logic;
-    S_REGBUS_RB_WADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	: in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK    : out std_logic;
 
     CONFIG_O            : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -53,7 +53,7 @@ entity adc_registers is
     COUNT_I             : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     TS_I                : in  std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
     DATA_I              : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
 end entity adc_registers;
 
 architecture behavioral of adc_registers is
@@ -114,9 +114,9 @@ begin
 
   --REGBUS--
   --outputs:
-  S_REGBUS_RB_RDATA	 <= rdata;
-  S_REGBUS_RB_RACK	 <= rack;
-  S_REGBUS_RB_WACK	 <= wack;
+  S_REGBUS_RB_RDATA      <= rdata;
+  S_REGBUS_RB_RACK       <= rack;
+  S_REGBUS_RB_WACK       <= wack;
   --inputs: (already registered at preceding stage)
   rupdate  <= S_REGBUS_RB_RUPDATE;
   raddr    <= S_REGBUS_RB_RADDR;
@@ -126,8 +126,8 @@ begin
 
   -- Handle Read Request:
   process(clk,rst)
-  variable scope   : integer;
-  variable reg     : integer;
+    variable scope   : integer;
+    variable reg     : integer;
   begin
     if (rst = '1') then
       rdata <= x"00000000";

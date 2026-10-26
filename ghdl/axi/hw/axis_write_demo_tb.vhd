@@ -187,32 +187,32 @@ begin
 
   summary_process : process
     variable l : line;
-    --variable reads : integer := 0;
-    --type result_t is array (0 to 5) of std_logic_vector(31 downto 0);
-    --variable results : result_t;
+  --variable reads : integer := 0;
+  --type result_t is array (0 to 5) of std_logic_vector(31 downto 0);
+  --variable results : result_t;
   begin
     --if (reads < 6) then
-      --wait until ((rising_edge(clk)) and (rvalid='1') and (rready='1'));
-      --write (l, String'("*** READ DETECTED ***"));
-      --writeline(output, l);
-      --results(reads) := rdata;
-      --reads := reads + 1;
+    --wait until ((rising_edge(clk)) and (rvalid='1') and (rready='1'));
+    --write (l, String'("*** READ DETECTED ***"));
+    --writeline(output, l);
+    --results(reads) := rdata;
+    --reads := reads + 1;
     --else
-      wait until (count > 30);
-      write (l, String'("*** Simulation Summary ***"));
-      writeline(output, l);
-      --for i in 0 to 5 loop
-        --write (l, i, right, 2);
-        --write (l, String'(": "));
-        --hwrite(l, results(i));
-      --end loop;
-      --writeline(output, l);
+    wait until (count > 30);
+    write (l, String'("*** Simulation Summary ***"));
+    writeline(output, l);
+    --for i in 0 to 5 loop
+    --write (l, i, right, 2);
+    --write (l, String'(": "));
+    --hwrite(l, results(i));
+    --end loop;
+    --writeline(output, l);
 
-      --assert(results(0) = x"11111111") report("read 1 failed") severity failure;
-      --assert(results(1) = x"00000000") report("read 2 failed") severity failure;
-      --write (l, String'("*** Test results were all SUCCESSFUL!!! ***"));
-      --writeline(output, l);
-      wait;
+    --assert(results(0) = x"11111111") report("read 1 failed") severity failure;
+    --assert(results(1) = x"00000000") report("read 2 failed") severity failure;
+    --write (l, String'("*** Test results were all SUCCESSFUL!!! ***"));
+    --writeline(output, l);
+    wait;
   --end if;
   end process;
 

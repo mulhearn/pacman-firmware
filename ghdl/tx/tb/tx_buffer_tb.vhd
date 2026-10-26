@@ -104,10 +104,10 @@ begin
     while count < 60 loop
       wait for 10 ns;
       strip(count, STATE(to_integer(unsigned(status(9 downto 8))))
-        & " | tdata ..." & hex(tdata(15 downto 0)) & " vr " & bits(tvalid & tready) & mark(tvalid and tready, "(BEAT)")
-        & mark(tlast, "(TLAST)") & " | valid " & hex(uvalid)
-        & " | udata 0:" & hex(udata(0)(11 downto 0)) & " 1:" & hex(udata(1)(11 downto 0))
-        & " 2:" & hex(udata(2)(11 downto 0)) & " 3:" & hex(udata(3)(11 downto 0)) & mark(rst, "(RESET)"));
+            & " | tdata ..." & hex(tdata(15 downto 0)) & " vr " & bits(tvalid & tready) & mark(tvalid and tready, "(BEAT)")
+            & mark(tlast, "(TLAST)") & " | valid " & hex(uvalid)
+            & " | udata 0:" & hex(udata(0)(11 downto 0)) & " 1:" & hex(udata(1)(11 downto 0))
+            & " 2:" & hex(udata(2)(11 downto 0)) & " 3:" & hex(udata(3)(11 downto 0)) & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

@@ -87,7 +87,7 @@ begin
     while count < 30 loop
       wait for 10 ns;
       strip(count, "inc " & bits(update_in) & " run " & bits(run) & " clear " & bits(clear)
-        & " | integral " & hex(cnt(31 downto 16)) & " count " & hex(cnt(15 downto 0)) & mark(rst, "(RESET)"));
+            & " | integral " & hex(cnt(31 downto 16)) & " count " & hex(cnt(15 downto 0)) & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

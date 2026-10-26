@@ -53,7 +53,7 @@ architecture behaviour of rx_unit_check is
       FIFO_COUNT_I        : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       PISO_I              : in  std_logic_vector(C_NUM_UART-1 downto 0);
       LOOPBACK_I          : in  std_logic_vector(C_NUM_UART-1 downto 0)
-      );
+    );
   end component;
 
   constant PERIOD : time := 10 ns;    -- 100 MHz
@@ -129,7 +129,7 @@ architecture behaviour of rx_unit_check is
   function data_header(wtype : integer; pacman : integer; chan_id : integer) return std_logic_vector is
   begin
     return x"00000000" & std_logic_vector(to_unsigned(chan_id, 16)) & std_logic_vector(to_unsigned(pacman, 8))
-           & std_logic_vector(to_unsigned(wtype, 8));
+      & std_logic_vector(to_unsigned(wtype, 8));
   end function;
 
 begin
@@ -155,7 +155,7 @@ begin
     FIFO_COUNT_I        => fifo_cnt,
     PISO_I              => piso,
     LOOPBACK_I          => loopback
-    );
+  );
 
   clock_until(clk, done, PERIOD);
 

@@ -121,7 +121,7 @@ begin
   rx_vote <= '1' when (rx_taps(0) = '1' and rx_taps(1) = '1') or
              (rx_taps(1) = '1' and rx_taps(2) = '1') or
              (rx_taps(2) = '1' and rx_taps(0) = '1')
-           else '0';
+             else '0';
 
   rx_dissent <= '1' when (rx_taps(0) /= rx_taps(1)) or (rx_taps(1) /= rx_taps(2)) else '0';
 
@@ -198,7 +198,7 @@ begin
     elsif rising_edge(clk) then
       case state is
         when IDLE =>
-         if (sample_en = '1') and (rx_vote = '0') and ((rx_dissent = '0') or (cfg_flags(0) = '1')) then
+          if (sample_en = '1') and (rx_vote = '0') and ((rx_dissent = '0') or (cfg_flags(0) = '1')) then
             state   <= FIRST;
             bit_counter := 0;
           end if;

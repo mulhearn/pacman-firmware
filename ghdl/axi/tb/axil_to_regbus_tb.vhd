@@ -19,7 +19,7 @@ architecture behaviour of axil_to_regbus_tb is
       constant C_ADDR_WIDTH : integer := C_ADDR_WIDTH;
       constant C_DATA_WIDTH : integer := C_DATA_WIDTH;
       constant C_TIMEOUT_CYCLES : integer := 3
-      );
+    );
     port (
       S_AXI_ACLK         : in std_logic;
       S_AXI_ARESETN      : in std_logic;
@@ -43,12 +43,12 @@ architecture behaviour of axil_to_regbus_tb is
       S_AXI_BVALID       : out std_logic;
       S_AXI_BREADY       : in std_logic;
       P_REGBUS_RB_RUPDATE      : out std_logic;
-      P_REGBUS_RB_RADDR	       : out std_logic_vector(C_ADDR_WIDTH-1 downto 0);
-      P_REGBUS_RB_RDATA	       : in  std_logic_vector(C_DATA_WIDTH-1 downto 0);
+      P_REGBUS_RB_RADDR        : out std_logic_vector(C_ADDR_WIDTH-1 downto 0);
+      P_REGBUS_RB_RDATA        : in  std_logic_vector(C_DATA_WIDTH-1 downto 0);
       P_REGBUS_RB_RACK         : in std_logic;
       P_REGBUS_RB_WUPDATE      : out std_logic;
-      P_REGBUS_RB_WADDR	       : out std_logic_vector(C_ADDR_WIDTH-1 downto 0);
-      P_REGBUS_RB_WDATA	       : out  std_logic_vector(C_DATA_WIDTH-1 downto 0);
+      P_REGBUS_RB_WADDR        : out std_logic_vector(C_ADDR_WIDTH-1 downto 0);
+      P_REGBUS_RB_WDATA        : out  std_logic_vector(C_DATA_WIDTH-1 downto 0);
       P_REGBUS_RB_WACK         : in std_logic
     );
   end component;

@@ -42,7 +42,7 @@ entity global_registers is
 
     -- global status input:
     GLOBAL_STATUS_I     : in std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of global_registers is

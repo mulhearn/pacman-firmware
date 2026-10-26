@@ -38,7 +38,7 @@ entity regbus_demo is
     S_AXI_BRESP        : out std_logic_vector(1 downto 0);
     S_AXI_BVALID       : out std_logic;
     S_AXI_BREADY       : in std_logic
-    );
+  );
 begin
   assert(C_ADDR_WIDTH>=8) severity failure; --assumed by test
 end regbus_demo;
@@ -72,12 +72,12 @@ architecture behaviour of regbus_demo is
       S_AXI_BVALID         : out std_logic;
       S_AXI_BREADY         : in std_logic;
       P_REGBUS_RB_RUPDATE  : out std_logic;
-      P_REGBUS_RB_RADDR	   : out std_logic_vector(15 downto 0);
-      P_REGBUS_RB_RDATA	   : in  std_logic_vector(31 downto 0);
+      P_REGBUS_RB_RADDR    : out std_logic_vector(15 downto 0);
+      P_REGBUS_RB_RDATA    : in  std_logic_vector(31 downto 0);
       P_REGBUS_RB_RACK     : in std_logic;
       P_REGBUS_RB_WUPDATE  : out std_logic;
-      P_REGBUS_RB_WADDR	   : out std_logic_vector(15 downto 0);
-      P_REGBUS_RB_WDATA	   : out  std_logic_vector(31 downto 0);
+      P_REGBUS_RB_WADDR    : out std_logic_vector(15 downto 0);
+      P_REGBUS_RB_WDATA    : out  std_logic_vector(31 downto 0);
       P_REGBUS_RB_WACK     : in std_logic
     );
   end component;
@@ -168,7 +168,7 @@ begin
 
   -- Handle Write Request:
   process(clk, rst)
-  variable reg     : integer;
+    variable reg     : integer;
   begin
     if (rst = '1') then
       scra <= x"11111111";
@@ -176,7 +176,7 @@ begin
     else
       if (rising_edge(clk)) then
         if (wupdate='0') then
-            wack  <= '0';
+          wack  <= '0';
         else
           reg   := to_integer(unsigned(waddr(7 downto 0)));
           if (reg=C_REG_SCRA) then

@@ -91,7 +91,7 @@ begin
     wr(C_ADDR_GLOBAL_ENABLES, x"000103FF", "enables:  analog power, all tiles");
 
     note("read-only registers:  the status input, the firmware and hardware versions, the build"
-      & " information (0 here:  filled in by the Vivado build)");
+         & " information (0 here:  filled in by the Vivado build)");
     rd(C_ADDR_GLOBAL_STATUS,         "status (input 0000ABCD)");
     rd(C_ADDR_GLOBAL_FIRMWARE_MAJOR, "firmware major");
     rd(C_ADDR_GLOBAL_FIRMWARE_MINOR, "firmware minor");
@@ -125,7 +125,7 @@ begin
     wait for 2 ns;
     if rst = '0' then
       strip(c, "outputs:  analog power " & bits(analog_pwr_en) & " | tiles " & bits(tile_en)
-        & " | LED config " & hex(led_config));
+            & " | LED config " & hex(led_config));
     end if;
   end process;
 end behaviour;

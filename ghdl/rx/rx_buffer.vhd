@@ -145,23 +145,23 @@ begin
   -- the stream writer outputs a stream assembled from buffered input
   -- data sourced from the uarts.
   ar0: entity work.axis_write
-  generic map (
-    C_AXIS_WIDTH => C_RX_AXIS_WIDTH
-  )
-  port map (
-    CLK_I           => clk,
-    RST_I           => rst,
-    M_AXIS_TDATA    => M_AXIS_TDATA,
-    M_AXIS_TVALID   => tvalid,
-    M_AXIS_TREADY   => tready,
-    M_AXIS_TKEEP    => M_AXIS_TKEEP,
-    M_AXIS_TLAST    => M_AXIS_TLAST,
-    BUSY_O          => busy,
-    WEN_I           => wen,
-    LAST_I          => last,
-    DATA_I          => data,
-    DEBUG_O         => open
-  );
+    generic map (
+      C_AXIS_WIDTH => C_RX_AXIS_WIDTH
+    )
+    port map (
+      CLK_I           => clk,
+      RST_I           => rst,
+      M_AXIS_TDATA    => M_AXIS_TDATA,
+      M_AXIS_TVALID   => tvalid,
+      M_AXIS_TREADY   => tready,
+      M_AXIS_TKEEP    => M_AXIS_TKEEP,
+      M_AXIS_TLAST    => M_AXIS_TLAST,
+      BUSY_O          => busy,
+      WEN_I           => wen,
+      LAST_I          => last,
+      DATA_I          => data,
+      DEBUG_O         => open
+    );
   M_AXIS_TVALID <= tvalid;
   tready <= M_AXIS_TREADY;
 

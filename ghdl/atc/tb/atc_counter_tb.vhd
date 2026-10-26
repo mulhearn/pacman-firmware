@@ -117,7 +117,7 @@ begin
     while count < 30 loop
       wait for 10 ns;
       strip(count, "lemo a " & bits(incr_la) & " | g " & bits(incr_g) & " | " & cmd(update, command)
-        & "| integral " & hex(count_o(31 downto 16)) & " count " & hex(count_o(15 downto 0)) & mark(rst, "(RESET)"));
+            & "| integral " & hex(count_o(31 downto 16)) & " count " & hex(count_o(15 downto 0)) & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

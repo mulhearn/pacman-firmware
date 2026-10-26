@@ -128,7 +128,7 @@ begin
         READY_O    => ready(i),
         TX_O       => POSI_O(i),
         DEBUG_O    => open
-        );
+      );
   end generate gtxchan0;
 
 end behaviour;

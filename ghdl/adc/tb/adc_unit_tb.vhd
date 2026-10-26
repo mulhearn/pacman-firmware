@@ -12,17 +12,17 @@ end adc_unit_tb;
 architecture behaviour of adc_unit_tb is
   component adc_unit is
     port (
-      ACLK	          : in std_logic;
-      RST_I	          : in std_logic;
+      ACLK                : in std_logic;
+      RST_I               : in std_logic;
 
       -- REGBUS Ports
       S_REGBUS_RB_RUPDATE : in  std_logic;
-      S_REGBUS_RB_RADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	  : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_RADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RACK    : out std_logic;
 
       S_REGBUS_RB_WUPDATE : in  std_logic;
-      S_REGBUS_RB_WADDR	  : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
       S_REGBUS_RB_WDATA   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK    : out std_logic;
 
@@ -91,9 +91,9 @@ begin
     TIMESTAMP_I         => (others => '0'),
     CROSS_TRIGGER_I     => '0',
     CROSS_TRIGGER_O     => open
-    --BRAM_DATA_O         => do,
-    --BRAM_ADDR_O         => addr,
-    --BRAM_WEN_O          => wen
+  --BRAM_DATA_O         => do,
+  --BRAM_ADDR_O         => addr,
+  --BRAM_WEN_O          => wen
   );
 
   rst_process : process

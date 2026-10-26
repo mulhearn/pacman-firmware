@@ -37,7 +37,7 @@ architecture behaviour of tx_unit_tb is
   --constant MASK  : std_logic_vector(63 downto 0) := x"000000000000000F";  -- UARTs 0-3 only
   --constant MASK  : std_logic_vector(63 downto 0) := x"0000000000000400";  -- UART 10 only
   constant PACKETS : integer := 1;
-  --constant PACKETS : integer := 1;  -- a second packet (words 2222DDxx2222CCxx), back to back
+--constant PACKETS : integer := 1;  -- a second packet (words 2222DDxx2222CCxx), back to back
 begin
   uut: entity work.tx_unit port map (
     ACLK                => clk,
@@ -133,7 +133,7 @@ begin
       beat(MASK, '0');
       for i in 0 to C_NUM_UART-1 loop
         w := std_logic_vector(to_unsigned(16#1111DD00# + p*16#11110000# + 2*i, 32))
-           & std_logic_vector(to_unsigned(16#1111CC00# + p*16#11110000# + 2*i, 32));
+             & std_logic_vector(to_unsigned(16#1111CC00# + p*16#11110000# + 2*i, 32));
         if i = C_NUM_UART-1 then beat(w, '1'); else beat(w, '0'); end if;
       end loop;
     end loop;

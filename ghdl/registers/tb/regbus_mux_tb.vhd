@@ -11,8 +11,8 @@ end regbus_mux_tb;
 architecture behaviour of regbus_mux_tb is
   component regbus_mux is
     port (
-      ACLK	             : in std_logic;
-      ARESETN	             : in std_logic;
+      ACLK                   : in std_logic;
+      ARESETN                : in std_logic;
       -- Secondary REGBUS:
       S_REGBUS_RB_RUPDATE  : in   std_logic;
       S_REGBUS_RB_RADDR    : in   std_logic_vector(15 downto 0);
@@ -125,53 +125,53 @@ architecture behaviour of regbus_mux_tb is
 
 begin
   uut: regbus_mux port map (
-      ACLK           => aclk,
-      ARESETN        => aresetn,
-      S_REGBUS_RB_RUPDATE => s_rupdate,
-      S_REGBUS_RB_RADDR   => s_raddr,
-      S_REGBUS_RB_RDATA   => s_rdata,
-      S_REGBUS_RB_RACK    => s_rack,
-      S_REGBUS_RB_WUPDATE => s_wupdate,
-      S_REGBUS_RB_WADDR   => s_waddr,
-      S_REGBUS_RB_WDATA   => s_wdata,
-      S_REGBUS_RB_WACK    => s_wack,
+    ACLK           => aclk,
+    ARESETN        => aresetn,
+    S_REGBUS_RB_RUPDATE => s_rupdate,
+    S_REGBUS_RB_RADDR   => s_raddr,
+    S_REGBUS_RB_RDATA   => s_rdata,
+    S_REGBUS_RB_RACK    => s_rack,
+    S_REGBUS_RB_WUPDATE => s_wupdate,
+    S_REGBUS_RB_WADDR   => s_waddr,
+    S_REGBUS_RB_WDATA   => s_wdata,
+    S_REGBUS_RB_WACK    => s_wack,
 
-      PA_REGBUS_RB_RUPDATE => a_rupdate,
-      PA_REGBUS_RB_RADDR   => a_raddr,
-      PA_REGBUS_RB_RDATA   => a_rdata,
-      PA_REGBUS_RB_RACK    => a_rack,
-      PA_REGBUS_RB_WUPDATE => a_wupdate,
-      PA_REGBUS_RB_WADDR   => a_waddr,
-      PA_REGBUS_RB_WDATA   => a_wdata,
-      PA_REGBUS_RB_WACK    => a_wack,
+    PA_REGBUS_RB_RUPDATE => a_rupdate,
+    PA_REGBUS_RB_RADDR   => a_raddr,
+    PA_REGBUS_RB_RDATA   => a_rdata,
+    PA_REGBUS_RB_RACK    => a_rack,
+    PA_REGBUS_RB_WUPDATE => a_wupdate,
+    PA_REGBUS_RB_WADDR   => a_waddr,
+    PA_REGBUS_RB_WDATA   => a_wdata,
+    PA_REGBUS_RB_WACK    => a_wack,
 
-      PB_REGBUS_RB_RUPDATE => b_rupdate,
-      PB_REGBUS_RB_RADDR   => b_raddr,
-      PB_REGBUS_RB_RDATA   => b_rdata,
-      PB_REGBUS_RB_RACK    => b_rack,
-      PB_REGBUS_RB_WUPDATE => b_wupdate,
-      PB_REGBUS_RB_WADDR   => b_waddr,
-      PB_REGBUS_RB_WDATA   => b_wdata,
-      PB_REGBUS_RB_WACK    => b_wack,
+    PB_REGBUS_RB_RUPDATE => b_rupdate,
+    PB_REGBUS_RB_RADDR   => b_raddr,
+    PB_REGBUS_RB_RDATA   => b_rdata,
+    PB_REGBUS_RB_RACK    => b_rack,
+    PB_REGBUS_RB_WUPDATE => b_wupdate,
+    PB_REGBUS_RB_WADDR   => b_waddr,
+    PB_REGBUS_RB_WDATA   => b_wdata,
+    PB_REGBUS_RB_WACK    => b_wack,
 
-      PC_REGBUS_RB_RUPDATE => c_rupdate,
-      PC_REGBUS_RB_RADDR   => c_raddr,
-      PC_REGBUS_RB_RDATA   => c_rdata,
-      PC_REGBUS_RB_RACK    => c_rack,
-      PC_REGBUS_RB_WUPDATE => c_wupdate,
-      PC_REGBUS_RB_WADDR   => c_waddr,
-      PC_REGBUS_RB_WDATA   => c_wdata,
-      PC_REGBUS_RB_WACK    => c_wack,
+    PC_REGBUS_RB_RUPDATE => c_rupdate,
+    PC_REGBUS_RB_RADDR   => c_raddr,
+    PC_REGBUS_RB_RDATA   => c_rdata,
+    PC_REGBUS_RB_RACK    => c_rack,
+    PC_REGBUS_RB_WUPDATE => c_wupdate,
+    PC_REGBUS_RB_WADDR   => c_waddr,
+    PC_REGBUS_RB_WDATA   => c_wdata,
+    PC_REGBUS_RB_WACK    => c_wack,
 
-      PD_REGBUS_RB_RUPDATE => d_rupdate,
-      PD_REGBUS_RB_RADDR   => d_raddr,
-      PD_REGBUS_RB_RDATA   => d_rdata,
-      PD_REGBUS_RB_RACK    => d_rack,
-      PD_REGBUS_RB_WUPDATE => d_wupdate,
-      PD_REGBUS_RB_WADDR   => d_waddr,
-      PD_REGBUS_RB_WDATA   => d_wdata,
-      PD_REGBUS_RB_WACK    => d_wack
-      );
+    PD_REGBUS_RB_RUPDATE => d_rupdate,
+    PD_REGBUS_RB_RADDR   => d_raddr,
+    PD_REGBUS_RB_RDATA   => d_rdata,
+    PD_REGBUS_RB_RACK    => d_rack,
+    PD_REGBUS_RB_WUPDATE => d_wupdate,
+    PD_REGBUS_RB_WADDR   => d_waddr,
+    PD_REGBUS_RB_WDATA   => d_wdata,
+    PD_REGBUS_RB_WACK    => d_wack
+  );
 
   aresetn_process : process
   begin
@@ -329,60 +329,60 @@ begin
     write (l, String'("aclk: "));
     write (l, aclk);
     if (show_read='1') then
-       write (l, String'(" || ra: 0x"));
-       hwrite(l, s_raddr);
-       write (l, String'(" ru:"));
-       write (l, s_rupdate);
-       write (l, String'(" rd: 0x"));
-       hwrite(l, s_rdata);
-       write (l, String'(" rk:"));
-       write (l, s_rack);
-       write (l, String'(" ark:"));
-       write (l, a_rack);
-       write (l, String'(" brk:"));
-       write (l, b_rack);
-       write (l, String'(" crk:"));
-       write (l, c_rack);
-       write (l, String'(" ra: 0x"));
-       hwrite(l, a_rdata);
-       write (l, String'(" rb: 0x"));
-       hwrite(l, b_rdata);
-       write (l, String'(" rc: 0x"));
-       hwrite(l, c_rdata);
-       write (l, String'(" || ra: 0x"));
-       hwrite(l, a_raddr);
-       write (l, String'(" rb: 0x"));
-       hwrite(l, b_raddr);
-       write (l, String'(" rc: 0x"));
-       hwrite(l, c_raddr);
+      write (l, String'(" || ra: 0x"));
+      hwrite(l, s_raddr);
+      write (l, String'(" ru:"));
+      write (l, s_rupdate);
+      write (l, String'(" rd: 0x"));
+      hwrite(l, s_rdata);
+      write (l, String'(" rk:"));
+      write (l, s_rack);
+      write (l, String'(" ark:"));
+      write (l, a_rack);
+      write (l, String'(" brk:"));
+      write (l, b_rack);
+      write (l, String'(" crk:"));
+      write (l, c_rack);
+      write (l, String'(" ra: 0x"));
+      hwrite(l, a_rdata);
+      write (l, String'(" rb: 0x"));
+      hwrite(l, b_rdata);
+      write (l, String'(" rc: 0x"));
+      hwrite(l, c_rdata);
+      write (l, String'(" || ra: 0x"));
+      hwrite(l, a_raddr);
+      write (l, String'(" rb: 0x"));
+      hwrite(l, b_raddr);
+      write (l, String'(" rc: 0x"));
+      hwrite(l, c_raddr);
     end if;
     if (show_write='1') then
-       write (l, String'(" || wa: 0x"));
-       hwrite (l,s_waddr);
-       write (l, String'(" wu:"));
-       write (l, s_wupdate);
-       write (l, String'(" wd: 0x"));
-       hwrite (l,s_wdata);
-       write (l, String'(" wk:"));
-       write (l, s_wack);
-       write (l, String'(" awk:"));
-       write (l, a_wack);
-       write (l, String'(" bwk:"));
-       write (l, b_wack);
-       write (l, String'(" cwk:"));
-       write (l, c_wack);
-       write (l, String'(" wa: 0x"));
-       hwrite(l, a_wdata);
-       write (l, String'(" wb: 0x"));
-       hwrite(l, b_wdata);
-       write (l, String'(" wc: 0x"));
-       hwrite(l, c_wdata);
-       write (l, String'(" || wa: 0x"));
-       hwrite(l, a_waddr);
-       write (l, String'(" wb: 0x"));
-       hwrite(l, b_waddr);
-       write (l, String'(" wc: 0x"));
-       hwrite(l, c_waddr);
+      write (l, String'(" || wa: 0x"));
+      hwrite (l,s_waddr);
+      write (l, String'(" wu:"));
+      write (l, s_wupdate);
+      write (l, String'(" wd: 0x"));
+      hwrite (l,s_wdata);
+      write (l, String'(" wk:"));
+      write (l, s_wack);
+      write (l, String'(" awk:"));
+      write (l, a_wack);
+      write (l, String'(" bwk:"));
+      write (l, b_wack);
+      write (l, String'(" cwk:"));
+      write (l, c_wack);
+      write (l, String'(" wa: 0x"));
+      hwrite(l, a_wdata);
+      write (l, String'(" wb: 0x"));
+      hwrite(l, b_wdata);
+      write (l, String'(" wc: 0x"));
+      hwrite(l, c_wdata);
+      write (l, String'(" || wa: 0x"));
+      hwrite(l, a_waddr);
+      write (l, String'(" wb: 0x"));
+      hwrite(l, b_waddr);
+      write (l, String'(" wc: 0x"));
+      hwrite(l, c_waddr);
 
     end if;
     if (aresetn = '0') then

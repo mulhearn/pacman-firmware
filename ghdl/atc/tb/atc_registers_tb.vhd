@@ -146,11 +146,11 @@ begin
     rd(C_ADDR_ATC_DST_LOGIC_A,  "destination LOGIC A");
     rd(C_ADDR_ATC_DST_LOGIC_B,  "destination LOGIC B");
     strip(count, "outputs:  config UART " & hex(cfg_uart) & " BAUD " & hex(cfg_baud)
-      & " input " & hex(cfg_input) & " G " & hex(cfg_g) & " H " & hex(cfg_h));
+          & " input " & hex(cfg_input) & " G " & hex(cfg_g) & " H " & hex(cfg_h));
     strip(count, "outputs:  destination LEMO A " & hex(lemo_a) & " B " & hex(lemo_b)
-      & " | LOGIC A " & hex(logic_a) & " B " & hex(logic_b));
+          & " | LOGIC A " & hex(logic_a) & " B " & hex(logic_b));
     strip(count, "outputs:  destination POKE A " & hex(dpoke_a) & " B " & hex(dpoke_b)
-      & " C " & hex(dpoke_c) & " D " & hex(dpoke_d));
+          & " C " & hex(dpoke_c) & " D " & hex(dpoke_d));
 
     note("pokes:  each a one-clock strobe with the tile mask (the low 10 bits)");
     wr(C_ADDR_ATC_POKE_A, x"00000001", "poke A:  tile 0");
@@ -159,7 +159,7 @@ begin
     wr(C_ADDR_ATC_POKE_D, x"00000155", "poke D:  tiles 0, 2, 4, 6, 8");
 
     note("count requests:  a one-clock strobe with the command byte (code, chan);  COUNT reads"
-      & " the answer");
+         & " the answer");
     rd(C_ADDR_ATC_COUNT,     "count (before any request)");
     wr(C_ADDR_ATC_COUNT_REQ, x"00000020", "count request:  START");
     wr(C_ADDR_ATC_COUNT_REQ, x"FFFFFF63", "count request:  READ H 3 (low byte kept)");
@@ -190,7 +190,7 @@ begin
     for i in 0 to 3 loop
       if poke(i) = '1' then
         strip(c, "strobe:  POKE " & character'val(character'pos('A') + i)
-          & ", mask " & bits(mask(i)));
+              & ", mask " & bits(mask(i)));
       end if;
     end loop;
     if count_req = '1' then strip(c, "strobe:  COUNT_REQ, command " & hex(count_cmd)); end if;

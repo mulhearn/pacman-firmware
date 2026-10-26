@@ -63,7 +63,7 @@ begin
     while count < 9 loop
       wait for 10 ns;
       strip(count, "sel " & bits(sel) & " | pins " & hex(adc_data) & " " & bits(adc_dof) & " | emul " & hex(emul) &
-                   " | out " & hex(data) & " " & bits(dof));
+            " | out " & hex(data) & " " & bits(dof));
     end loop;
     wait;
   end process;

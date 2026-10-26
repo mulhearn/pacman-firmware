@@ -32,7 +32,7 @@ entity global_unit is
     TILE_EN_O            : out std_logic_vector(C_NUM_TILE-1 downto 0);
     --LED output:
     LED_O                : out std_logic_vector(C_NUM_LED-1 downto 0)
-    );
+  );
 end global_unit;
 
 -- this integration module contains submodules global_registers and

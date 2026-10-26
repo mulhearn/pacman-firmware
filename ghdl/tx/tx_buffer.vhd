@@ -70,7 +70,7 @@ entity tx_buffer is
     READY_I            : in std_logic_vector(C_NUM_UART-1 downto 0);
 
     DEBUG_O           : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of tx_buffer is
@@ -101,22 +101,22 @@ architecture behavioral of tx_buffer is
 
 begin
   ar0: entity work.axis_read
-  generic map (
-    C_AXIS_WIDTH => C_TX_AXIS_WIDTH,
-    C_AXIS_BEATS => C_TX_AXIS_BEATS
-  )
-  port map (
-    CLK_I           => clk,
-    RST_I           => rst,
-    S_AXIS_TDATA    => S_AXIS_TDATA,
-    S_AXIS_TVALID   => stream_valid,
-    S_AXIS_TREADY   => stream_ready,
-    S_AXIS_TKEEP    => S_AXIS_TKEEP,
-    S_AXIS_TLAST    => S_AXIS_TLAST,
-    DATA_O          => packet_data,
-    VALID_O         => packet_valid,
-    READY_I         => packet_ready
-  );
+    generic map (
+      C_AXIS_WIDTH => C_TX_AXIS_WIDTH,
+      C_AXIS_BEATS => C_TX_AXIS_BEATS
+    )
+    port map (
+      CLK_I           => clk,
+      RST_I           => rst,
+      S_AXIS_TDATA    => S_AXIS_TDATA,
+      S_AXIS_TVALID   => stream_valid,
+      S_AXIS_TREADY   => stream_ready,
+      S_AXIS_TKEEP    => S_AXIS_TKEEP,
+      S_AXIS_TLAST    => S_AXIS_TLAST,
+      DATA_O          => packet_data,
+      VALID_O         => packet_valid,
+      READY_I         => packet_ready
+    );
 
   clk <= CLK_I;
   rst <= RST_I;

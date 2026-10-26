@@ -28,13 +28,13 @@ entity legacy_1v4 is
     LEGACY_TILE_EN_O            : out std_logic_vector(C_NUM_EN_LEGACY -1 downto 0)
 
 
-    ---------------------------------------------------------
-    ------------------------adc------------------------------
-    --ADC_EN_O            : out std_logic;
-    --ADC_CLK_O           : out std_logic;
-    --ADC_DATA_I          : in  std_logic_vector(ADC_DATA_WIDTH-2 downto 0);
-    --ADC_DOF_I           : in  std_logic
-    );
+  ---------------------------------------------------------
+  ------------------------adc------------------------------
+  --ADC_EN_O            : out std_logic;
+  --ADC_CLK_O           : out std_logic;
+  --ADC_DATA_I          : in  std_logic_vector(ADC_DATA_WIDTH-2 downto 0);
+  --ADC_DOF_I           : in  std_logic
+  );
 end entity;
 
 architecture behavioral of legacy_1v4 is
@@ -54,7 +54,7 @@ begin
   --TILE_EN
   LEGACY_TILE_EN_O            <= TILE_EN_I(7 downto 0);
 
-  --ADC
-  --ADC_EN_O                  <= '0';
-  --ADC_CLK_O                 <= '0';
+--ADC
+--ADC_EN_O                  <= '0';
+--ADC_CLK_O                 <= '0';
 end behavioral;

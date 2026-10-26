@@ -102,7 +102,7 @@ entity regbus_hub is
     PP_REGBUS_RB_WACK    : in   std_logic;
 
     DEBUG                 : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of regbus_hub is
@@ -113,25 +113,25 @@ architecture behavioral of regbus_hub is
     );
     port (
       S_REGBUS_RB_RUPDATE  : in   std_logic;
-      S_REGBUS_RB_RADDR	 : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	 : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_RADDR  : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA  : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RACK     : out  std_logic;
 
       S_REGBUS_RB_WUPDATE  : in   std_logic;
-      S_REGBUS_RB_WADDR	 : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	 : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR  : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WDATA  : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK     : out  std_logic;
 
       P_REGBUS_RB_RUPDATE  : out  std_logic_vector(0 to N_PRIMARY-1);
-      P_REGBUS_RB_RADDR	 : out  regbus_addr_array_t(0 to N_PRIMARY-1);
-      P_REGBUS_RB_RDATA	 : in   regbus_data_array_t(0 to N_PRIMARY-1);
+      P_REGBUS_RB_RADDR  : out  regbus_addr_array_t(0 to N_PRIMARY-1);
+      P_REGBUS_RB_RDATA  : in   regbus_data_array_t(0 to N_PRIMARY-1);
       P_REGBUS_RB_RACK     : in   std_logic_vector(0 to N_PRIMARY-1);
 
       P_REGBUS_RB_WUPDATE  : out  std_logic_vector(0 to N_PRIMARY-1);
-      P_REGBUS_RB_WADDR	 : out  regbus_addr_array_t(0 to N_PRIMARY-1);
-      P_REGBUS_RB_WDATA	 : out  regbus_data_array_t(0 to N_PRIMARY-1);
+      P_REGBUS_RB_WADDR  : out  regbus_addr_array_t(0 to N_PRIMARY-1);
+      P_REGBUS_RB_WDATA  : out  regbus_data_array_t(0 to N_PRIMARY-1);
       P_REGBUS_RB_WACK     : in   std_logic_vector(0 to N_PRIMARY-1)
-      );
+    );
   end component;
 
   component regbus_cdc is
@@ -151,7 +151,7 @@ architecture behavioral of regbus_hub is
       P_REGBUS_RB_RDATA     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       P_REGBUS_RB_WUPDATE   : out std_logic;
       P_REGBUS_RB_WACK      : in  std_logic
-      );
+    );
   end component;
 
   -- Secondary-domain fanout (S_CLK_I):  secondary -> the secondary-domain ports, CDC branch (last index)
@@ -178,7 +178,7 @@ architecture behavioral of regbus_hub is
   signal pri_wdata   : regbus_data_array_t(0 to N_PRI-1);
   signal pri_wack    : std_logic_vector(0 to N_PRI-1);
 
-    -- u_regbus_cdc's P_CLK_I-domain interface
+  -- u_regbus_cdc's P_CLK_I-domain interface
   signal p_rupdate : std_logic;
   signal p_raddr   : std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
   signal p_rdata   : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
@@ -225,7 +225,7 @@ begin
   u_fanout_sec : regbus_fanout
     generic map (
       N_PRIMARY => N_SEC
-      )
+    )
     port map (
       S_REGBUS_RB_RUPDATE  => s_rupdate_reg,
       S_REGBUS_RB_RADDR    => s_raddr_reg,
@@ -246,7 +246,7 @@ begin
       P_REGBUS_RB_WADDR    => sec_waddr,
       P_REGBUS_RB_WDATA    => sec_wdata,
       P_REGBUS_RB_WACK     => sec_wack
-      );
+    );
 
   -- PA <-> index 0
   PA_REGBUS_RB_RUPDATE <= sec_rupdate(0);
@@ -300,7 +300,7 @@ begin
       P_REGBUS_RB_RDATA     => p_rdata,
       P_REGBUS_RB_WUPDATE   => p_wupdate,
       P_REGBUS_RB_WACK      => p_wack
-      );
+    );
 
   -- ADDR/WDATA passthrough into the P_CLK_I domain (quasi-static, no register)
   p_raddr <= sec_raddr(N_SEC-1);
@@ -330,7 +330,7 @@ begin
   u_fanout_pri : regbus_fanout
     generic map (
       N_PRIMARY => N_PRI
-      )
+    )
     port map (
       S_REGBUS_RB_RUPDATE  => p_rupdate_reg,
       S_REGBUS_RB_RADDR    => p_raddr_reg,
@@ -351,7 +351,7 @@ begin
       P_REGBUS_RB_WADDR    => pri_waddr,
       P_REGBUS_RB_WDATA    => pri_wdata,
       P_REGBUS_RB_WACK     => pri_wack
-      );
+    );
 
   -- PL <-> index 0
   PL_REGBUS_RB_RUPDATE <= pri_rupdate(0);

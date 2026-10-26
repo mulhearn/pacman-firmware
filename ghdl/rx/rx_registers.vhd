@@ -653,7 +653,7 @@ begin
   -- latency is not an issue, so there are two stages:
   process(clk, rst)
   begin
-   if rst = '1' then
+    if rst = '1' then
       starts_rega   <= (others => (others => '0'));
       beats_rega    <= (others => (others => '0'));
       updates_rega  <= (others => (others => '0'));
@@ -674,7 +674,7 @@ begin
       pattern_starts_regb <= (others => '0');
       pattern_stops_regb  <= (others => '0');
 
-   elsif rising_edge(clk) then
+    elsif rising_edge(clk) then
       -- First register stage: next -> rega
       starts_rega    <= starts_next;
       beats_rega     <= beats_next;

@@ -10,29 +10,29 @@ entity regbus_fanout is
   port (
     -- Secondary REGBUS:
     S_REGBUS_RB_RUPDATE  : in   std_logic;
-    S_REGBUS_RB_RADDR	 : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_RDATA	 : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_RADDR    : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_RDATA    : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RACK     : out  std_logic;
 
     S_REGBUS_RB_WUPDATE  : in   std_logic;
-    S_REGBUS_RB_WADDR	 : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	 : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR    : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA    : in   std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK     : out  std_logic;
 
     -- Primary REGBUS arrays:
     P_REGBUS_RB_RUPDATE  : out  std_logic_vector(0 to N_PRIMARY-1);
-    P_REGBUS_RB_RADDR	 : out  regbus_addr_array_t(0 to N_PRIMARY-1);
+    P_REGBUS_RB_RADDR    : out  regbus_addr_array_t(0 to N_PRIMARY-1);
     -- NOTE: primaries must hold RDATA stable from one update to the next,
     -- and drive 0 when not addressed -- S_REGBUS_RB_RDATA below is a plain
     -- OR across all lanes, not ack-qualified, so this is load-bearing.
-    P_REGBUS_RB_RDATA	 : in   regbus_data_array_t(0 to N_PRIMARY-1);
+    P_REGBUS_RB_RDATA    : in   regbus_data_array_t(0 to N_PRIMARY-1);
     P_REGBUS_RB_RACK     : in   std_logic_vector(0 to N_PRIMARY-1);
 
     P_REGBUS_RB_WUPDATE  : out  std_logic_vector(0 to N_PRIMARY-1);
-    P_REGBUS_RB_WADDR	 : out  regbus_addr_array_t(0 to N_PRIMARY-1);
-    P_REGBUS_RB_WDATA	 : out  regbus_data_array_t(0 to N_PRIMARY-1);
+    P_REGBUS_RB_WADDR    : out  regbus_addr_array_t(0 to N_PRIMARY-1);
+    P_REGBUS_RB_WDATA    : out  regbus_data_array_t(0 to N_PRIMARY-1);
     P_REGBUS_RB_WACK     : in   std_logic_vector(0 to N_PRIMARY-1)
-    );
+  );
 end;
 
 architecture behavioral of regbus_fanout is

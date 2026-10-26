@@ -66,15 +66,15 @@ entity axil_to_regbus is
     P_REGBUS_RB_WDATA    : out std_logic_vector(C_DATA_WIDTH-1 downto 0);
     P_REGBUS_RB_WACK     : in  std_logic
 
-    -- Regbus error status, latched sticky until cleared
-    --   bit 31:16  latched address of the first fault since last clear
-    --   bit 2      unrequested ack (NOTE: no address latched for this fault)
-    --   bit 1      timeout (no ack within C_TIMEOUT_CYCLES)
-    --   bit 0      any (= bit1 or bit2)
-    --READ_ERROR_O             : out std_logic_vector(31 downto 0);
-    --WRITE_ERROR_O            : out std_logic_vector(31 downto 0);
-    --CLEAR_ERROR_I            : in  std_logic
-    );
+  -- Regbus error status, latched sticky until cleared
+  --   bit 31:16  latched address of the first fault since last clear
+  --   bit 2      unrequested ack (NOTE: no address latched for this fault)
+  --   bit 1      timeout (no ack within C_TIMEOUT_CYCLES)
+  --   bit 0      any (= bit1 or bit2)
+  --READ_ERROR_O             : out std_logic_vector(31 downto 0);
+  --WRITE_ERROR_O            : out std_logic_vector(31 downto 0);
+  --CLEAR_ERROR_I            : in  std_logic
+  );
 end;
 
 architecture behavioral of axil_to_regbus is

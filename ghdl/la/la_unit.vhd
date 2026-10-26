@@ -29,18 +29,18 @@ entity la_unit is
     C_DEPTH_LOG2        : integer := 15      -- 32K samples
   );
   port (
-    ACLK	        : in std_logic;
-    RST_I	        : in std_logic;
+    ACLK                : in std_logic;
+    RST_I               : in std_logic;
 
     -- REGBUS Ports
     S_REGBUS_RB_RUPDATE : in  std_logic;
-    S_REGBUS_RB_RADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_RDATA	: out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_RADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_RDATA   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RACK    : out std_logic;
 
     S_REGBUS_RB_WUPDATE : in  std_logic;
-    S_REGBUS_RB_WADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	: in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK    : out std_logic;
 
     -- inputs (ACLK domain;  PISO as synchronized by rx_unit)
@@ -57,7 +57,7 @@ entity la_unit is
     -- cross trigger (the ADC unit)
     CROSS_TRIGGER_I     : in  std_logic;
     CROSS_TRIGGER_O     : out std_logic
-    );
+  );
 end la_unit;
 
 architecture behavioral of la_unit is
@@ -79,34 +79,34 @@ begin
       C_DEPTH             => 2**C_DEPTH_LOG2
     )
     port map (
-    CLK_I               => ACLK,
-    RST_I               => RST_I,
-    S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
-    S_REGBUS_RB_RADDR   => S_REGBUS_RB_RADDR,
-    S_REGBUS_RB_RDATA   => S_REGBUS_RB_RDATA,
-    S_REGBUS_RB_RACK    => S_REGBUS_RB_RACK,
-    S_REGBUS_RB_WUPDATE => S_REGBUS_RB_WUPDATE,
-    S_REGBUS_RB_WADDR   => S_REGBUS_RB_WADDR,
-    S_REGBUS_RB_WDATA   => S_REGBUS_RB_WDATA,
-    S_REGBUS_RB_WACK    => S_REGBUS_RB_WACK,
+      CLK_I               => ACLK,
+      RST_I               => RST_I,
+      S_REGBUS_RB_RUPDATE => S_REGBUS_RB_RUPDATE,
+      S_REGBUS_RB_RADDR   => S_REGBUS_RB_RADDR,
+      S_REGBUS_RB_RDATA   => S_REGBUS_RB_RDATA,
+      S_REGBUS_RB_RACK    => S_REGBUS_RB_RACK,
+      S_REGBUS_RB_WUPDATE => S_REGBUS_RB_WUPDATE,
+      S_REGBUS_RB_WADDR   => S_REGBUS_RB_WADDR,
+      S_REGBUS_RB_WDATA   => S_REGBUS_RB_WDATA,
+      S_REGBUS_RB_WACK    => S_REGBUS_RB_WACK,
 
-    TILE_O      => tile,
-    MUX_SELECT_O => mux_select,
-    PERIOD_O    => period,
-    PHASE_O     => phase,
-    MODE_O      => mode,
-    TRIG_O      => trig,
-    POST_O      => post,
-    ARM_O       => arm,
-    FORCE_O     => frc,
-    START_O     => start,
-    NEXT_O      => nxt,
-    STATUS_I    => status,
-    TRIG_POS_I  => trig_pos,
-    COUNT_I     => count,
-    TS_I        => trig_ts,
-    DATA_I      => data
-  );
+      TILE_O      => tile,
+      MUX_SELECT_O => mux_select,
+      PERIOD_O    => period,
+      PHASE_O     => phase,
+      MODE_O      => mode,
+      TRIG_O      => trig,
+      POST_O      => post,
+      ARM_O       => arm,
+      FORCE_O     => frc,
+      START_O     => start,
+      NEXT_O      => nxt,
+      STATUS_I    => status,
+      TRIG_POS_I  => trig_pos,
+      COUNT_I     => count,
+      TS_I        => trig_ts,
+      DATA_I      => data
+    );
 
   status <= (C_RB_DATA_WIDTH-1 downto 3 => '0') & done & triggered & armed;
 

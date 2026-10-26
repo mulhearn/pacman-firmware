@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 library work;
 use work.common.all;
 
--- adc_cmp:  ADC comparator with hysteresis 
+-- adc_cmp:  ADC comparator with hysteresis
 --
 -- Parameters (registers, register_map.vhd):
 --   THRESH  (12 bits)  threshold

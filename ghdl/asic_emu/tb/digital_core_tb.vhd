@@ -88,7 +88,7 @@ architecture behaviour of digital_core_tb is
       posi                    : in  std_logic_vector(3 downto 0);
       clk                     : in  std_logic;
       reset_n                 : in  std_logic
-      );
+    );
   end component;
   signal count   : integer := 0;
   signal clk     : std_logic;

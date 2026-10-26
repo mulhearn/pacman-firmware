@@ -30,7 +30,7 @@ architecture behaviour of axil_demo_rw_tb is
       S_AXI_BRESP         : out std_logic_vector(1 downto 0);
       S_AXI_BVALID        : out std_logic;
       S_AXI_BREADY        : in std_logic
-      );
+    );
   end component;
   signal aclk     : std_logic;
   signal aresetn  : std_logic;
@@ -54,22 +54,22 @@ architecture behaviour of axil_demo_rw_tb is
 
 begin
   uut: axil_demo_rw port map (
-      S_AXI_ACLK          => aclk,
-      S_AXI_ARESETN       => aresetn,
-      S_AXI_ARADDR        => araddr,
-      S_AXI_ARVALID       => arvalid,
-      S_AXI_ARREADY       => arready,
-      S_AXI_RDATA         => rdata,
-      S_AXI_RVALID        => rvalid,
-      S_AXI_RREADY        => rready,
-      S_AXI_AWADDR        => awaddr,
-      S_AXI_AWVALID       => awvalid,
-      S_AXI_AWREADY       => awready,
-      S_AXI_WDATA         => wdata,
-      S_AXI_WVALID        => wvalid,
-      S_AXI_WREADY        => wready,
-      S_AXI_BVALID        => bvalid,
-      S_AXI_BREADY        => bready);
+    S_AXI_ACLK          => aclk,
+    S_AXI_ARESETN       => aresetn,
+    S_AXI_ARADDR        => araddr,
+    S_AXI_ARVALID       => arvalid,
+    S_AXI_ARREADY       => arready,
+    S_AXI_RDATA         => rdata,
+    S_AXI_RVALID        => rvalid,
+    S_AXI_RREADY        => rready,
+    S_AXI_AWADDR        => awaddr,
+    S_AXI_AWVALID       => awvalid,
+    S_AXI_AWREADY       => awready,
+    S_AXI_WDATA         => wdata,
+    S_AXI_WVALID        => wvalid,
+    S_AXI_WREADY        => wready,
+    S_AXI_BVALID        => bvalid,
+    S_AXI_BREADY        => bready);
 
   aresetn_process : process
   begin

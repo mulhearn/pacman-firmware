@@ -53,7 +53,7 @@ entity atc_unit is
 
     -- status to the logic analyzer unit
     STATUS_O              : out std_logic_vector(C_STATUS_BITS-1 downto 0)
-    );
+  );
 end atc_unit;
 
 architecture behaviour of atc_unit is
@@ -152,7 +152,7 @@ begin
       RST_I      => rst,
       CONFIG_I   => x"00000000",
       STROBE_O   => logic_a
-      );
+    );
 
   logic_b_timer: entity work.timer
     port map (
@@ -160,7 +160,7 @@ begin
       RST_I      => rst,
       CONFIG_I   => x"00000000",
       STROBE_O   => logic_b
-      );
+    );
 
   atcreg0: entity work.atc_registers port map (
     CLK_I               => clk,
@@ -203,7 +203,7 @@ begin
     TIMESTAMP_I         => ts
   );
 
- -- double flop synchronization of the LEMO inputs:  reset high, as the edge detectors' history
+  -- double flop synchronization of the LEMO inputs:  reset high, as the edge detectors' history
   process(clk, rst)
   begin
     if (rst = '1') then
@@ -215,30 +215,30 @@ begin
     end if;
   end process;
 
- lemoa0: entity work.rising_edge_detect
-   generic map(
-     DEBOUNCE_CYCLES => 4
-     )
+  lemoa0: entity work.rising_edge_detect
+    generic map(
+      DEBOUNCE_CYCLES => 4
+    )
 
-   port map (
-     CLK_I  => clk,
-     RST_I  => rst,
-     SIGNAL_I => lemo_sync(0),
-     INVERT_I => config_input(0),
-     UPDATE_O => lemo_a
-   );
+    port map (
+      CLK_I  => clk,
+      RST_I  => rst,
+      SIGNAL_I => lemo_sync(0),
+      INVERT_I => config_input(0),
+      UPDATE_O => lemo_a
+    );
 
   lemob0: entity work.rising_edge_detect
     generic map(
       DEBOUNCE_CYCLES => 4
-     )
-   port map (
-     CLK_I  => clk,
-     RST_I  => rst,
-     SIGNAL_I => lemo_sync(1),
-     INVERT_I => config_input(1),
-     UPDATE_O => lemo_b
-   );
+    )
+    port map (
+      CLK_I  => clk,
+      RST_I  => rst,
+      SIGNAL_I => lemo_sync(1),
+      INVERT_I => config_input(1),
+      UPDATE_O => lemo_b
+    );
 
   atcmux0: entity work.atc_mux port map (
     CLK_I         => clk,
@@ -266,7 +266,7 @@ begin
     G_O           => g,
     H_O           => h,
     M_O           => m
-    );
+  );
 
   atccnt0: entity work.atc_counter port map (
     CLK_I            => clk,

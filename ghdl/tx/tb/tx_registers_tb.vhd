@@ -120,7 +120,7 @@ begin
     rd(1,  C_ADDR_TX_UART_CONFIG, "UART 1 config");
     rd(39, C_ADDR_TX_UART_CONFIG, "UART 39 config");
     outputs("UART config 0 " & hex(uart_config(0)) & " | 1 " & hex(uart_config(1))
-      & " | 39 " & hex(uart_config(39)));
+            & " | 39 " & hex(uart_config(39)));
 
     note("UART status:  the input as it is (UART number in bits 31-24)");
     rd(0,  C_ADDR_TX_UART_STATUS, "UART 0 status");
@@ -128,7 +128,7 @@ begin
     rd(39, C_ADDR_TX_UART_STATUS, "UART 39 status");
 
     note("counters, UART 12:  3 starts, 5 beats (valid and ready);  then 7 valid without ready,"
-      & " 2 ready without valid (not beats)");
+         & " 2 ready without valid (not beats)");
     events(12, EV_START, 3);
     events(12, EV_VALID or EV_READY, 5);
     events(12, EV_VALID, 7);

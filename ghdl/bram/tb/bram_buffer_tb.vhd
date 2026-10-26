@@ -123,10 +123,10 @@ begin
     while count < 38 loop
       wait for 10 ns;
       strip(count, "se " & bits(se) & " | sample " & hex(sample) & " | a t d " & bits(armed) & " " &
-                   bits(triggered) & " " & bits(done) & " | " & bits(trig_o) & " | count " &
-                   dec(to_integer(unsigned(cnt)), 2) & " pos " & dec(to_integer(unsigned(trig_pos)), 2) &
-                   " | data " & hex(data(7 downto 0)) &
-                   mark(start, "(START)") & mark(nxt, "(NEXT)") & mark(rst, "(RESET)"));
+            bits(triggered) & " " & bits(done) & " | " & bits(trig_o) & " | count " &
+            dec(to_integer(unsigned(cnt)), 2) & " pos " & dec(to_integer(unsigned(trig_pos)), 2) &
+            " | data " & hex(data(7 downto 0)) &
+            mark(start, "(START)") & mark(nxt, "(NEXT)") & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

@@ -27,8 +27,8 @@ end registers_demo;
 architecture behaviour of registers_demo is
   component regbus_mux is
     port (
-      ACLK	             : in std_logic;
-      ARESETN	             : in std_logic;
+      ACLK                   : in std_logic;
+      ARESETN                : in std_logic;
       -- Secondary REGBUS:
       S_REGBUS_RB_RUPDATE  : in   std_logic;
       S_REGBUS_RB_RADDR    : in   std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
@@ -93,19 +93,19 @@ architecture behaviour of registers_demo is
       C_VAL_ROB     : unsigned(C_RB_DATA_WIDTH-1 downto 0)  := x"22222222"
     );
     port (
-      ACLK	        : in std_logic;
-      ARESETN	        : in std_logic;
-      S_REGBUS_RB_RADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_RDATA	     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      ACLK              : in std_logic;
+      ARESETN           : in std_logic;
+      S_REGBUS_RB_RADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_RDATA      : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_RUPDATE    : in  std_logic;
       S_REGBUS_RB_RACK       : out std_logic;
       S_REGBUS_RB_WUPDATE    : in  std_logic;
-      S_REGBUS_RB_WADDR	     : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-      S_REGBUS_RB_WDATA	     : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+      S_REGBUS_RB_WADDR      : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+      S_REGBUS_RB_WDATA      : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
       S_REGBUS_RB_WACK       : out std_logic;
       --
-      DEBUG     	: out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
+      DEBUG             : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
+    );
   end component;
 
 
@@ -135,7 +135,7 @@ begin
         C_ROLE  => role_array(i),
         C_VAL_ROA => unsigned(roa_array(i)),
         C_VAL_ROB => unsigned(rob_array(i))
-        )
+      )
       port map (
         ACLK                => ACLK,
         ARESETN             => ARESETN,
@@ -147,7 +147,7 @@ begin
         S_REGBUS_RB_WADDR   => waddr_array(i),
         S_REGBUS_RB_WDATA   => wdata_array(i),
         S_REGBUS_RB_WACK    => wack_array(i)
-        );
+      );
   end generate u0;
 
   uut: regbus_mux port map (
@@ -198,7 +198,7 @@ begin
     PD_REGBUS_RB_WDATA   => wdata_array(3),
     PD_REGBUS_RB_WACK    => wack_array(3)
 
-    );
+  );
 
 end behaviour;
 

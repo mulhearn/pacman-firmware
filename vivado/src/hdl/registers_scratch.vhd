@@ -16,23 +16,23 @@ entity registers_scratch is
     C_VAL_STAT    : unsigned(31 downto 0)  := x"1000F001";
     C_VAL_ROA     : unsigned(31 downto 0)  := x"11111111";
     C_VAL_ROB     : unsigned(31 downto 0)  := x"22222222"
-    );
+  );
   port (
-    ACLK	        : in std_logic;
-    ARESETN	        : in std_logic;
+    ACLK                : in std_logic;
+    ARESETN             : in std_logic;
 
     S_REGBUS_RB_RUPDATE : in  std_logic;
-    S_REGBUS_RB_RADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_RDATA	: out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_RADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_RDATA   : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_RACK    : out  std_logic;
 
     S_REGBUS_RB_WUPDATE : in  std_logic;
-    S_REGBUS_RB_WADDR	: in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
-    S_REGBUS_RB_WDATA	: in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+    S_REGBUS_RB_WADDR   : in  std_logic_vector(C_RB_ADDR_WIDTH-1 downto 0);
+    S_REGBUS_RB_WDATA   : in  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
     S_REGBUS_RB_WACK    : out  std_logic;
     --
     DEBUG               : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-    );
+  );
 begin
   assert C_RB_ADDR_WIDTH>=8;
 end;
@@ -62,9 +62,9 @@ begin
   rst <= not ARESETN;
 
   --outputs:
-  S_REGBUS_RB_RDATA	 <= rdata;
-  S_REGBUS_RB_RACK	 <= rack;
-  S_REGBUS_RB_WACK	 <= wack;
+  S_REGBUS_RB_RDATA      <= rdata;
+  S_REGBUS_RB_RACK       <= rack;
+  S_REGBUS_RB_WACK       <= wack;
 
   --inputs: (already registered at preceding stage)
   rupdate  <= S_REGBUS_RB_RUPDATE;
@@ -77,9 +77,9 @@ begin
 
   -- Handle Read Request:
   process(clk,rst)
-  variable scope   : integer;
-  variable role    : integer;
-  variable reg     : integer;
+    variable scope   : integer;
+    variable role    : integer;
+    variable reg     : integer;
   begin
     if (rst = '1') then
       rdata <= x"00000000";
@@ -110,9 +110,9 @@ begin
               rdata <= std_logic_vector(C_VAL_ROB);
               rack  <= '1';
             else
-                -- this is an error, invalid register
-                rdata <= x"EEEEEEEE";
-                rack  <= '0';
+              -- this is an error, invalid register
+              rdata <= x"EEEEEEEE";
+              rack  <= '0';
             end if;
           else
             -- this is not an error, just a request outside our scope/role
@@ -126,9 +126,9 @@ begin
 
   -- Handle Write Request:
   process(clk,rst)
-  variable scope   : integer;
-  variable role    : integer;
-  variable reg     : integer;
+    variable scope   : integer;
+    variable role    : integer;
+    variable reg     : integer;
   begin
     if (rst = '1') then
       scra <= x"00000000";
@@ -136,7 +136,7 @@ begin
     else
       if (rising_edge(clk)) then
         if (wupdate='0') then
-            wack  <= '0';
+          wack  <= '0';
         else
           scope := to_integer(unsigned(waddr(15 downto 12)));
           role  := to_integer(unsigned(waddr(11 downto 8)));
@@ -149,8 +149,8 @@ begin
               scrb<= wdata;
               wack  <= '1';
             else
-                -- this is an error, invalid register
-                wack  <= '0';
+              -- this is an error, invalid register
+              wack  <= '0';
             end if;
           else
             -- this is not an error, just a request outside our scope/role

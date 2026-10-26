@@ -37,7 +37,7 @@ architecture behaviour of axis_read_demo is
     generic (
       constant C_AXIS_WIDTH  : integer  := C_AXIS_WIDTH;
       constant C_AXIS_BEATS  : integer  := C_AXIS_BEATS
-      );
+    );
     port (
       CLK_I              : in std_logic;
       RST_I              : in std_logic;
@@ -52,7 +52,7 @@ architecture behaviour of axis_read_demo is
       DATA_O             : out std_logic_vector(C_AXIS_WIDTH*C_AXIS_BEATS-1 downto 0);
       VALID_O            : out std_logic;
       READY_I            : in std_logic
-      );
+    );
   end component;
 
   signal clk      : std_logic;
@@ -142,7 +142,7 @@ begin
 
   -- Handle Write Request:
   process(clk, rst)
-  variable reg     : integer;
+    variable reg     : integer;
   begin
     if (rst = '1') then
       pready <= '0';

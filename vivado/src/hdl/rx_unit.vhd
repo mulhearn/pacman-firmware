@@ -57,7 +57,7 @@ entity rx_unit is
 
     -- status to the logic analyzer unit (none defined yet:  zero)
     STATUS_O               : out std_logic_vector(C_STATUS_BITS-1 downto 0)
-     );
+  );
 end rx_unit;
 
 -- This integration module contains submodules rx_registers,
@@ -128,7 +128,7 @@ begin
     READY_O         => ready,
     EOP_HEADER_I    => eop_header,
     DEBUG_O         => open
-    );
+  );
 
   reg0: entity work.rx_registers port map (
     CLK_I               => clk,
@@ -163,7 +163,7 @@ begin
     PATTERN_PAYLOAD_O   => pattern_payload,
     PATTERN_DELAY_O     => pattern_delay,
     PATTERN_CONFIG_O    => pattern_config
-    );
+  );
 
   grxchan0: for i in 0 to C_NUM_UART-1 generate
     rxchan0: entity work.rx_chan
@@ -184,7 +184,7 @@ begin
         EMUL_I        => '1',
         TIMESTAMP_I   => TIMESTAMP_I,
         DEBUG_O       => open
-        );
+      );
   end generate grxchan0;
 
   pat0: entity work.pattern port map (
@@ -242,7 +242,7 @@ begin
     READY_I       => ready(C_NUM_UART),
     TIMESTAMP_I   => TIMESTAMP_I,
     DEBUG_O       => open
-    );
+  );
 
   ro0: entity work.rollover port map (
     CLK_I         => clk,
@@ -254,7 +254,7 @@ begin
     READY_I       => ready(C_NUM_UART+1),
     TIMESTAMP_I   => TIMESTAMP_I,
     DEBUG_O       => open
-    );
+  );
 
   m0: entity work.marker port map (
     CLK_I         => clk,
@@ -266,7 +266,7 @@ begin
     TIMESTAMP_I   => TIMESTAMP_I,
     MARKER_I      => RX_MARKER_I(2),
     DEBUG_O       => open
-    );
+  );
 
   m1: entity work.marker port map (
     CLK_I         => clk,
@@ -278,6 +278,6 @@ begin
     TIMESTAMP_I   => TIMESTAMP_I,
     MARKER_I      => RX_MARKER_I(3),
     DEBUG_O       => open
-    );
+  );
 
 end behaviour;

@@ -86,7 +86,7 @@ begin
     while count < 120 loop
       wait for 10 ns;
       strip(count, "uclk " & bits(uclk) & " | sig " & bits(sig) & " update " & bits(update)
-        & mark(update, "(UPDATE)") & mark(rst, "(RESET)"));
+            & mark(update, "(UPDATE)") & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

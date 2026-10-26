@@ -44,7 +44,7 @@ entity tx_registers is
     -- look feature:
     LOOK_SELECT_O       : out std_logic_vector(C_SELECT_WIDTH-1 downto 0);
     LOOK_UART_DATA_I    : in std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of tx_registers is

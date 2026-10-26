@@ -25,7 +25,7 @@ entity axis_write is
     LAST_I             : in  std_logic;
     DATA_I             : in  std_logic_vector(C_AXIS_WIDTH-1 downto 0);
     DEBUG_O            : out std_logic_vector(C_DEBUG_WIDTH-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of axis_write is

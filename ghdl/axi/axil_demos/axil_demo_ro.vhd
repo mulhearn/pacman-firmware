@@ -6,32 +6,32 @@ entity axil_demo_ro is
   generic (
     C_DATA_WIDTH  : integer  := 32;
     C_ADDR_WIDTH  : integer  := 8
-    );
+  );
 
   port (
-    S_AXI_ACLK	        : in std_logic;
-    S_AXI_ARESETN	: in std_logic;
-    S_AXI_ARADDR	: in std_logic_vector(C_ADDR_WIDTH-1 downto 0);
-    S_AXI_ARPROT	: in std_logic_vector(2 downto 0);
-    S_AXI_ARVALID	: in std_logic;
-    S_AXI_ARREADY	: out std_logic;
-    S_AXI_RDATA	        : out std_logic_vector(C_DATA_WIDTH-1 downto 0);
-    S_AXI_RRESP	        : out std_logic_vector(1 downto 0);
-    S_AXI_RVALID	: out std_logic;
-    S_AXI_RREADY	: in std_logic;
+    S_AXI_ACLK          : in std_logic;
+    S_AXI_ARESETN       : in std_logic;
+    S_AXI_ARADDR        : in std_logic_vector(C_ADDR_WIDTH-1 downto 0);
+    S_AXI_ARPROT        : in std_logic_vector(2 downto 0);
+    S_AXI_ARVALID       : in std_logic;
+    S_AXI_ARREADY       : out std_logic;
+    S_AXI_RDATA         : out std_logic_vector(C_DATA_WIDTH-1 downto 0);
+    S_AXI_RRESP         : out std_logic_vector(1 downto 0);
+    S_AXI_RVALID        : out std_logic;
+    S_AXI_RREADY        : in std_logic;
     -- unused:
-    S_AXI_AWADDR	: in std_logic_vector(C_ADDR_WIDTH-1 downto 0)      := (others => '0');
-    S_AXI_AWPROT	: in std_logic_vector(2 downto 0)                 := (others => '0');
-    S_AXI_AWVALID	: in std_logic                                    := '0';
-    S_AXI_AWREADY	: out std_logic;
-    S_AXI_WDATA	        : in std_logic_vector(C_DATA_WIDTH-1 downto 0)      := (others => '0');
-    S_AXI_WSTRB	        : in std_logic_vector((C_DATA_WIDTH/8)-1 downto 0)   := (others => '0');
-    S_AXI_WVALID	: in std_logic                                    := '0';
-    S_AXI_WREADY	: out std_logic;
-    S_AXI_BRESP	        : out std_logic_vector(1 downto 0);
-    S_AXI_BVALID	: out std_logic;
-    S_AXI_BREADY	: in std_logic
-      );
+    S_AXI_AWADDR        : in std_logic_vector(C_ADDR_WIDTH-1 downto 0)      := (others => '0');
+    S_AXI_AWPROT        : in std_logic_vector(2 downto 0)                 := (others => '0');
+    S_AXI_AWVALID       : in std_logic                                    := '0';
+    S_AXI_AWREADY       : out std_logic;
+    S_AXI_WDATA         : in std_logic_vector(C_DATA_WIDTH-1 downto 0)      := (others => '0');
+    S_AXI_WSTRB         : in std_logic_vector((C_DATA_WIDTH/8)-1 downto 0)   := (others => '0');
+    S_AXI_WVALID        : in std_logic                                    := '0';
+    S_AXI_WREADY        : out std_logic;
+    S_AXI_BRESP         : out std_logic_vector(1 downto 0);
+    S_AXI_BVALID        : out std_logic;
+    S_AXI_BREADY        : in std_logic
+  );
 begin
   assert C_ADDR_WIDTH>=8;
 end;
@@ -46,7 +46,7 @@ architecture behavioral of axil_demo_ro is
 
   signal rdata    : std_logic_vector(C_DATA_WIDTH-1 downto 0);
   signal rready   : std_logic;
-  signal rvalid	  : std_logic := '0';
+  signal rvalid   : std_logic := '0';
 
   signal rupdate  : std_logic;
 begin
@@ -56,10 +56,10 @@ begin
   -- Do not use read response
   S_AXI_RRESP   <= (others => '0');
   -- Ignore writes for now...
-  S_AXI_AWREADY	<= '0';
+  S_AXI_AWREADY <= '0';
   S_AXI_WREADY  <= '0';
-  S_AXI_BRESP	<= (others => '0');
-  S_AXI_BVALID	<= '0';
+  S_AXI_BRESP   <= (others => '0');
+  S_AXI_BVALID  <= '0';
 
 
   clk <= S_AXI_ACLK;
@@ -108,7 +108,7 @@ begin
 
   -- Send data
   process(clk, rst)
-  variable lowaddr : std_logic_vector(7 downto 0);
+    variable lowaddr : std_logic_vector(7 downto 0);
   begin
     if (rst = '1') then
       rdata <= (others => '0');

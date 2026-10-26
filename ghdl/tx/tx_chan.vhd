@@ -130,7 +130,7 @@ begin
     end if;
   end process;
 
-    --outputs:
+  --outputs:
   process(clk, rst)
   begin
     if rst = '1' then
@@ -182,7 +182,7 @@ begin
     5      => state_bits(1),
     6      => clk_en,
     others => '0'
-    );
+  );
 
   process(clk, rst)
   begin

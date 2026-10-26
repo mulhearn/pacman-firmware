@@ -131,11 +131,11 @@ begin
     wait until status(10)='1';
     wait for 11 ns;
     strip(count, STATE(to_integer(unsigned(status(1 downto 0))))
-      & " v: " & bits(valid) & " r: " & bits(ready)
-      & " | ph " & hex(status(31 downto 24))
-      & " | d " & hex(data)
-      & " | rx " & bits(rx & status(12) & status(13) & status(14))
-      & " | vden " & bits(status(15) & status(11) & status(10) & status(8))
-      & mark(status(4), "(START)") & mark(status(5), "(UPDATE)") & mark(status(6), "(LOST)") & mark(rst, "(RESET)"));
+          & " v: " & bits(valid) & " r: " & bits(ready)
+          & " | ph " & hex(status(31 downto 24))
+          & " | d " & hex(data)
+          & " | rx " & bits(rx & status(12) & status(13) & status(14))
+          & " | vden " & bits(status(15) & status(11) & status(10) & status(8))
+          & mark(status(4), "(START)") & mark(status(5), "(UPDATE)") & mark(status(6), "(LOST)") & mark(rst, "(RESET)"));
   end process;
 end behaviour;

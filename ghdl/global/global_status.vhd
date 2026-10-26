@@ -22,7 +22,7 @@ entity global_status is
     GLOBAL_STATUS_O     : out std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
 
     LED_O               : out std_logic_vector(C_NUM_LED-1 downto 0)
-    );
+  );
 end;
 
 architecture behavioral of global_status is

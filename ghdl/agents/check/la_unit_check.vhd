@@ -126,7 +126,7 @@ architecture behaviour of la_unit_check is
   function lanes_aligned(d : std_logic_vector(31 downto 0)) return boolean is
   begin
     return d(16) = d(0) and d(22 downto 20) = d(2 downto 0) and d(24) = d(0) and d(25) = not d(0) and
-           d(26) = d(1) and d(27) = d(2) and d(31 downto 28) = "0000";
+      d(26) = d(1) and d(27) = d(2) and d(31 downto 28) = "0000";
   end function;
 begin
   uut: entity work.la_unit

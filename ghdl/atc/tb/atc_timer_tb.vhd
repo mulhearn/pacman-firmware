@@ -57,7 +57,7 @@ begin
     loop
       wait for 10 ns;
       strip(count, "uart " & bits(uart) & " baud " & bits(baud) & " uclk " & bits(uclk)
-        & mark(uart, "(UART)") & mark(baud, "(BAUD)"));
+            & mark(uart, "(UART)") & mark(baud, "(BAUD)"));
     end loop;
   end process;
 end;

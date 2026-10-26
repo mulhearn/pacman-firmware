@@ -43,7 +43,7 @@ architecture behaviour of tx_unit_check is
       S_REGBUS_RB_WACK    : out std_logic;
       POSI_O              : out std_logic_vector(C_NUM_UART-1 downto 0);
       DEBUG_O             : out  std_logic_vector(C_RB_DATA_WIDTH-1 downto 0)
-      );
+    );
   end component;
 
   constant PERIOD : time := 10 ns;    -- 100 MHz; BAUD every 10 cycles = 10 MHz UART
@@ -98,7 +98,7 @@ architecture behaviour of tx_unit_check is
   function word(c : integer; k : integer) return std_logic_vector is
   begin
     return std_logic_vector(to_unsigned(16#A5# + k, 8)) & x"5A" & std_logic_vector(to_unsigned(c, 8))
-           & std_logic_vector(to_unsigned(k, 8)) & x"8001" & std_logic_vector(to_unsigned(c * 256 + k, 16));
+      & std_logic_vector(to_unsigned(k, 8)) & x"8001" & std_logic_vector(to_unsigned(c * 256 + k, 16));
   end function;
 
 begin
@@ -121,7 +121,7 @@ begin
     S_REGBUS_RB_WACK    => wack,
     POSI_O              => posi,
     DEBUG_O             => open
-    );
+  );
 
   clock_until(clk, done, PERIOD);
 

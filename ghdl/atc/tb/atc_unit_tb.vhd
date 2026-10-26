@@ -118,8 +118,8 @@ begin
     while count < 200 loop
       wait for 10 ns;
       strip(count, "uclk " & bits(uclk) & " baud " & bits(baud) & " lemo a " & bits(lemo_a)
-        & " | G " & bits(atc_g) & " H " & bits(atc_h) & " M " & bits(atc_m)
-        & " | ts " & hex(timestamp(15 downto 0)) & mark(rst, "(RESET)"));
+            & " | G " & bits(atc_g) & " H " & bits(atc_h) & " M " & bits(atc_m)
+            & " | ts " & hex(timestamp(15 downto 0)) & mark(rst, "(RESET)"));
     end loop;
     fold(false);
     wait;

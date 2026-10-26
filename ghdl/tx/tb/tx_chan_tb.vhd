@@ -123,7 +123,7 @@ begin
           n := -1;
         end if;
         strip(count, STATE(to_integer(unsigned(status_z(5 downto 4)))) & " v: " & bits(valid) & " r: " & bits(ready) & " | tx " & bits(tx)
-          & mark(s, "(START)") & mark(b, "(BEAT)") & mark(rst, "(RESET)"));
+              & mark(s, "(START)") & mark(b, "(BEAT)") & mark(rst, "(RESET)"));
         s := '0';
         b := '0';
       end if;
