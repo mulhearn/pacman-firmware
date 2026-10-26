@@ -54,6 +54,7 @@ begin
     VALID_O     => valid,
     READY_I     => ready,
     RX_I        => rx,
+    RX_SYNC_O   => open,
     LOOPBACK_I  => '1',
     PATTERN_I   => '1',
     EMUL_I      => '1',

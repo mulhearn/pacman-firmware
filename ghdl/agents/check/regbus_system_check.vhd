@@ -1,8 +1,8 @@
 -- regbus_system_check:  the register path as the PS sees it
 --
 -- AXI-Lite master (this testbench) -> axil_to_regbus -> regbus_hub ->
--- global and ADC units (S clock) and, through the hub's CDC, the TX, RX and
--- ATC units (P clock, a different frequency).  Checks that every unit
+-- the global unit (S clock) and, through the hub's CDC, the TX, RX, ATC, ADC
+-- and LA units (P clock, a different frequency).  Checks that every unit
 -- answers with the right data, that back-to-back reads across units never
 -- mix their data (the hub's RDATA is a plain OR of all units), that writes
 -- land in the right unit only, that unmapped addresses time out with
@@ -13,7 +13,7 @@
 -- register_map.vhd.  Stimulus changes on falling clock edges.
 --
 -- Design assumption (regbus_hub.vhd): after an access to an S-domain unit
--- (global, ADC), the next access to a P-domain unit (TX, RX, ATC) comes later
+-- (global), the next access to a P-domain unit (TX, RX, ATC, ADC, LA) comes later
 -- than the CDC crossing.  Every request also enters the CDC, and a strobe
 -- still crossing would pick up the next request's address.  AXI-Lite from
 -- the PS is not that fast (hardware check: G stress test), so the helpers
@@ -30,8 +30,8 @@ entity regbus_system_check is
 end regbus_system_check;
 
 architecture behaviour of regbus_system_check is
-  constant S_PERIOD : time := 10 ns;   -- AXI / hub S side, global, ADC
-  constant P_PERIOD : time := 16 ns;   -- TX, RX, ATC (62.5 MHz)
+  constant S_PERIOD : time := 10 ns;   -- AXI / hub S side, global
+  constant P_PERIOD : time := 16 ns;   -- TX, RX, ATC, ADC, LA (62.5 MHz)
   -- CDC crossing: request toggle through 4 P-clock flops, plus margin
   constant C_CDC_SETTLE : time := 8 * P_PERIOD;
 
@@ -61,13 +61,13 @@ architecture behaviour of regbus_system_check is
   signal b_raddr, b_waddr : std_logic_vector(15 downto 0);
   signal b_rdata, b_wdata : std_logic_vector(31 downto 0);
 
-  -- hub -> units: A global, B adc, L tx, M rx, N atc
+  -- hub -> units: A global, L tx, M rx, N atc, O adc, P la
   type lane_t is record
     rupdate, rack, wupdate, wack : std_logic;
     raddr, waddr : std_logic_vector(15 downto 0);
     rdata, wdata : std_logic_vector(31 downto 0);
   end record;
-  signal la, lb, ll, lm, ln : lane_t;
+  signal la, ll, lm, ln, lo, lp : lane_t;
 
   -- unit outputs
   signal analog_pwr : std_logic;
@@ -77,6 +77,10 @@ architecture behaviour of regbus_system_check is
   signal timestamp  : std_logic_vector(C_TIMESTAMP_WIDTH-1 downto 0);
   signal markers    : std_logic_vector(C_NUM_MARKER-1 downto 0);
   signal posi       : std_logic_vector(C_NUM_UART-1 downto 0);
+  signal g, h       : std_logic_vector(C_NUM_TILE-1 downto 0);
+  signal piso_sync  : std_logic_vector(C_NUM_UART-1 downto 0);
+  signal atc_status, rx_status, tx_status : std_logic_vector(C_STATUS_BITS-1 downto 0);
+  signal la_to_adc, adc_to_la : std_logic;
 begin
   rst <= not aresetn;
 
@@ -103,9 +107,6 @@ begin
       PA_REGBUS_RB_RUPDATE => la.rupdate, PA_REGBUS_RB_RADDR => la.raddr, PA_REGBUS_RB_RDATA => la.rdata,
       PA_REGBUS_RB_RACK => la.rack, PA_REGBUS_RB_WUPDATE => la.wupdate, PA_REGBUS_RB_WADDR => la.waddr,
       PA_REGBUS_RB_WDATA => la.wdata, PA_REGBUS_RB_WACK => la.wack,
-      PB_REGBUS_RB_RUPDATE => lb.rupdate, PB_REGBUS_RB_RADDR => lb.raddr, PB_REGBUS_RB_RDATA => lb.rdata,
-      PB_REGBUS_RB_RACK => lb.rack, PB_REGBUS_RB_WUPDATE => lb.wupdate, PB_REGBUS_RB_WADDR => lb.waddr,
-      PB_REGBUS_RB_WDATA => lb.wdata, PB_REGBUS_RB_WACK => lb.wack,
       PL_REGBUS_RB_RUPDATE => ll.rupdate, PL_REGBUS_RB_RADDR => ll.raddr, PL_REGBUS_RB_RDATA => ll.rdata,
       PL_REGBUS_RB_RACK => ll.rack, PL_REGBUS_RB_WUPDATE => ll.wupdate, PL_REGBUS_RB_WADDR => ll.waddr,
       PL_REGBUS_RB_WDATA => ll.wdata, PL_REGBUS_RB_WACK => ll.wack,
@@ -115,6 +116,12 @@ begin
       PN_REGBUS_RB_RUPDATE => ln.rupdate, PN_REGBUS_RB_RADDR => ln.raddr, PN_REGBUS_RB_RDATA => ln.rdata,
       PN_REGBUS_RB_RACK => ln.rack, PN_REGBUS_RB_WUPDATE => ln.wupdate, PN_REGBUS_RB_WADDR => ln.waddr,
       PN_REGBUS_RB_WDATA => ln.wdata, PN_REGBUS_RB_WACK => ln.wack,
+      PO_REGBUS_RB_RUPDATE => lo.rupdate, PO_REGBUS_RB_RADDR => lo.raddr, PO_REGBUS_RB_RDATA => lo.rdata,
+      PO_REGBUS_RB_RACK => lo.rack, PO_REGBUS_RB_WUPDATE => lo.wupdate, PO_REGBUS_RB_WADDR => lo.waddr,
+      PO_REGBUS_RB_WDATA => lo.wdata, PO_REGBUS_RB_WACK => lo.wack,
+      PP_REGBUS_RB_RUPDATE => lp.rupdate, PP_REGBUS_RB_RADDR => lp.raddr, PP_REGBUS_RB_RDATA => lp.rdata,
+      PP_REGBUS_RB_RACK => lp.rack, PP_REGBUS_RB_WUPDATE => lp.wupdate, PP_REGBUS_RB_WADDR => lp.waddr,
+      PP_REGBUS_RB_WDATA => lp.wdata, PP_REGBUS_RB_WACK => lp.wack,
       DEBUG => open);
 
   global0: entity work.global_unit
@@ -127,11 +134,22 @@ begin
 
   adc0: entity work.adc_unit
     port map (
-      ACLK => s_clk, RST_I => rst,
-      S_REGBUS_RB_RUPDATE => lb.rupdate, S_REGBUS_RB_RADDR => lb.raddr, S_REGBUS_RB_RDATA => lb.rdata,
-      S_REGBUS_RB_RACK => lb.rack, S_REGBUS_RB_WUPDATE => lb.wupdate, S_REGBUS_RB_WADDR => lb.waddr,
-      S_REGBUS_RB_WDATA => lb.wdata, S_REGBUS_RB_WACK => lb.wack,
-      ADC_EN_O => open, ADC_CLK_O => open, ADC_DATA_I => (others => '0'), ADC_DOF_I => '0');
+      ACLK => p_clk, RST_I => rst,
+      S_REGBUS_RB_RUPDATE => lo.rupdate, S_REGBUS_RB_RADDR => lo.raddr, S_REGBUS_RB_RDATA => lo.rdata,
+      S_REGBUS_RB_RACK => lo.rack, S_REGBUS_RB_WUPDATE => lo.wupdate, S_REGBUS_RB_WADDR => lo.waddr,
+      S_REGBUS_RB_WDATA => lo.wdata, S_REGBUS_RB_WACK => lo.wack,
+      ADC_EN_O => open, ADC_CLK_O => open, ADC_DATA_I => (others => '0'), ADC_DOF_I => '0',
+      TIMESTAMP_I => timestamp, CROSS_TRIGGER_I => la_to_adc, CROSS_TRIGGER_O => adc_to_la);
+
+  la_unit0: entity work.la_unit
+    port map (
+      ACLK => p_clk, RST_I => rst,
+      S_REGBUS_RB_RUPDATE => lp.rupdate, S_REGBUS_RB_RADDR => lp.raddr, S_REGBUS_RB_RDATA => lp.rdata,
+      S_REGBUS_RB_RACK => lp.rack, S_REGBUS_RB_WUPDATE => lp.wupdate, S_REGBUS_RB_WADDR => lp.waddr,
+      S_REGBUS_RB_WDATA => lp.wdata, S_REGBUS_RB_WACK => lp.wack,
+      PISO_I => piso_sync, POSI_I => posi, G_I => g, H_I => h, BAUD_I => baud,
+      ATC_STATUS_I => atc_status, RX_STATUS_I => rx_status, TX_STATUS_I => tx_status, TIMESTAMP_I => timestamp,
+      CROSS_TRIGGER_I => adc_to_la, CROSS_TRIGGER_O => la_to_adc);
 
   tx0: entity work.tx_unit
     port map (
@@ -141,7 +159,7 @@ begin
       S_REGBUS_RB_RADDR => ll.raddr, S_REGBUS_RB_RDATA => ll.rdata, S_REGBUS_RB_RUPDATE => ll.rupdate,
       S_REGBUS_RB_RACK => ll.rack, S_REGBUS_RB_WUPDATE => ll.wupdate, S_REGBUS_RB_WADDR => ll.waddr,
       S_REGBUS_RB_WDATA => ll.wdata, S_REGBUS_RB_WACK => ll.wack,
-      POSI_O => posi, DEBUG_O => open);
+      POSI_O => posi, STATUS_O => tx_status, DEBUG_O => open);
 
   rx0: entity work.rx_unit
     port map (
@@ -152,7 +170,7 @@ begin
       S_REGBUS_RB_RACK => lm.rack, S_REGBUS_RB_WUPDATE => lm.wupdate, S_REGBUS_RB_WADDR => lm.waddr,
       S_REGBUS_RB_WDATA => lm.wdata, S_REGBUS_RB_WACK => lm.wack,
       TIMESTAMP_I => timestamp, RX_MARKER_I => markers, FIFO_COUNT_I => x"00000123",
-      PISO_I => (others => '1'), LOOPBACK_I => posi);
+      PISO_I => (others => '1'), PISO_SYNC_O => piso_sync, LOOPBACK_I => posi, STATUS_O => rx_status);
 
   atc0: entity work.atc_unit
     port map (
@@ -161,7 +179,7 @@ begin
       S_REGBUS_RB_RACK => ln.rack, S_REGBUS_RB_WUPDATE => ln.wupdate, S_REGBUS_RB_WADDR => ln.waddr,
       S_REGBUS_RB_WDATA => ln.wdata, S_REGBUS_RB_WACK => ln.wack,
       LEMO_A_I => '0', LEMO_B_I => '0', BAUD_O => baud, TIMESTAMP_O => timestamp,
-      RX_MARKER_O => markers, UCLK_O => open, G_O => open, H_O => open);
+      RX_MARKER_O => markers, UCLK_O => open, G_O => g, H_O => h, STATUS_O => atc_status);
 
   clock_until(s_clk, done, S_PERIOD);
   clock_until(p_clk, done, P_PERIOD);
@@ -172,7 +190,7 @@ begin
 
     function s_domain(addr : std_logic_vector(15 downto 0)) return boolean is
     begin
-      return addr(15 downto 12) = x"F" or addr(15 downto 12) = x"D";   -- global, ADC scopes
+      return addr(15 downto 12) = x"F";   -- global scope (the ADC is on the P side, PO)
     end function;
 
     procedure settle(addr : std_logic_vector(15 downto 0)) is
@@ -245,16 +263,17 @@ begin
     end procedure;
 
     -- one readable/writable register per unit, with a value that uses every bit
-    type reg_list_t is array (0 to 4) of std_logic_vector(15 downto 0);
-    type val_list_t is array (0 to 4) of std_logic_vector(31 downto 0);
+    type reg_list_t is array (0 to 5) of std_logic_vector(15 downto 0);
+    type val_list_t is array (0 to 5) of std_logic_vector(31 downto 0);
     constant REG : reg_list_t := (
       x"F020",                                               -- global SCRATCH_A
       x"D004",                                               -- adc CONFIG
       x"0004",                                               -- tx UART_CONFIG ch0
       x"7FBC",                                               -- rx PACMAN
-      x"E110");                                              -- atc CONFIG_G
-    constant VAL : val_list_t := (x"A1B2C3D4", x"0000F00D", x"5A5A0006", x"C3C3C3C3", x"0F1E2D3C");
-    constant NAME : string := "global adc    tx     rx     atc    ";
+      x"E110",                                               -- atc CONFIG_G
+      x"C020");                                              -- la PERIOD
+    constant VAL : val_list_t := (x"A1B2C3D4", x"0000F00D", x"5A5A0006", x"C3C3C3C3", x"0F1E2D3C", x"89ABCDEF");
+    constant NAME : string := "global adc    tx     rx     atc    la     ";
 
     variable v, v2 : std_logic_vector(31 downto 0);
     variable j     : integer;
@@ -275,13 +294,15 @@ begin
     expect(x"4004", x"000A1104", "rx UART_CONFIG ch0 default");
     expect(x"7FF0", x"00000123", "rx FIFO_CNT (input)");
     expect(x"E100", x"0000000A", "atc CONFIG_UART default");
+    expect(x"C05C", x"00008000", "la DEPTH");
+    expect(x"D05C", x"00004000", "adc DEPTH (capture)");
 
     print("-- writes land in their unit only");
     req("REG-2.1");
-    for i in 0 to 4 loop
+    for i in 0 to 5 loop
       axi_write(REG(i), VAL(i));
     end loop;
-    for i in 0 to 4 loop
+    for i in 0 to 5 loop
       expect(REG(i), VAL(i), NAME(7*i+1 to 7*i+6) & " read back");
     end loop;
     req("REG-2.2");
@@ -290,8 +311,8 @@ begin
 
     print("-- back-to-back reads across every pair of units (C_CDC_SETTLE after S -> P): no mixed data");
     req("REG-3.2");
-    for i in 0 to 4 loop
-      for j in 0 to 4 loop
+    for i in 0 to 5 loop
+      for j in 0 to 5 loop
         axi_read(REG(i), v);
         axi_read(REG(j), v2);
         check_equal(v,  VAL(i), "pair " & NAME(7*i+1 to 7*i+6) & " -> " & NAME(7*j+1 to 7*j+6) & ": first");
@@ -302,10 +323,10 @@ begin
     print("-- the same across clock phases: 0-15 idle cycles between accesses");
     req("REG-3.2");
     for gap in 0 to 15 loop
-      for i in 0 to 4 loop
-        j := (i + 1 + gap) mod 5;
+      for i in 0 to 5 loop
+        j := (i + 1 + gap) mod 6;
         if j = i then
-          j := (j + 1) mod 5;
+          j := (j + 1) mod 6;
         end if;
         axi_read(REG(i), v);
         wait for gap * S_PERIOD;

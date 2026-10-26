@@ -32,7 +32,7 @@ plot("atc_lemo.pdf", V, [
     bit(T + "clk", "clk"),
     bit(U + "uart", "UART strobe"),
     bit(T + "lemo_a", "LEMO A input"),
-    bit(U + "lemoa0.signal_sync", "synchronized"),
+    bit(U + "lemo_sync[1:0]", "synchronized", bits=(0, 0)),
     bit(U + "lemo_a", "LEMO A pulse"),
     bit(U + "g[9:0]", "G (internal) 0", bits=(0, 0)),
     bit(T + "g[9:0]", "G output 0", bits=(0, 0)),
