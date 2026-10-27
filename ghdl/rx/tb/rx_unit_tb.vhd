@@ -131,8 +131,8 @@ begin
     rd(0, C_ADDR_RX_UART_CONFIG,     "UART 0 config");
 
     -- test pattern:
-    --wr(G, C_ADDR_RX_PATTERN_A,        x"CCCCDDDD", "pattern payload A");
-    --wr(G, C_ADDR_RX_PATTERN_B,        x"AAAABBBB", "pattern payload B");
+    --wr(G, C_ADDR_RX_PATTERN_LOWER,    x"CCCCDDDD", "pattern payload lower");
+    --wr(G, C_ADDR_RX_PATTERN_UPPER,    x"AAAABBBB", "pattern payload upper");
     --wr(G, C_ADDR_RX_PATTERN_CONFIG,   x"00000101", "pattern on, phase 1");
     --wr(C_CHAN_BROADCAST, C_ADDR_RX_UART_CONFIG, x"000A1404", "all UARTs:  period 0A, edge mode, pattern input, phase 4");
 
@@ -149,8 +149,8 @@ begin
     note("at 20 us:");
     rd(0, C_ADDR_RX_UART_STATUS,     "UART 0 status");
     rd(G, C_ADDR_RX_BUFFER_STATUS,   "buffer status");
-    rd(G, C_ADDR_RX_LOOK_UA,         "look A (UART 0)");
-    rd(G, C_ADDR_RX_LOOK_UB,         "look B (UART 0)");
+    rd(G, C_ADDR_RX_LOOK_LOWER,      "look lower (UART 0)");
+    rd(G, C_ADDR_RX_LOOK_UPPER,      "look upper (UART 0)");
     rd(0, C_ADDR_RX_UART_STARTS,     "UART 0 starts");
     rd(0, C_ADDR_RX_UART_BEATS,      "UART 0 beats");
     rd(0, C_ADDR_RX_UART_UPDATES,    "UART 0 updates");

@@ -204,12 +204,12 @@ begin
     rd(G, C_ADDR_RX_PATTERN_STATUS, "pattern status");
     rd(G, C_ADDR_RX_PATTERN_STARTS, "pattern starts");
     rd(G, C_ADDR_RX_PATTERN_STOPS,  "pattern stops");
-    wr(G, C_ADDR_RX_PATTERN_A,      x"AAAAAAAA", "pattern payload, low word");
-    wr(G, C_ADDR_RX_PATTERN_B,      x"BBBBBBBB", "pattern payload, high word");
+    wr(G, C_ADDR_RX_PATTERN_LOWER,  x"AAAAAAAA", "pattern payload, low word");
+    wr(G, C_ADDR_RX_PATTERN_UPPER,  x"BBBBBBBB", "pattern payload, high word");
     wr(G, C_ADDR_RX_PATTERN_DELAY,  x"00000002", "pattern delay");
     wr(G, C_ADDR_RX_PATTERN_CONFIG, x"00000001", "pattern config");
-    rd(G, C_ADDR_RX_PATTERN_A,      "pattern payload, low word");
-    rd(G, C_ADDR_RX_PATTERN_B,      "pattern payload, high word");
+    rd(G, C_ADDR_RX_PATTERN_LOWER,  "pattern payload, low word");
+    rd(G, C_ADDR_RX_PATTERN_UPPER,  "pattern payload, high word");
     rd(G, C_ADDR_RX_PATTERN_DELAY,  "pattern delay");
     rd(G, C_ADDR_RX_PATTERN_CONFIG, "pattern config");
     outputs("pattern payload " & hex(p_payload) & " | delay " & hex(p_delay)
@@ -260,13 +260,13 @@ begin
     outputs("headers A " & hex(hdr_a) & " | B " & hex(hdr_b) & " | C " & hex(hdr_c)
             & " | D " & hex(hdr_d) & " | EOP " & hex(hdr_eop));
 
-    note("look:  select a UART (6 bits kept), its word in look A and B");
+    note("look:  select a UART (6 bits kept), its word in look lower and upper");
     rd(G, C_ADDR_RX_LOOK_SELECT, "look select");
-    rd(G, C_ADDR_RX_LOOK_UA,     "look A");
+    rd(G, C_ADDR_RX_LOOK_LOWER,  "look lower");
     wr(G, C_ADDR_RX_LOOK_SELECT, x"FFFFFFE7", "look select:  UART 39");
     rd(G, C_ADDR_RX_LOOK_SELECT, "look select");
-    rd(G, C_ADDR_RX_LOOK_UA,     "look A");
-    rd(G, C_ADDR_RX_LOOK_UB,     "look B");
+    rd(G, C_ADDR_RX_LOOK_LOWER,  "look lower");
+    rd(G, C_ADDR_RX_LOOK_UPPER,  "look upper");
 
     note("no ack:  read-only and write-only registers the wrong way, addresses not RX registers");
     wr(G,  C_ADDR_RX_BUFFER_STATUS, x"FFFFFFFF", "buffer status");

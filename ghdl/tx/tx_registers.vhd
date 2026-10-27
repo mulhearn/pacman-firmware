@@ -190,10 +190,10 @@ begin
               rdata <= (others => '0');
               rdata(C_SELECT_WIDTH-1 downto 0) <= look_select;
               rack  <= '1';
-            elsif (reg=C_ADDR_TX_LOOK_UA) then
+            elsif (reg=C_ADDR_TX_LOOK_LOWER) then
               rdata <= look(31 downto 0);
               rack  <= '1';
-            elsif (reg=C_ADDR_TX_LOOK_UB) then
+            elsif (reg=C_ADDR_TX_LOOK_UPPER) then
               rdata <= look(63 downto 32);
               rack  <= '1';
             end if;

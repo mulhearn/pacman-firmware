@@ -107,8 +107,8 @@ begin
     rd(0,  C_ADDR_TX_UART_STARTS, "UART 0 starts");
     rd(12, C_ADDR_TX_UART_STARTS, "UART 12 starts");
     rd(G,  C_ADDR_TX_LOOK_SELECT, "look select");
-    rd(G,  C_ADDR_TX_LOOK_UA,     "look A (UART 10)");
-    rd(G,  C_ADDR_TX_LOOK_UB,     "look B (UART 10)");
+    rd(G,  C_ADDR_TX_LOOK_LOWER,  "look lower (UART 10)");
+    rd(G,  C_ADDR_TX_LOOK_UPPER,  "look upper (UART 10)");
     wait;
   end process;
 

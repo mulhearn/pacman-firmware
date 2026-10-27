@@ -383,16 +383,16 @@ begin
               rdata <= (others => '0');
               rdata(C_SELECT_WIDTH-1 downto 0) <= look_select;
               rack  <= '1';
-            elsif (reg=C_ADDR_RX_LOOK_UA) then
+            elsif (reg=C_ADDR_RX_LOOK_LOWER) then
               rdata <= LOOK_UART_DATA_I(31 downto 0);
               rack  <= '1';
-            elsif (reg=C_ADDR_RX_LOOK_UB) then
+            elsif (reg=C_ADDR_RX_LOOK_UPPER) then
               rdata <= LOOK_UART_DATA_I(63 downto 32);
               rack  <= '1';
-            elsif (reg=C_ADDR_RX_PATTERN_A) then
+            elsif (reg=C_ADDR_RX_PATTERN_LOWER) then
               rdata <= pattern_payload(31 downto 0);
               rack  <= '1';
-            elsif (reg=C_ADDR_RX_PATTERN_B) then
+            elsif (reg=C_ADDR_RX_PATTERN_UPPER) then
               rdata <= pattern_payload(63 downto 32);
               rack  <= '1';
             elsif (reg=C_ADDR_RX_PATTERN_DELAY) then
@@ -524,10 +524,10 @@ begin
           elsif (reg=C_ADDR_RX_LOOK_SELECT) then
             look_select <= wdata(C_SELECT_WIDTH-1 downto 0);
             wack  <= '1';
-          elsif (reg=C_ADDR_RX_PATTERN_A) then
+          elsif (reg=C_ADDR_RX_PATTERN_LOWER) then
             pattern_payload(31 downto 0) <= wdata;
             wack  <= '1';
-          elsif (reg=C_ADDR_RX_PATTERN_B) then
+          elsif (reg=C_ADDR_RX_PATTERN_UPPER) then
             pattern_payload(63 downto 32) <= wdata;
             wack  <= '1';
           elsif (reg=C_ADDR_RX_PATTERN_DELAY) then

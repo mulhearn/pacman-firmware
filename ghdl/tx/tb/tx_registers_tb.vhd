@@ -143,14 +143,14 @@ begin
     rd(12, C_ADDR_TX_UART_STARTS, "UART 12 starts");
     rd(12, C_ADDR_TX_UART_BEATS,  "UART 12 beats");
 
-    note("buffer status, and look:  select a UART (6 bits kept), its word in look A and B");
+    note("buffer status, and look:  select a UART (6 bits kept), its word in look lower and upper");
     rd(G, C_ADDR_TX_BUFFER_STATUS, "buffer status (input AAAABBBB)");
     rd(G, C_ADDR_TX_LOOK_SELECT,   "look select");
-    rd(G, C_ADDR_TX_LOOK_UA,       "look A");
+    rd(G, C_ADDR_TX_LOOK_LOWER,    "look lower");
     wr(G, C_ADDR_TX_LOOK_SELECT,   x"FFFFFFE7", "look select:  UART 39");
     rd(G, C_ADDR_TX_LOOK_SELECT,   "look select");
-    rd(G, C_ADDR_TX_LOOK_UA,       "look A");
-    rd(G, C_ADDR_TX_LOOK_UB,       "look B");
+    rd(G, C_ADDR_TX_LOOK_LOWER,    "look lower");
+    rd(G, C_ADDR_TX_LOOK_UPPER,    "look upper");
     outputs("look select " & hex("00" & look_select));
 
     note("no ack:  read-only and write-only registers the wrong way, addresses not TX registers");

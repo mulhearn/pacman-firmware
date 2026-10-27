@@ -78,8 +78,8 @@ package register_map is
   -- TX look feature channel selection:
   constant C_ADDR_TX_LOOK_SELECT    : integer := 16#A0#;
   -- TX look feature UART data (MSB) B(32 bits) A(32 bits) (LSB):
-  constant C_ADDR_TX_LOOK_UA        : integer := 16#A4#; -- Read Only
-  constant C_ADDR_TX_LOOK_UB        : integer := 16#A8#; -- Read Only
+  constant C_ADDR_TX_LOOK_LOWER     : integer := 16#A4#; -- Read Only
+  constant C_ADDR_TX_LOOK_UPPER     : integer := 16#A8#; -- Read Only
   -- TX buffer status
   constant C_ADDR_TX_BUFFER_STATUS  : integer := 16#B0#;
   constant C_ADDR_TX_ZERO_CNTS      : integer := 16#F8#;
@@ -102,8 +102,8 @@ package register_map is
 
   -- Not UART specific, at chan=0x3F:
   -- test pattern generation:
-  constant C_ADDR_RX_PATTERN_A      : integer := 16#80#;
-  constant C_ADDR_RX_PATTERN_B      : integer := 16#84#;
+  constant C_ADDR_RX_PATTERN_LOWER  : integer := 16#80#;
+  constant C_ADDR_RX_PATTERN_UPPER  : integer := 16#84#;
   constant C_ADDR_RX_PATTERN_DELAY  : integer := 16#88#;
   constant C_ADDR_RX_PATTERN_CONFIG : integer := 16#8C#;
   constant C_ADDR_RX_PATTERN_STATUS : integer := 16#90#;
@@ -113,8 +113,8 @@ package register_map is
   -- RX look feature channel selection:
   constant C_ADDR_RX_LOOK_SELECT    : integer := 16#A0#;
   -- RX look feature UART data (MSB) B(32 bits) A(32 bits) (LSB):
-  constant C_ADDR_RX_LOOK_UA        : integer := 16#A4#; -- Read Only
-  constant C_ADDR_RX_LOOK_UB        : integer := 16#A8#; -- Read Only
+  constant C_ADDR_RX_LOOK_LOWER     : integer := 16#A4#; -- Read Only
+  constant C_ADDR_RX_LOOK_UPPER     : integer := 16#A8#; -- Read Only
 
   -- RX buffer status, config, and enables:
   constant C_ADDR_RX_BUFFER_STATUS  : integer := 16#B0#; -- Read Only
