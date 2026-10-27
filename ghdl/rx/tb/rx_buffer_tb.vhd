@@ -10,7 +10,9 @@
 -- character on headers, (BEAT) each beat taken, (TLAST) the last.
 --
 -- Scenario: at most 3 words per packet, no timeout;  every channel gets valid data at once at 500
--- ns  -- (alternatives in comments)
+-- ns:  the words come out in channel order, across packets  -- (alternatives in comments, e.g.
+-- channels 0-2 valid again as soon as taken:  each packet resumes at the next channel, so the higher
+-- channels still get their turns)
 ----------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -39,12 +41,16 @@ architecture behaviour of rx_buffer_tb is
   signal status      : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal config     : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
   signal eop_header : std_logic_vector(C_RB_DATA_WIDTH-1 downto 0);
+  signal refill     : std_logic_vector(C_RX_NUM_CHAN-1 downto 0);
 begin
   -- the buffer configuration (alternatives in comments):
   config     <= x"00030000";                                    -- 3 words per packet, no timeout
   --config     <= x"00010000";                                  -- 1 word per packet, no timeout
   --config     <= x"00050000";                                  -- 5 words per packet, no timeout
   eop_header <= x"1100004C";                                    -- end-of-packet header (type L)
+  -- the input (alternatives in comments):
+  refill     <= (others => '0');                                -- every channel valid once
+  --refill     <= (2 downto 0 => '1', others => '0');           -- channels 0-2 valid again as soon as taken
 
   uut: entity work.rx_buffer port map (
     CLK_I         => clk,
@@ -83,7 +89,8 @@ begin
     wait for 5 ns;
   end process;
 
-  -- every 500 ns:  all channels valid at once;  each clears when the buffer takes it (ready)
+  -- every 500 ns:  all channels valid at once;  each clears when the buffer takes it (ready), unless
+  -- refilled
   uvalid_process : process
   begin
     uvalid <= (others => '0');
@@ -92,8 +99,8 @@ begin
     uvalid <= (others => '1');
     loop
       wait for 10 ns;
-      uvalid <= uvalid and (not uready);
-      exit when unsigned(uvalid and (not uready)) = 0;
+      uvalid <= (uvalid and (not uready)) or refill;
+      exit when unsigned((uvalid and (not uready)) or refill) = 0;
     end loop;
   end process;
 

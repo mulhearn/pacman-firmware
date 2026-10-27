@@ -70,6 +70,8 @@ RX-3.1   sim     When the stream stalls, waiting words are held;  a further word
                  is lost, and counted.
 RX-3.2   sim+hw  BUFFER_CONFIG's maximum closes a packet after that many words.
 RX-3.3   sim+hw  BUFFER_CONFIG's timeout lets later words join the open packet, then closes it.
+RX-3.4   sim     A packet closed by the maximum lets the next one resume the sweep at the following channel:
+                 busy low channels do not starve the higher ones.
 RX-4     The extra channels add their words when enabled.
 RX-4.1   sim+hw  Heartbeat:  a word every HEARTBEAT_CONFIG clocks (HEADER_A, timestamp, zero data).
 RX-4.2   sim     Rollover:  a word when the timestamp equals ROLLOVER_CONFIG (HEADER_B).
