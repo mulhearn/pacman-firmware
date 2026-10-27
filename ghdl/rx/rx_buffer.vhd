@@ -59,14 +59,16 @@ use work.common.all;
 -- CONFIG_I:   0xMMMMTTTT
 -- DEFAULT:    0x00000001
 --
--- where TTTT is the timeout in units of 512 clock cycles for completing
+-- where TTTT is the timeout in units of 256 clock cycles for completing
 -- packet, and MMMM is max words streamed for completing a packet.
 -- In both cases, a zero is no condition (no timeout / no maximum).
 --
 -- The timeout counts from the start of the packet and is acted on
--- only in WAIT_STATE, at the end of a sweep.  At baud=10 each
--- transmission takes 660 cycles.  For the default timeout setting of
--- 1, packets will contain at most one ASIC packet per UART channel.
+-- only in WAIT_STATE, at the end of a sweep (136 clock cycles), so the
+-- default timeout setting of 1 closes a packet within 256 + 136 = 392
+-- cycles.  A UART word takes 66 bit periods:  396 cycles at baud=6,
+-- 660 at baud=10.  So for baud >= 6, packets will contain at most one
+-- ASIC packet per UART channel.
 
 
 entity rx_buffer is
@@ -277,7 +279,7 @@ begin
   end process;
 
   -- packet timeout: reset in IDLE, otherwise count down from configurable timeout
-  -- TTTT is timeout in units of 512 clock cycles
+  -- TTTT is timeout in units of 256 clock cycles
   process(clk, rst)
     variable timeout_counter : integer range 0 to 16#1FFFFFF# := 0;
   begin
@@ -286,7 +288,7 @@ begin
       packet_timeout <= '0';
     elsif rising_edge(clk) then
       if (state = IDLE) then
-        timeout_counter := to_integer(unsigned(CONFIG_I(15 downto 0))) * 512;
+        timeout_counter := to_integer(unsigned(CONFIG_I(15 downto 0))) * 256;
         packet_timeout <= '0';
       else
         if (timeout_counter > 0) then
