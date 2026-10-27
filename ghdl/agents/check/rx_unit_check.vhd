@@ -507,8 +507,8 @@ begin
     req("RX-6.2");
     reg_write(rx_addr(COMMON, C_ADDR_RX_LOOK_SELECT), x"00000005");
     check_reg(rx_addr(COMMON, C_ADDR_RX_LOOK_SELECT), x"00000005", "LOOK_SELECT read back");
-    check_reg(rx_addr(COMMON, C_ADDR_RX_LOOK_UA), x"89ABCDEF", "LOOK_UA (ch5, low half)");
-    check_reg(rx_addr(COMMON, C_ADDR_RX_LOOK_UB), x"01234567", "LOOK_UB (ch5, high half)");
+    check_reg(rx_addr(COMMON, C_ADDR_RX_LOOK_LOWER), x"89ABCDEF", "LOOK_LOWER (ch5, low half)");
+    check_reg(rx_addr(COMMON, C_ADDR_RX_LOOK_UPPER), x"01234567", "LOOK_UPPER (ch5, high half)");
 
     ---------------------------------------------------------------------
     print("-- UART start-bit phase: any phase relative to BAUD decodes (mode 01)");
@@ -699,8 +699,8 @@ begin
     print("-- pattern generator into a channel (INPUT 0100)");
     req("RX-5.1");
     zero_counts;
-    reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_A), x"DEADBEEF");
-    reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_B), x"C0FFEE00");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_LOWER), x"DEADBEEF");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_UPPER), x"C0FFEE00");
     reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_DELAY), x"00000064");   -- 100 bit times between words
     reg_write(rx_addr(25, C_ADDR_RX_UART_CONFIG), CFG_PATTERN);
     reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_CONFIG), x"00000104");   -- mode 0001 (bits 11:8), phase 4

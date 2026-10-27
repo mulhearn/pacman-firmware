@@ -510,8 +510,8 @@ begin
     reg_write(tx_addr(COMMON, C_ADDR_TX_LOOK_SELECT), x"00000007");
     check_reg(tx_addr(COMMON, C_ADDR_TX_LOOK_SELECT), x"00000007", "LOOK_SELECT read back");
     w := word(7, 11);
-    check_reg(tx_addr(COMMON, C_ADDR_TX_LOOK_UA), w(31 downto 0),  "LOOK_UA (ch7)");
-    check_reg(tx_addr(COMMON, C_ADDR_TX_LOOK_UB), w(63 downto 32), "LOOK_UB (ch7)");
+    check_reg(tx_addr(COMMON, C_ADDR_TX_LOOK_LOWER), w(31 downto 0),  "LOOK_LOWER (ch7)");
+    check_reg(tx_addr(COMMON, C_ADDR_TX_LOOK_UPPER), w(63 downto 32), "LOOK_UPPER (ch7)");
 
     print("-- reset restores the defaults");
     req("REG-4.1");
