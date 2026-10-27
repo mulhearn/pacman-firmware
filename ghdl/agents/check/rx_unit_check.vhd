@@ -610,10 +610,10 @@ begin
     expect_word(data_header(16#44#, 0, 23), u64(22), -1, 0, "packet 2 word 1");
     expect_trailer(1, 0, "packet 2 trailer");
 
-    print("-- packet timeout (BUFFER_CONFIG TTTT, units of 512 cycles): later words join the open packet");
+    print("-- packet timeout (BUFFER_CONFIG TTTT, units of 256 cycles): later words join the open packet");
     req("RX-3.3");
-    -- TTTT counts sweeps of 512 clock cycles (rx_buffer.vhd CONFIG_I)
-    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000004");   -- 4 x 512 cycles = 20.48 us
+    -- TTTT counts units of 256 clock cycles (rx_buffer.vhd CONFIG_I)
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000004");   -- 4 x 256 cycles = 10.24 us
     send(23, u64(23));
     wait_senders;
     send(24, u64(24));                -- arrives ~7 us later: before the timeout
@@ -630,6 +630,19 @@ begin
     wait_senders;
     expect_word(data_header(16#44#, 0, 25), u64(24), -1, 0, "1 sweep: word 2");
     expect_trailer(1, 0, "1 sweep: own packet");
+    -- the unit:  4 x 256 cycles + one sweep (136) = 11.6 us at most, so a word ~12.6 us later starts a new
+    -- packet (with units of 512 cycles it would still join)
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000004");
+    send(23, u64(23));
+    wait_senders;
+    wait for 6 us;
+    send(24, u64(24));                -- arrives ~12.6 us later: after the timeout
+    wait_senders;
+    expect_word(data_header(16#44#, 0, 24), u64(23), -1, 0, "unit: word 1");
+    expect_trailer(1, 0, "unit: word 1 closes its packet");
+    expect_word(data_header(16#44#, 0, 25), u64(24), -1, 0, "unit: word 2");
+    expect_trailer(1, 0, "unit: word 2 in a new packet");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");
 
     ---------------------------------------------------------------------
     print("-- heartbeat sync word (enable bit 0): HEADER_A with PACMAN id, timestamp, zero data");
