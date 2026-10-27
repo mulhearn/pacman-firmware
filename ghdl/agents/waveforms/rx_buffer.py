@@ -17,7 +17,7 @@ vcd = VCDVCD(vcd_path)
 
 
 fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-     
+
 TSTART  = 450
 TFINISH = 900
 
@@ -56,7 +56,7 @@ ax.text(tlk_lt[5],    7.2, "0x{:02X}...".format(tlk_lv[5]), fontsize = 12, rotat
 ax.text(tlk_lt[9],    7.2, "0x{:02X}...".format(tlk_lv[9]), fontsize = 12, rotation=40)
 ax.text(tlk_lt[12],    7.2, "0x{:02X}...".format(tlk_lv[12]), fontsize = 12, rotation=40)
 
-yticks = [0.5, 2.5, 4.5, 6.5, 10.5, 12.5, 14.5, 16.5, 18.5, 20.5] 
+yticks = [0.5, 2.5, 4.5, 6.5, 10.5, 12.5, 14.5, 16.5, 18.5, 20.5]
 ytick_labels = ['tready', 'tlast', 'tvalid', 'tdata', 'uready(8)', 'uready(5)', 'uready(2)', 'uvalid(8)', 'uvalid(5)', 'uvalid(2)']
 ax.set_yticks(yticks, ytick_labels, fontsize=14, rotation=30)
 ax.set_ylim(0, 22)

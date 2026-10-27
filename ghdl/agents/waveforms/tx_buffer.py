@@ -79,7 +79,7 @@ for i in range(uready_lt.size):
      if (uready_lv[i]>0):
           plt.text(uready_lt[i],    3.2, "0x{:010X}".format(uready_lv[i]), fontsize = 12, rotation=40)
 
-yticks = [2.5, 6.5, 10.5, 12.5, 14.5, 16.5, 18.5] 
+yticks = [2.5, 6.5, 10.5, 12.5, 14.5, 16.5, 18.5]
 ytick_labels = ['uready', 'uvalid', 'tdata', 'tready', 'tlast', 'tvalid', 'clk']
 plt.yticks(yticks, ytick_labels, fontsize=14, rotation=30)
 plt.ylim(0, 20)

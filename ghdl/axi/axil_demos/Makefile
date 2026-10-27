@@ -6,5 +6,5 @@ all:
 	ghdl -a -fsynopsys axil_demo_rw_tb.vhd
 
 run:
-	ghdl -r -fsynopsys axil_demo_rw_tb --stop-time=350ns 
+	ghdl -r -fsynopsys axil_demo_rw_tb --stop-time=350ns
 

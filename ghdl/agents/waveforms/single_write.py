@@ -17,7 +17,7 @@ vcd = VCDVCD(vcd_path)
 
 TSTART  = 10
 TFINISH = 45
-     
+
 
 clk_t, clk_v              = td.get_time_series_single_bit(vcd, "regbus_diagram_tb.clk", TSTART, TFINISH)
 wupdate_t, wupdate_v        = td.get_time_series_single_bit(vcd, "regbus_diagram_tb.wupdate", TSTART, TFINISH)
@@ -41,7 +41,7 @@ for i in range(waddr_lt.size):
 for i in range(wdata_lt.size):
      plt.text(wdata_lt[i],    4.2, "0x{:X}".format(wdata_lv[i]), fontsize = 14)
 
-yticks = [2.5, 4.5, 6.5, 8.5, 10.5] 
+yticks = [2.5, 4.5, 6.5, 8.5, 10.5]
 ytick_labels = ['wack', 'wdata', 'waddr', 'wupdate', 'clk']
 plt.yticks(yticks, ytick_labels, fontsize=14, rotation=30)
 plt.xlim(TSTART, TFINISH)
