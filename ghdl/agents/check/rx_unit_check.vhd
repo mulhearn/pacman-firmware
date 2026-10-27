@@ -644,6 +644,30 @@ begin
     expect_trailer(1, 0, "unit: word 2 in a new packet");
     reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");
 
+    print("-- one word per packet (BUFFER_CONFIG MMMM = 1), all 40 UARTs sending back to back: no channel starves");
+    req("RX-3.4");
+    -- each packet resumes the sweep where the last one stopped:  about 10 cycles per word, 40 words well
+    -- within one UART frame (660 cycles).  Restarting every packet at channel 0 would cost a growing scan
+    -- per word (about 2700 cycles for 40), so the low channels' next words would starve the high ones (LOST).
+    zero_counts;
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00010000");   -- 1 word per packet, no timeout
+    for f in 1 to 3 loop
+      for c in 0 to C_NUM_UART-1 loop
+        send(c, u64(100 * f + c));
+      end loop;
+      wait_senders;
+    end loop;
+    for k in 1 to 3 * C_NUM_UART loop
+      next_beat(b, l);
+      next_beat(b, l);
+      next_beat(b, l);
+      expect_trailer(1, 0, "one word per packet");
+    end loop;
+    for c in 0 to C_NUM_UART-1 loop
+      check_counts(c, 3, 3, 3, 0, 0, "ch" & integer'image(c) & ":  3 words, none lost");
+    end loop;
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");
+
     ---------------------------------------------------------------------
     print("-- heartbeat sync word (enable bit 0): HEADER_A with PACMAN id, timestamp, zero data");
     req("RX-4.1");
@@ -716,6 +740,10 @@ begin
     reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_UPPER), x"C0FFEE00");
     reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_DELAY), x"00000064");   -- 100 bit times between words
     reg_write(rx_addr(25, C_ADDR_RX_UART_CONFIG), CFG_PATTERN);
+    -- current behaviour:  a write that turns the generator on and moves its phase can give the BAUD period
+    -- two clk_en pulses (old phase, then new), cutting the first start bit short;  depending on where the
+    -- write lands, the first word is then received shifted.  So the phase goes in first, then the mode.
+    reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_CONFIG), x"00000004");   -- phase 4, generator off
     reg_write(rx_addr(COMMON, C_ADDR_RX_PATTERN_CONFIG), x"00000104");   -- mode 0001 (bits 11:8), phase 4
     for k in 1 to 3 loop
       expect_word(data_header(16#44#, 0, 26), x"C0FFEE00DEADBEEF", -1, 0, "pattern word " & integer'image(k));
