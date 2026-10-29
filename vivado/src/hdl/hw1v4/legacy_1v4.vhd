@@ -46,7 +46,10 @@ begin
   LEGACY_POSI_O               <= POSI_I(31 downto 0);
 
   --SYNC
-  LEGACY_RSTN_O                <= '0' when (SYNCN_I /= (SYNCN_I'range => '1')) else '1';
+  -- The 1v4 has one active-low reset line (GLOBAL_SYNC) shared by its 8 tiles.  SYNCN_I is
+  -- the ATC G output, active-low when inverted (ATC CONFIG_G, set_atc_default_config).  Tiles
+  -- 9-10 do not exist on the 1v4 and are ignored, so their G config cannot hold the reset.
+  LEGACY_RSTN_O                <= '0' when (SYNCN_I(C_NUM_EN_LEGACY-1 downto 0) /= (C_NUM_EN_LEGACY-1 downto 0 => '1')) else '1';
 
   --TRIG
   LEGACY_SYNCN_O              <= TRIG_I(7 downto 0);
