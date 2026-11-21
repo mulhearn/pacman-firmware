@@ -71,7 +71,7 @@ architecture behaviour of tx_unit_check is
   signal posi      : std_logic_vector(C_NUM_UART-1 downto 0);
 
   -- UART decoders: every frame seen on each POSI line
-  constant MAX_FRAMES : integer := 16;
+  constant MAX_FRAMES : integer := 32;
   type frame_words_t is array (0 to C_NUM_UART-1, 0 to MAX_FRAMES-1) of std_logic_vector(63 downto 0);
   type frame_times_t is array (0 to C_NUM_UART-1, 0 to MAX_FRAMES-1) of integer;
   shared variable rx_word  : frame_words_t;
@@ -430,6 +430,28 @@ begin
     check_equal(rx_start(7, n0(7) + 1) - rx_start(7, n0(7)), 660, "frame period with DELAY 0 (cycles)");
     check_equal(rx_start(7, n0(7) + 2) - rx_start(7, n0(7) + 1), 660, "frame period, third packet");
 
+    print("-- full rate:  all 40 UARTs, four packets back to back, each frame right after the previous stop bit");
+    req("TX-1.4");
+    snapshot;
+    mask := (others => '0');
+    mask(C_NUM_UART-1 downto 0) := (others => '1');
+    for k in 20 to 23 loop
+      packet(mask, k);
+    end loop;
+    wait_idle;
+    for c in 0 to C_NUM_UART-1 loop
+      check_frames(c, 4, "full rate");
+      for i in 0 to 3 loop
+        check_word(c, n0(c) + i, word(c, 20 + i), "full rate");
+      end loop;
+      for i in 1 to 3 loop
+        if n0(c) + i < MAX_FRAMES then
+          check_equal(rx_start(c, n0(c) + i) - rx_start(c, n0(c) + i - 1), 660,
+                      "full rate:  channel " & integer'image(c) & " frame period (cycles)");
+        end if;
+      end loop;
+    end loop;
+
     print("-- DELAY (UART_CONFIG bits 31:16, in bit periods) between frames");
     req("TX-2.2");
     reg_write(tx_addr(9, C_ADDR_TX_UART_CONFIG), x"00050006");
@@ -505,7 +527,7 @@ begin
     check_reg(tx_addr(7, C_ADDR_TX_UART_BEATS),  x"00000002", "BEATS ch7 after 2 frames");
     check_reg(tx_addr(6, C_ADDR_TX_UART_STARTS), x"00000000", "STARTS ch6 untouched");
 
-    print("-- LOOK registers: the word last loaded for the selected channel");
+    print("-- LOOK registers: the selected UART's word in the output buffer");
     req("TX-3.2");
     reg_write(tx_addr(COMMON, C_ADDR_TX_LOOK_SELECT), x"00000007");
     check_reg(tx_addr(COMMON, C_ADDR_TX_LOOK_SELECT), x"00000007", "LOOK_SELECT read back");

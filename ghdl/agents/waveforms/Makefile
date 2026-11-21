@@ -4,13 +4,14 @@
 #
 # The first run makes a Python venv here (.venv; needs network once).  matplotlib is pinned to the version
 # the TRM PDFs were made with (3.10.3), so the figures match them.  Another Python:  make PYTHON=python3
+# wave.py typesets its figures with pdflatex (pgf backend, lmodern).
 
 B      := ../build
 PYTHON ?= .venv/bin/python
 FIGS   := single_read.pdf single_write.pdf rx_buffer.pdf tx_buffer.pdf
 # the firmware description (pacman_docs/agents/firmware.tex):  wave.py, one script and one testbench per unit
-DOCS   := global.pdf tx_stream.pdf tx_frames.pdf rx_chan_start.pdf rx_chan_frames.pdf rx_stream.pdf \
-          atc_timer.pdf atc_poke.pdf atc_lemo.pdf
+DOCS   := global.pdf tx_stream.pdf tx_frames.pdf tx_backpressure.pdf tx_delay.pdf \
+          rx_chan_noise.pdf rx_chan_frames.pdf rx_stream.pdf atc_timer.pdf atc_poke.pdf atc_lemo.pdf
 
 all: $(FIGS) $(DOCS)
 
@@ -26,7 +27,8 @@ STOP_rx_buffer := 1us
 STOP_tx_buffer := 700ns
 STOP_global    := 200ns
 STOP_tx        := 16us
-STOP_rx_chan   := 22us
+STOP_tx_backpressure := 16us
+STOP_rx_chan   := 29us
 STOP_rx_stream := 600ns
 STOP_atc       := 2200ns
 
@@ -41,7 +43,15 @@ global.pdf: global.py wave.py global_diagram_tb.vcd $(PYTHON)
 	$(PYTHON) $<
 tx_stream.pdf tx_frames.pdf &: tx.py wave.py tx_diagram_tb.vcd $(PYTHON)
 	$(PYTHON) $<
-rx_chan_start.pdf rx_chan_frames.pdf &: rx_chan.py wave.py rx_chan_diagram_tb.vcd $(PYTHON)
+tx_backpressure.pdf: tx_backpressure.py wave.py tx_backpressure_diagram_tb.vcd $(PYTHON)
+	$(PYTHON) $<
+tx_delay_diagram_tb.vcd: tb/tx_backpressure_diagram_tb.vhd $(B)/work-obj93.cf
+	ghdl -m --workdir=$(B) -fsynopsys tx_backpressure_diagram_tb > tx_delay_diagram_tb.log
+	ghdl -r --workdir=$(B) -fsynopsys tx_backpressure_diagram_tb -gDELAY=5 --stop-time=10us --vcd=$@ \
+	    >> tx_delay_diagram_tb.log
+tx_delay.pdf: tx_delay.py wave.py tx_delay_diagram_tb.vcd $(PYTHON)
+	$(PYTHON) $<
+rx_chan_noise.pdf rx_chan_frames.pdf &: rx_chan.py wave.py rx_chan_diagram_tb.vcd $(PYTHON)
 	$(PYTHON) $<
 rx_stream.pdf: rx_stream.py wave.py rx_stream_diagram_tb.vcd $(PYTHON)
 	$(PYTHON) $<

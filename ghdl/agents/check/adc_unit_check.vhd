@@ -244,10 +244,13 @@ begin
     wait for 2*PERIOD;
 
     print("-- registers");
+    req("ADC-1.1");
     check_reg(adc(C_ADDR_ADC_STATUS), x"00000ADC", "STATUS");
     reg_write(adc(C_ADDR_ADC_CONFIG), x"00000001");
     check_reg(adc(C_ADDR_ADC_CONFIG), x"00000001", "CONFIG");
+    req("ADC-1.4");
     check(adc_en = '1', "CONFIG bit 0 drives ADC_EN");
+    req("REG-2.1");
     reg_write(adc(C_ADDR_ADC_EMUL_MIN), x"FFFFFFFF");
     check_reg(adc(C_ADDR_ADC_EMUL_MIN), x"00000FFF", "EMUL_MIN:  bits 11-0");
     reg_write(adc(C_ADDR_ADC_EMUL_MAX), x"FFFFFFFF");
@@ -263,6 +266,7 @@ begin
     check_reg(adc(C_ADDR_ADC_CMP_THRESH), x"00000FFF", "CMP_THRESH:  bits 11-0");
     reg_write(adc(C_ADDR_ADC_CMP_SWING), x"FFFFFFFF");
     check_reg(adc(C_ADDR_ADC_CMP_SWING), x"00000FFF", "CMP_SWING:  bits 11-0");
+    req("REG-1.2");
     reg_write(adc(C_ADDR_ADC_STATUS), x"00000000", false);      -- read only:  no ack
     reg_write(adc(C_ADDR_ADC_LOOK), x"00000000", false);
     reg_write(adc(C_ADDR_ADC_CMP_LEVEL), x"00000000", false);
@@ -272,12 +276,14 @@ begin
     check(not a, "another scope:  not acknowledged");
 
     print("-- LOOK:  the ADC pins (MUX_SELECT 0)");
+    req("ADC-1.2");
     wait until falling_edge(clk);
     set_d <= x"5A3"; set_dof <= '1';
     wait for 5*PERIOD;
     check_reg(adc(C_ADDR_ADC_LOOK), x"000015A3", "LOOK follows the ADC pins (DOF in bit 12)");
 
     print("-- emulator:  0x010 to 0x040, step 3 every 20 clocks");
+    req("ADC-1.3");
     reg_write(adc(C_ADDR_ADC_EMUL_MIN), u32(16#010#));
     reg_write(adc(C_ADDR_ADC_EMUL_MAX), u32(16#040#));
     reg_write(adc(C_ADDR_ADC_EMUL_STEP), u32(3));
@@ -341,10 +347,12 @@ begin
     check_equal(w, v, "PERIOD 0:  the emulator holds");
 
     print("-- mux back to the pins");
+    req("ADC-1.2");
     reg_write(adc(C_ADDR_ADC_MUX_SELECT), x"00000000");
     check_reg(adc(C_ADDR_ADC_LOOK), x"000015A3", "MUX_SELECT 0:  LOOK the ADC pins again");
 
     print("-- comparator:  THRESH 0x030, SWING 4 (high from 0x034, low from 0x02C)");
+    req("ADC-2.1");
     reg_write(adc(C_ADDR_ADC_CMP_THRESH), u32(16#030#));
     reg_write(adc(C_ADDR_ADC_CMP_SWING), u32(4));
     reg_write(adc(C_ADDR_ADC_EMUL_PERIOD), u32(0));
@@ -374,6 +382,7 @@ begin
     check_reg(adc(C_ADDR_ADC_CMP_LEVEL), x"00000001", "pins 0x5A3:  high");
 
     print("-- capture:  registers");
+    req("REG-2.1");
     check_reg(adc(C_ADDR_ADC_PERIOD), x"00000001", "PERIOD after reset");
     check_reg(adc(C_ADDR_ADC_MODE), x"00000002", "MODE after reset (acquisition enabled)");
     check_reg(adc(C_ADDR_ADC_DEPTH), u32(DEPTH), "DEPTH");
@@ -387,6 +396,7 @@ begin
     reg_write(adc(C_ADDR_ADC_PERIOD), x"00000003");
     check_reg(adc(C_ADDR_ADC_PERIOD), x"00000003", "PERIOD");
     reg_write(adc(C_ADDR_ADC_PERIOD), x"00000001");
+    req("REG-1.2");
     reg_write(adc(C_ADDR_ADC_CAPTURE_STATUS), x"00000000", false);   -- read only:  no ack
     reg_write(adc(C_ADDR_ADC_COUNT), x"00000000", false);
     reg_write(adc(C_ADDR_ADC_TS_UPPER), x"00000000", false);
@@ -397,6 +407,7 @@ begin
     check(not a, "NEXT is write only:  read not acknowledged");
 
     print("-- capture, pins following the counter:  every clock, FORCE, POST 10");
+    req("ADC-3.1");
     follow <= true;
     reg_write(adc(C_ADDR_ADC_MUX_SELECT), x"00000000");
     reg_write(adc(C_ADDR_ADC_TRIG), u32(31));                   -- bit 31:  beyond the sample, no edge
@@ -415,6 +426,7 @@ begin
     check_equal(xo_count - xo, 1, "FORCE:  one CROSS_TRIGGER_O pulse");
 
     print("-- capture:  wrap-around, POST 20");
+    req("ADC-3.2");
     reg_write(adc(C_ADDR_ADC_POST), u32(20));
     reg_write(adc(C_ADDR_ADC_ARM), x"00000000");
     wait for 200*PERIOD;
@@ -428,6 +440,7 @@ begin
     check_equal(data12(smp(pos)), lo12(lo32), "wrap:  the triggering sample's data = its timestamp");
 
     print("-- capture:  PERIOD 3");
+    req("ADC-3.1");
     reg_write(adc(C_ADDR_ADC_PERIOD), u32(3));
     reg_write(adc(C_ADDR_ADC_POST), u32(5));
     reg_write(adc(C_ADDR_ADC_ARM), x"00000000");
@@ -442,6 +455,7 @@ begin
     reg_write(adc(C_ADDR_ADC_PERIOD), u32(1));
 
     print("-- capture:  the comparator's rising edge (bit 13), THRESH 0x800, SWING 0x10:  high from 0x810");
+    req("ADC-3.3");
     reg_write(adc(C_ADDR_ADC_CMP_THRESH), u32(16#800#));
     reg_write(adc(C_ADDR_ADC_CMP_SWING), u32(16#010#));
     reg_write(adc(C_ADDR_ADC_TRIG), u32(13));
@@ -475,6 +489,7 @@ begin
     end loop;
 
     print("-- capture:  the emulator (MUX_SELECT 1), ramp 0x100-0x1FF, step 1 every clock");
+    req("ADC-3.1");
     reg_write(adc(C_ADDR_ADC_EMUL_MIN), u32(16#100#));
     reg_write(adc(C_ADDR_ADC_EMUL_MAX), u32(16#1FF#));
     reg_write(adc(C_ADDR_ADC_EMUL_STEP), u32(1));
@@ -495,6 +510,7 @@ begin
     reg_write(adc(C_ADDR_ADC_MUX_SELECT), x"00000000");
 
     print("-- capture:  CROSS_TRIGGER_I ignored unless TRIG bit 10;  then the trigger, timestamp one clock earlier");
+    req("ADC-3.3");
     reg_write(adc(C_ADDR_ADC_TRIG), u32(31));
     reg_write(adc(C_ADDR_ADC_POST), u32(6));
     reg_write(adc(C_ADDR_ADC_ARM), x"00000000");
@@ -524,6 +540,7 @@ begin
     reg_write(adc(C_ADDR_ADC_PERIOD), u32(1));
 
     print("-- capture:  acquisition disabled (MODE bit 1 clear):  nothing written;  edge, timestamp, POST, DONE");
+    req("ADC-3.4");
     reg_write(adc(C_ADDR_ADC_MODE), x"00000000");
     reg_write(adc(C_ADDR_ADC_TRIG), u32(13));
     reg_write(adc(C_ADDR_ADC_POST), u32(3));
@@ -537,6 +554,7 @@ begin
     reg_write(adc(C_ADDR_ADC_MODE), x"00000002");
 
     print("-- capture:  PERIOD 0, no samples");
+    req("ADC-3.1");
     reg_write(adc(C_ADDR_ADC_PERIOD), u32(0));
     reg_write(adc(C_ADDR_ADC_TRIG), u32(31));
     reg_write(adc(C_ADDR_ADC_ARM), x"00000000");

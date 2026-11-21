@@ -193,6 +193,7 @@ begin
     rst <= '0';
     wait for 2*PERIOD;
 
+    req("MON-1.1");
     -- ATC:  timestamp every clock;  poke A to marker 1 only (no G/H, no tiles)
     reg_write(atc(C_ADDR_ATC_CONFIG_UART), u32(1));
     reg_write(atc(C_ADDR_ATC_DST_POKE_A), x"00000008");
@@ -203,6 +204,7 @@ begin
     reg_write(adc(C_ADDR_ADC_POST), u32(20));
 
     print("-- ATC marker M1 -> LA (rising edge of sample bit 1) -> ADC (cross trigger)");
+    req("MON-1.2");
     reg_write(la(C_ADDR_LA_TRIG), u32(1));
     reg_write(adc(C_ADDR_ADC_TRIG), u32(16#400# + 31));
     for k in 0 to 2 loop
@@ -222,6 +224,7 @@ begin
     end loop;
 
     print("-- the marker in the LA capture:  one sample with M1, at the trigger");
+    req("MON-1.1");
     reg_read(la(C_ADDR_LA_COUNT), v);       cnt := to_integer(unsigned(v));
     reg_read(la(C_ADDR_LA_TRIG_POS), v);    pos := to_integer(unsigned(v));
     reg_write(la(C_ADDR_LA_START), x"00000000");
@@ -239,6 +242,7 @@ begin
     check_equal(first, pos, "marker capture:  that sample is the triggering one");
 
     print("-- ADC FORCE -> LA (cross trigger);  both enabled:  one pulse each (no loop)");
+    req("MON-1.2");
     reg_write(la(C_ADDR_LA_TRIG), u32(16#400# + 31));
     for k in 0 to 2 loop
       n1 := n_la_to_adc; n2 := n_adc_to_la;
@@ -255,6 +259,7 @@ begin
     end loop;
 
     print("-- LA acquisition disabled:  a trigger router for the marker");
+    req("MON-1.3");
     reg_write(la(C_ADDR_LA_MODE), x"00000000");
     reg_write(la(C_ADDR_LA_TRIG), u32(1));
     arm_both;

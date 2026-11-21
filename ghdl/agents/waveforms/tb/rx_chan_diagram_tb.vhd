@@ -1,7 +1,9 @@
--- Diagram testbench (make waveforms):  rx_chan receiving three back-to-back UART frames, for the firmware
--- description (rx_chan_start.pdf, rx_chan_frames.pdf).  Default configuration 000A1104 (period 10 clocks, edge
--- mode, input RX_I, phase 4);  BAUD every 10 clocks.  READY is given once, after the first word:  the second
--- word stays valid, the third is lost.  The input is asynchronous to the clock (edges at odd times).
+-- Diagram testbench (make waveforms):  rx_chan receiving four back-to-back UART frames, for the TRM and the
+-- firmware description (rx_chan_noise.pdf, rx_chan_frames.pdf).  Default configuration 000A1104 (period 10
+-- clocks, edge mode, input RX_I, phase 4), BAUD every 10 clocks.  The first frame has a one-clock glitch in
+-- data bit 1, at its sample point (noise).  READY is given once, after the first word.  The second frame has
+-- a low stop bit (frame error), the third word stays valid, the fourth is lost.  The input is asynchronous
+-- to the clock (edges at odd times).
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -27,16 +29,23 @@ architecture behaviour of rx_chan_diagram_tb is
   signal sample_en : std_logic;
   signal vote      : std_logic;
   signal update    : std_logic;
+  signal noisy     : std_logic;
+  signal frame_err : std_logic;
+  signal dissent   : std_logic;
   signal lost      : std_logic;
   signal start     : std_logic;
   signal taps      : std_logic_vector(2 downto 0);
   signal phase     : std_logic_vector(7 downto 0);
 
-  constant BIT_T : time := 100 ns;
+  constant BIT_T     : time := 100 ns;
+  constant GLITCH_AT : time := 50 ns;       -- from the start of the bit:  in tap 1 at the sample point
 begin
   state     <= debug(1 downto 0);
   start     <= debug(4);
   update    <= debug(5);
+  noisy     <= debug(8);
+  frame_err <= debug(7);
+  dissent   <= debug(11);
   lost      <= debug(6);
   sample_en <= debug(10);
   taps      <= debug(14 downto 12);
@@ -82,24 +91,37 @@ begin
   end process;
 
   process
-    procedure send(w : std_logic_vector(63 downto 0)) is
+    variable glitched : boolean := false;
+    procedure send(w : std_logic_vector(63 downto 0); stop : std_logic := '1') is
     begin
       rx <= '0';
       wait for BIT_T;
       for i in 0 to 63 loop
         rx <= w(i);
-        wait for BIT_T;
+        if glitched = false and i = 1 then      -- the first frame only
+          glitched := true;
+          wait for GLITCH_AT;
+          rx <= not w(i);
+          wait for 10 ns;
+          rx <= w(i);
+          wait for BIT_T - GLITCH_AT - 10 ns;
+        else
+          wait for BIT_T;
+        end if;
       end loop;
-      rx <= '1';
+      rx <= stop;
       wait for BIT_T;
+      rx <= '1';
     end procedure;
   begin
     wait for 1033 ns;
-    send(x"1111222233334444");
+    send(x"5555555555555555");
     wait for 2 * BIT_T;
-    send(x"5555666677778888");
+    send(x"5555666677778888", '0');                   -- low stop bit:  frame error
     wait for 2 * BIT_T;
     send(x"9999AAAABBBBCCCC");
+    wait for 2 * BIT_T;
+    send(x"DDDDEEEEFFFF1111");
     wait;
   end process;
 

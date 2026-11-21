@@ -6,16 +6,17 @@ STATE = {0: "IDLE", 1: "WAIT", 2: "STREAM", 3: "TRAILER"}
 
 
 def word(v):
-    """the stream fragments of this testbench:  header, timestamp, data;  trailer:  EOP header, count, 0"""
+    """the stream fragments of this testbench, by UART n:  header hn (its channel id is n+1), timestamp tn,
+    data dn.  Trailer:  EOP header L (its word type), the count, 0"""
     if v & 0xFFFF == 0x0144:
-        return "hdr %d" % (v >> 16)
+        return "h%d" % ((v >> 16) - 1)
     if v & 0xFFFFF000 == 0x1000:
-        return "ts"
+        return "t%d" % ((v - 0x1000) // 16)
     if v >> 8 == 0xDA7A00:
-        return "data"
+        return "d%d" % (v & 0xFF)
     if v == 0x4C:
-        return "EOP"
-    return "n=%d" % v
+        return "L"
+    return "%d" % v
 
 
 plot("rx_stream.pdf", V, [
@@ -30,6 +31,6 @@ plot("rx_stream.pdf", V, [
     bus(T + "turn[5:0]", "turn", fmt=lambda v: "%d" % v),
     bus(T + "frag[1:0]", "fragment", fmt=lambda v: "%d" % v),
     bit(T + "tvalid", "tvalid"),
-    bus(T + "tdata[63:0]", "tdata", fmt=word, show=lambda v: v != 0, size=7),
+    bus(T + "tdata[63:0]", "tdata", fmt=word, show=lambda v: v != 0),
     bit(T + "tlast", "tlast"),
 ], 90, 320)

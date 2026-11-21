@@ -90,15 +90,20 @@ architecture behaviour of rx_unit_check is
   type time_array_t is array (0 to C_NUM_UART-1) of time;
   signal tx_word   : word_array_t := (others => (others => '0'));
   signal tx_delay  : time_array_t := (others => 0 ns);         -- before the start bit
+  signal tx_pulse  : time_array_t := (others => 0 ns);         -- if set:  one low pulse this long, no frame
   signal tx_stop   : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '1');  -- stop bit value
   signal tx_glitch : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');  -- 1-cycle glitch mid bit 10
   signal tx_lb     : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');  -- send on LOOPBACK_I instead
   signal tx_req    : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');
+  type int_array_t is array (0 to C_NUM_UART-1) of integer;
+  type sweep_t is array (0 to 5) of std_logic_vector(9 downto 0);   -- noisy PHASEs, per swept UART
+  type sweep_int_t is array (0 to 5) of integer;
+  signal tx_count  : int_array_t := (others => 1);  -- frames back to back, word + k for frame k
   signal tx_busy   : std_logic_vector(C_NUM_UART-1 downto 0) := (others => '0');
   signal tx_stop_cycle : uart_reg_array_t;  -- cycle when the stop bit started (low 32 bits)
 
   -- AXI stream monitor: every beat, in order
-  constant MAX_BEATS : integer := 4096;
+  constant MAX_BEATS : integer := 8192;
   type beat_data_t is array (0 to MAX_BEATS-1) of std_logic_vector(63 downto 0);
   shared variable beat_data : beat_data_t;
   shared variable beat_last : std_logic_vector(0 to MAX_BEATS-1);
@@ -204,25 +209,33 @@ begin
     begin
       wait on tx_req(c);
       tx_busy(c) <= '1';
-      w := tx_word(c);
       wait for tx_delay(c);
-      drive('0');                        -- start bit
-      wait for BIT_T;
-      for b in 0 to 63 loop
-        drive(w(b));
-        if b = 10 and tx_glitch(c) = '1' then
-          wait for BIT_T/2;
-          drive(not w(b));               -- one clock wide, at about the sample point
-          wait for PERIOD;
+      if tx_pulse(c) > 0 ns then
+        drive('0');
+        wait for tx_pulse(c);
+        drive('1');
+      end if;
+      for k in 0 to tx_count(c) - 1 loop
+        exit when tx_pulse(c) > 0 ns;
+        w := std_logic_vector(unsigned(tx_word(c)) + k);
+        drive('0');                      -- start bit
+        wait for BIT_T;
+        for b in 0 to 63 loop
           drive(w(b));
-          wait for BIT_T/2 - PERIOD;
-        else
-          wait for BIT_T;
-        end if;
+          if b = 10 and tx_glitch(c) = '1' then
+            wait for BIT_T/2;
+            drive(not w(b));             -- one clock wide, at about the sample point
+            wait for PERIOD;
+            drive(w(b));
+            wait for BIT_T/2 - PERIOD;
+          else
+            wait for BIT_T;
+          end if;
+        end loop;
+        tx_stop_cycle(c) <= std_logic_vector(cycle(31 downto 0));
+        drive(tx_stop(c));               -- stop bit
+        wait for BIT_T;
       end loop;
-      tx_stop_cycle(c) <= std_logic_vector(cycle(31 downto 0));
-      drive(tx_stop(c));                 -- stop bit
-      wait for BIT_T;
       drive('1');                        -- idle
       wait for BIT_T;
       tx_busy(c) <= '0';
@@ -385,9 +398,177 @@ begin
       reg_write(rx_addr(COMMON, C_ADDR_RX_ZERO_CNTS), x"00000000");
     end procedure;
 
+    -- consume whatever the stream holds
+    procedure drain is
+    begin
+      rd_ptr := nbeats;
+    end procedure;
+
+    -- a frame on UART c whose bit edges fall k clocks (plus 3 ns) after a BAUD period starts
+    procedure send_at(c : integer; w : std_logic_vector(63 downto 0); k : integer) is
+    begin
+      wait until rising_edge(clk) and to_integer(cycle mod 10) = 0;
+      send(c, w, k * PERIOD + 3 ns);
+    end procedure;
+
+    -- read the stream until it has been quiet for 3 us (a trailer's timeout is 2.56 us):  per UART, the words equal
+    -- to w (got) and the others (bad);  trailers skipped
+    procedure collect(w : std_logic_vector(63 downto 0); got, bad : inout int_array_t) is
+      variable h, b : std_logic_vector(63 downto 0);
+      variable l    : std_logic;
+      variable n0   : integer;
+      variable c    : integer;
+    begin
+      got := (others => 0);
+      bad := (others => 0);
+      loop
+        n0 := nbeats;
+        wait for 3 us;
+        exit when nbeats = n0;
+      end loop;
+      while nbeats - rd_ptr >= 3 loop
+        next_beat(h, l);
+        next_beat(b, l);
+        next_beat(b, l);
+        if h(7 downto 0) /= x"4C" then
+          c := to_integer(unsigned(h(31 downto 16))) - 1;
+          if c >= 0 and c < C_NUM_UART then
+            if b = w then
+              got(c) := got(c) + 1;
+            else
+              bad(c) := bad(c) + 1;
+            end if;
+          end if;
+        end if;
+      end loop;
+      check(nbeats = rd_ptr, "the stream ends on a whole word");
+    end procedure;
+
+    -- PHASE sweeps on six UARTs at once (the simulation costs per clock, not per busy UART):  MODE 1 on UARTs 18-20,
+    -- MODE 2 on 21-23, start bits at offsets 0, 3, 6 clocks after a BAUD period starts.  Per UART and PHASE:  intact
+    -- (no noise, the word once) or noisy;  edge = the start bit's phase as MODE 1 reports it (UART_STATUS EDGE)
+    procedure phase_sweeps(noisy : out sweep_t; edge : out sweep_int_t) is
+      constant W  : std_logic_vector(63 downto 0) := x"5555555555555555";   -- an edge every bit
+      variable got, bad : int_array_t;
+      variable v  : std_logic_vector(31 downto 0);
+      variable ok : boolean;
+      variable lt : integer;
+      variable c  : integer;
+      function sweep_tag(i, p : integer) return string is
+      begin
+        return "MODE " & integer'image(1 + i / 3) & ", offset " & integer'image(3 * (i mod 3)) & ", PHASE " &
+               integer'image(p);
+      end function;
+      procedure send_all is
+      begin
+        wait until rising_edge(clk) and to_integer(cycle mod 10) = 0;
+        for i in 0 to 5 loop
+          send(18 + i, W, 3 * (i mod 3) * PERIOD + 3 ns);
+        end loop;
+        wait_senders;
+      end procedure;
+    begin
+      for i in 0 to 5 loop
+        reg_write(rx_addr(18 + i, C_ADDR_RX_UART_CONFIG), CFG_DEFAULT);
+      end loop;
+      send_all;
+      collect(W, got, bad);
+      for i in 0 to 5 loop
+        c := 18 + i;
+        check(got(c) = 1 and bad(c) = 0, "MODE 1 reference, UART " & integer'image(c) & ":  the word once");
+        reg_read(rx_addr(c, C_ADDR_RX_UART_STATUS), v, ok, lt);
+        edge(i) := to_integer(unsigned(v(31 downto 24)));
+      end loop;
+      for p in 0 to 9 loop
+        zero_counts;
+        for i in 0 to 5 loop
+          reg_write(rx_addr(18 + i, C_ADDR_RX_UART_CONFIG), x"000A" & std_logic_vector(to_unsigned(1 + i / 3, 4)) &
+                    x"1" & std_logic_vector(to_unsigned(p, 8)));
+        end loop;
+        send_all;
+        wait for 8 us;                     -- a frame started off the edges ends on the idle line
+        collect(W, got, bad);
+        for i in 0 to 5 loop
+          c := 18 + i;
+          if i < 3 then
+            req("RX-2.1");
+          else
+            req("RX-2.5");
+          end if;
+          reg_read(rx_addr(c, C_ADDR_RX_UART_NOISE), v, ok, lt);
+          if unsigned(v) = 0 then
+            noisy(i)(p) := '0';
+            check(got(c) = 1 and bad(c) = 0, sweep_tag(i, p) & ":  no noise, the word intact, once");
+            check_counts(c, 1, 1, 1, 0, 0, sweep_tag(i, p));
+          else
+            noisy(i)(p) := '1';
+          end if;
+        end loop;
+      end loop;
+      for i in 0 to 5 loop
+        reg_write(rx_addr(18 + i, C_ADDR_RX_UART_CONFIG), CFG_DEFAULT);
+      end loop;
+    end procedure;
+
+    -- n frames back to back on all 40 UARTs at once;  every word must reach the stream once, in order per UART
+    procedure full_rate(n : integer; config : std_logic_vector(31 downto 0); msg : string) is
+      variable got   : int_array_t := (others => 0);
+      variable words : integer := 0;
+      variable fin  : boolean := false;
+      variable h, b  : std_logic_vector(63 downto 0);
+      variable l     : std_logic;
+      variable c     : integer;
+    begin
+      zero_counts;
+      reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), config);
+      for u in 0 to C_NUM_UART-1 loop
+        tx_count(u) <= n;
+      end loop;
+      for u in 0 to C_NUM_UART-1 loop
+        send(u, x"FA57" & std_logic_vector(to_unsigned(u, 16)) & x"00000000");
+      end loop;
+      while not fin loop
+        next_beat(h, l);
+        if h(7 downto 0) = x"4C" then             -- trailer
+          next_beat(b, l);
+          next_beat(b, l);
+          fin := words >= n * C_NUM_UART;
+        else
+          next_beat(b, l);
+          next_beat(b, l);
+          c := to_integer(unsigned(h(31 downto 16))) - 1;
+          if c >= 0 and c < C_NUM_UART then
+            check_equal(b, x"FA57" & std_logic_vector(to_unsigned(c, 16)) & std_logic_vector(to_unsigned(got(c), 32)),
+                        msg & ":  UART " & integer'image(c) & " word " & integer'image(got(c)));
+            got(c) := got(c) + 1;
+          else
+            check(false, msg & ":  header with a channel id out of range");
+          end if;
+          words := words + 1;
+        end if;
+      end loop;
+      wait_senders;
+      for u in 0 to C_NUM_UART-1 loop
+        check_equal(got(u), n, msg & ":  words from UART " & integer'image(u));
+        check_counts(u, n, n, n, 0, 0, msg & ":  UART " & integer'image(u) & ", none lost");
+        tx_count(u) <= 1;
+      end loop;
+      reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");
+    end procedure;
+
     variable b    : std_logic_vector(63 downto 0);
     variable l    : std_logic;
     variable stop : integer;
+    variable sw   : sweep_t;
+    variable se   : sweep_int_t;
+    variable got_w, bad_w : int_array_t;
+    variable ex   : std_logic_vector(9 downto 0);
+    type st_t is array (0 to 9) of integer;
+    variable st   : st_t;
+    variable sts  : string(1 to 10);
+    variable n    : integer;
+    type dts_t is array (0 to 1, 0 to 1) of integer;
+    variable dts  : dts_t;
     variable lat  : integer;
     variable n0   : integer;
     variable hb   : integer;
@@ -503,6 +684,57 @@ begin
     reg_write(rx_addr(COMMON, C_ADDR_RX_PACMAN), x"00000000");
     reg_write(rx_addr(9, C_ADDR_RX_UART_CHAN), x"0000000A");
 
+    print("-- trailer:  EOP_HEADER with the PACMAN id spliced in (bits 15-8), the word count, a zero fragment with LAST");
+    req("RX-1.5");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_PACMAN), x"0000005A");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_EOP_HEADER), x"ABCD12E7");   -- bits 15-8 replaced by the PACMAN id
+    send(20, x"2020202020202020");
+    send(21, x"2121212121212121");
+    wait_senders;
+    expect_word(data_header(16#44#, 16#5A#, 21), x"2020202020202020", -1, 0, "trailer test, ch20 word");
+    expect_word(data_header(16#44#, 16#5A#, 22), x"2121212121212121", -1, 0, "trailer test, ch21 word");
+    next_beat(b, l);
+    check_equal(b, x"00000000" & x"ABCD" & x"5A" & x"E7", "trailer:  EOP_HEADER template, PACMAN id in bits 15-8");
+    check_equal(l, '0', "trailer:  no LAST on the header");
+    next_beat(b, l);
+    check_equal(b, u64(2), "trailer:  the packet's word count");
+    check_equal(l, '0', "trailer:  no LAST on the count");
+    next_beat(b, l);
+    check_equal(b, u64(0), "trailer:  zero last fragment");
+    check_equal(l, '1', "trailer:  LAST on the last fragment");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_EOP_HEADER), x"0000004C");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_PACMAN), x"00000000");
+
+    print("-- timestamp:  latched at the stop bit's sample point (MODE 1:  PHASE after the edge)");
+    req("RX-1.6");
+    for pi in 0 to 1 loop
+      for oi in 0 to 1 loop
+        reg_write(rx_addr(27, C_ADDR_RX_UART_CONFIG), x"000A11" & std_logic_vector(to_unsigned(2 + 4 * pi, 8)));
+        send_at(27, x"2727272727272727", 5 * oi);
+        wait_senders;
+        stop := to_integer(unsigned(tx_stop_cycle(27)));
+        next_beat(b, l);
+        check_equal(b, data_header(16#44#, 0, 28), "timestamp test:  header");
+        next_beat(b, l);
+        dts(pi, oi) := to_integer(unsigned(b(30 downto 0))) - stop;
+        next_beat(b, l);
+        check_equal(b, x"2727272727272727", "timestamp test:  data");
+        expect_trailer(1);
+        print("   PHASE " & integer'image(2 + 4 * pi) & ", offset " & integer'image(5 * oi) &
+              ":  timestamp - stop bit start = " & integer'image(dts(pi, oi)) & " cycles");
+        check(dts(pi, oi) - (2 + 4 * pi) >= 0 and dts(pi, oi) - (2 + 4 * pi) < 10,
+              "timestamp within a bit period after the stop bit's sample point (PHASE " & integer'image(2 + 4 * pi) &
+              ", offset " & integer'image(5 * oi) & ")");
+      end loop;
+    end loop;
+    for oi in 0 to 1 loop
+      check_equal(dts(1, oi) - dts(0, oi), 4, "timestamp moves with the sample point (PHASE 2 -> 6), offset " &
+                  integer'image(5 * oi));
+      check_equal(dts(oi, 1), dts(oi, 0), "timestamp relative to the stop bit independent of the offset, PHASE " &
+                  integer'image(2 + 4 * oi));
+    end loop;
+    reg_write(rx_addr(27, C_ADDR_RX_UART_CONFIG), CFG_DEFAULT);
+
     print("-- LOOK registers: last word received on the selected channel");
     req("RX-6.2");
     reg_write(rx_addr(COMMON, C_ADDR_RX_LOOK_SELECT), x"00000005");
@@ -514,14 +746,88 @@ begin
     print("-- UART start-bit phase: any phase relative to BAUD decodes (mode 01)");
     req("RX-2.1");
     zero_counts;
-    for k in 0 to 9 loop
-      send(12, x"F00DF00D0000000" & std_logic_vector(to_unsigned(k, 4)), k * PERIOD + 3 ns);
-      wait_senders;
-      expect_word(data_header(16#44#, 0, 13), x"F00DF00D0000000" & std_logic_vector(to_unsigned(k, 4)), -1, 0,
-                  "phase " & integer'image(k));
-      expect_trailer(1);
+    for k in 0 to 9 loop                 -- UART k, start bit k clocks later than UART 0's
+      send(k, x"F00DF00D0000000" & std_logic_vector(to_unsigned(k, 4)), k * PERIOD + 3 ns);
     end loop;
-    check_counts(12, 10, 10, 10, 0, 0, "ch12 after 10 words");
+    wait_senders;
+    for k in 0 to 9 loop
+      expect_word(data_header(16#44#, 0, k + 1), x"F00DF00D0000000" & std_logic_vector(to_unsigned(k, 4)), -1, 0,
+                  "phase " & integer'image(k));
+    end loop;
+    expect_trailer(10);
+    for k in 0 to 9 loop
+      check_counts(k, 1, 1, 1, 0, 0, "UART " & integer'image(k) & ", phase " & integer'image(k));
+    end loop;
+    -- PHASE sweeps, both modes at once (UARTs 18-23);  MODE 1:  the sample point is PHASE after the start bit's
+    -- edge, so the noisy PHASEs are the same at every offset
+    phase_sweeps(sw, se);
+    req("RX-2.1");
+    for i in 0 to 2 loop
+      print("   MODE 1, offset " & integer'image(3 * i) & ":  edge " & integer'image(se(i)) & ", noisy PHASE " &
+            hex("00" & sw(i)));
+      check_equal(sw(i), sw(0), "MODE 1, offset " & integer'image(3 * i) & ":  noisy PHASEs independent of the offset");
+      check_equal(se(i), (se(0) + 3 * i) mod 10, "MODE 1, offset " & integer'image(3 * i) & ":  edge phase follows");
+    end loop;
+    check(sw(0) /= "0000000000" and sw(0) /= "1111111111", "MODE 1:  some PHASEs noisy, others intact");
+
+    print("-- MODE 10 (fixed phase):  the sample point is PHASE after BAUD, whatever the start bit's phase");
+    req("RX-2.5");
+    for i in 3 to 5 loop
+      print("   MODE 2, offset " & integer'image(3 * (i - 3)) & ":  MODE 1 edge " & integer'image(se(i)) &
+            ", noisy PHASE " & hex("00" & sw(i)));
+      -- the noisy PHASEs are the two clocks of dissent at the bit edges, so they follow the start bit
+      ex := (others => '0');
+      ex((se(i) + 8) mod 10) := '1';
+      ex((se(i) + 9) mod 10) := '1';
+      check_equal(sw(i), ex, "MODE 2, offset " & integer'image(3 * (i - 3)) &
+                  ":  noise only at the two PHASEs on the edges");
+      check_equal(se(i), (se(3) + 3 * (i - 3)) mod 10, "MODE 2, offset " & integer'image(3 * (i - 3)) &
+                  ":  edge phase follows");
+    end loop;
+
+    print("-- ACCEPT_DISSENT:  a start bit sampled with dissent (two of three taps low) starts a frame only if set");
+    req("RX-2.6");
+    -- UARTs 20-29 without the flag, 30-39 with it;  UART 20 + 10 f + o gets a two-clock low pulse at offset o (every
+    -- vote of 0 on it dissents);  MODE 2, PHASE 4
+    zero_counts;
+    for i in 0 to 19 loop
+      tx_pulse(20 + i) <= 2 * PERIOD;
+      if i < 10 then
+        reg_write(rx_addr(20 + i, C_ADDR_RX_UART_CONFIG), x"000A2104");
+      else
+        reg_write(rx_addr(20 + i, C_ADDR_RX_UART_CONFIG), x"000A6104");   -- and ACCEPT_DISSENT
+      end if;
+    end loop;
+    wait until rising_edge(clk) and to_integer(cycle mod 10) = 0;
+    for i in 0 to 19 loop
+      send(20 + i, x"0000000000000000", (i mod 10) * PERIOD + 3 ns);
+    end loop;
+    wait_senders;
+    wait for 8 us;
+    -- the line is idle high after the pulse:  a start gives 64 ones and a good stop bit
+    collect(x"FFFFFFFFFFFFFFFF", got_w, bad_w);
+    for f in 0 to 1 loop
+      sts := (others => ' ');
+      n := 0;
+      for o in 0 to 9 loop
+        reg_read(rx_addr(20 + 10 * f + o, C_ADDR_RX_UART_STARTS), d, ok, t);
+        st(o) := to_integer(unsigned(d));
+        check(got_w(20 + 10 * f + o) = st(o) and bad_w(20 + 10 * f + o) = 0,
+              "ACCEPT_DISSENT " & integer'image(f) & ", pulse at " & integer'image(o) & ":  a frame of ones per start");
+        sts(o + 1) := character'val(character'pos('0') + st(o));
+        n := n + st(o);
+      end loop;
+      print("   ACCEPT_DISSENT " & integer'image(f) & ":  starts per pulse offset 0-9:  " & sts);
+      if f = 0 then
+        check_equal(n, 0, "ACCEPT_DISSENT 0:  no start at any offset");
+      else
+        check_equal(n, 2, "ACCEPT_DISSENT 1:  a start at the two offsets that put the sample on the pulse");
+      end if;
+    end loop;
+    for i in 0 to 19 loop
+      tx_pulse(20 + i) <= 0 ns;
+      reg_write(rx_addr(20 + i, C_ADDR_RX_UART_CONFIG), CFG_DEFAULT);
+    end loop;
 
     print("-- a one-cycle glitch mid bit is outvoted (majority vote) and counted as noise");
     req("RX-2.2");
@@ -575,6 +881,26 @@ begin
     reg_write(rx_addr(16, C_ADDR_RX_UART_CONFIG), CFG_DEFAULT);
 
     ---------------------------------------------------------------------
+    print("-- INPUT select with more than one bit set:  the line is held high, nothing is received");
+    req("RX-2.7");
+    for i in 0 to 1 loop
+      zero_counts;
+      if i = 0 then
+        reg_write(rx_addr(23, C_ADDR_RX_UART_CONFIG), x"000A1304");    -- PISO and LOOPBACK
+      else
+        reg_write(rx_addr(23, C_ADDR_RX_UART_CONFIG), x"000A1F04");    -- all four
+      end if;
+      send(23, x"6666666666666666");      -- on PISO
+      wait_senders;
+      tx_lb(23) <= '1';
+      send(23, x"7777777777777777");      -- on LOOPBACK_I
+      wait_senders;
+      tx_lb(23) <= '0';
+      expect_quiet(10 us, "input " & integer'image(i));
+      check_counts(23, 0, 0, 0, 0, 0, "input " & integer'image(i) & ":  no start");
+    end loop;
+    reg_write(rx_addr(23, C_ADDR_RX_UART_CONFIG), CFG_DEFAULT);
+
     print("-- stream stalled (FIFO full): one word waits in the rx_buffer, one in the channel, the next is lost");
     req("RX-3.1");
     zero_counts;
@@ -667,6 +993,40 @@ begin
       check_counts(c, 3, 3, 3, 0, 0, "ch" & integer'image(c) & ":  3 words, none lost");
     end loop;
     reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");
+
+    print("-- full rate:  all 40 UARTs receiving back-to-back frames, the stream ready:  no word lost");
+    req("RX-3.5");
+    full_rate(5, x"00000001", "full rate");
+    full_rate(3, x"00010000", "full rate, one word per packet");
+
+    print("-- BUFFER_CONFIG zeros:  TIMEOUT 0 is no timeout, MAX_WORDS 0 no maximum;  both 0:  the packet never closes");
+    req("RX-3.6");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00020000");   -- at most 2 words, no timeout
+    send(24, x"2424242424242424");
+    wait_senders;
+    expect_word(data_header(16#44#, 0, 25), x"2424242424242424", -1, 0, "no timeout:  first word");
+    expect_quiet(20 us, "no timeout:  the packet stays open");
+    send(26, x"2626262626262626");
+    wait_senders;
+    expect_word(data_header(16#44#, 0, 27), x"2626262626262626", -1, 0, "no timeout:  second word");
+    expect_trailer(2, 0, "no timeout:  closed by the maximum");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");   -- no maximum
+    for u in 0 to C_NUM_UART-1 loop
+      send(u, x"A11A" & std_logic_vector(to_unsigned(u, 16)) & x"00000000");
+    end loop;
+    wait_senders;
+    for u in 0 to C_NUM_UART-1 loop
+      expect_word(data_header(16#44#, 0, u + 1), x"A11A" & std_logic_vector(to_unsigned(u, 16)) & x"00000000", -1, 0,
+                  "no maximum:  UART " & integer'image(u));
+    end loop;
+    expect_trailer(C_NUM_UART, 0, "no maximum:  40 words in one packet");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000000");   -- both 0
+    send(24, x"2525252525252525");
+    wait_senders;
+    expect_word(data_header(16#44#, 0, 25), x"2525252525252525", -1, 0, "both 0:  the word");
+    expect_quiet(20 us, "both 0:  the packet never closes");
+    reg_write(rx_addr(COMMON, C_ADDR_RX_BUFFER_CONFIG), x"00000001");   -- a timeout closes it at once
+    expect_trailer(1, 0, "both 0, then TIMEOUT 1");
 
     ---------------------------------------------------------------------
     print("-- heartbeat sync word (enable bit 0): HEADER_A with PACMAN id, timestamp, zero data");

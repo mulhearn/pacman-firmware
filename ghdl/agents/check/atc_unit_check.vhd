@@ -380,15 +380,36 @@ begin
     lemo_a <= '0';
     wait for 1 us;
     check_equal(m_pulses(2), 1, "bouncing LEMO edge counted once");
+
+    print("-- CONFIG_INPUT inverts each LEMO input:  its falling edge is the stimulus, its rising edge is not");
+    req("ATC-4.2");
+    reg_write(atc(C_ADDR_ATC_DST_LEMO_B), dst(false, false, "1000", "0000000000", 0));
     clear_monitors;
-    reg_write(atc(C_ADDR_ATC_CONFIG_INPUT), x"00000001");   -- invert LEMO A
+    reg_write(atc(C_ADDR_ATC_CONFIG_INPUT), x"00000003");   -- invert LEMO A and B, both lines low
     wait for 200 ns;
+    print("   inverting with the lines low:  marker 2 " & integer'image(m_pulses(2)) & ", marker 3 " &
+          integer'image(m_pulses(3)) & " stimuli");
     clear_monitors;
-    pulse_lemo_a(500 ns);                          -- the falling edge is now the stimulus
-    wait for 200 ns;
-    check_equal(m_pulses(2), 1, "inverted LEMO A: falling edge counts");
+    lemo_a <= '1';
+    lemo_b <= '1';
+    wait for 300 ns;
+    check_equal(m_pulses(2), 0, "inverted LEMO A:  rising edge, no stimulus");
+    check_equal(m_pulses(3), 0, "inverted LEMO B:  rising edge, no stimulus");
+    lemo_a <= '0';
+    wait for 300 ns;
+    check_equal(m_pulses(2), 1, "inverted LEMO A:  falling edge, one stimulus");
+    check_equal(m_pulses(3), 0, "inverted LEMO B:  still high, no stimulus");
+    lemo_b <= '0';
+    wait for 300 ns;
+    check_equal(m_pulses(3), 1, "inverted LEMO B:  falling edge, one stimulus");
+    check_equal(m_pulses(2), 1, "inverted LEMO A:  unchanged by LEMO B");
+    clear_monitors;
     reg_write(atc(C_ADDR_ATC_CONFIG_INPUT), x"00000000");
     wait for 200 ns;
+    print("   restoring with the lines low:  marker 2 " & integer'image(m_pulses(2)) & ", marker 3 " &
+          integer'image(m_pulses(3)) & " stimuli");
+    reg_write(atc(C_ADDR_ATC_DST_LEMO_B), x"00000000");
+    clear_monitors;
 
     ---------------------------------------------------------------------
     print("-- counters (COUNT_REQ commands, atc_counter.vhd)");

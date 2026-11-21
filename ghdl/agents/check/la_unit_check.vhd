@@ -305,6 +305,7 @@ begin
     wait for 2*PERIOD;
 
     print("-- registers");
+    req("REG-2.1");
     check_reg(la(C_ADDR_LA_PERIOD), x"00000001", "PERIOD after reset");
     check_reg(la(C_ADDR_LA_DEPTH), u32(DEPTH), "DEPTH");
     check_reg(la(C_ADDR_LA_STATUS), x"00000000", "STATUS after reset (idle)");
@@ -318,6 +319,7 @@ begin
     reg_write(la(C_ADDR_LA_MODE), x"FFFFFFFF");
     check_reg(la(C_ADDR_LA_MODE), x"00000003", "MODE:  bits 1-0");
     reg_write(la(C_ADDR_LA_MODE), x"00000002");
+    req("REG-1.2");
     reg_write(la(C_ADDR_LA_STATUS), x"00000000", false);      -- read only:  no ack
     reg_write(la(C_ADDR_LA_COUNT), x"00000000", false);
     reg_write(la(C_ADDR_LA_TS_UPPER), x"00000000", false);
@@ -329,6 +331,7 @@ begin
     check(not a, "another scope:  not acknowledged");
 
     print("-- lane map (static inputs):  every lane, tiles 0-9 and 10-15");
+    req("LA-1.1");
     static <= true;
     for t in 0 to 2 loop
       ta := TILE_SETS(t);
@@ -358,6 +361,7 @@ begin
 
     select_counter;
     print("-- every clock, FORCE, POST 10 (no wrap)");
+    req("LA-2.1");
     reg_write(la(C_ADDR_LA_TRIG), u32(31));                  -- sample bit 31:  constant 0, never an edge
     reg_write(la(C_ADDR_LA_POST), u32(10));
     reg_write(la(C_ADDR_LA_ARM), x"00000000");
@@ -371,6 +375,7 @@ begin
     check_ts("FORCE");
 
     print("-- every clock, wrap-around, POST 20");
+    req("LA-2.2");
     reg_write(la(C_ADDR_LA_POST), u32(20));
     reg_write(la(C_ADDR_LA_ARM), x"00000000");
     wait for 200*PERIOD;
@@ -383,6 +388,7 @@ begin
     check_ts("wrap");
 
     print("-- PERIOD 3 (free running)");
+    req("LA-2.1");
     reg_write(la(C_ADDR_LA_PERIOD), u32(3));
     reg_write(la(C_ADDR_LA_POST), u32(5));
     reg_write(la(C_ADDR_LA_ARM), x"00000000");
@@ -393,6 +399,7 @@ begin
     check_spacing(3, "PERIOD 3");
 
     print("-- rising edge of PISO 3 (sample bit 23), POST 4");
+    req("LA-2.3");
     reg_write(la(C_ADDR_LA_PERIOD), u32(1));
     reg_write(la(C_ADDR_LA_TRIG), u32(23));
     reg_write(la(C_ADDR_LA_POST), u32(4));
@@ -419,6 +426,7 @@ begin
     check(s(pos) / 2**23 mod 2 = 0 and s(pos-1) / 2**23 mod 2 = 1, "falling edge:  bit 23 high then low");
 
     print("-- BAUD locked:  PERIOD 5, PHASE 2;  PERIOD 10, PHASE 0;  PERIOD 10, PHASE 7");
+    req("LA-2.1");
     reg_write(la(C_ADDR_LA_TRIG), u32(31));
     reg_write(la(C_ADDR_LA_MODE), x"00000003");
     for t in 0 to 2 loop
@@ -461,6 +469,7 @@ begin
     check(aligned, "every sample:  POSI, PISO, G, H and ATC status lanes from the same clock");
 
     print("-- CROSS_TRIGGER_O:  one pulse per trigger");
+    req("LA-2.3");
     check_equal(xo_count, 20, "CROSS_TRIGGER_O:  20 pulses for the 20 captures so far (12 of the lane map)");
 
     print("-- FORCE between sample strobes (PERIOD 4):  triggers in its clock, the triggering sample the next one");
@@ -538,6 +547,7 @@ begin
     check_equal(cnt - 1 - pos, 40, "one trigger per ARM:  POST from the first trigger");
 
     print("-- acquisition disabled (MODE bit 1 clear):  nothing written;  edges, trigger, timestamp, POST, DONE");
+    req("LA-2.4");
     reg_write(la(C_ADDR_LA_MODE), x"00000000");
     reg_write(la(C_ADDR_LA_TRIG), u32(23));
     reg_write(la(C_ADDR_LA_POST), u32(5));
@@ -554,6 +564,7 @@ begin
     reg_write(la(C_ADDR_LA_MODE), x"00000002");
 
     print("-- PERIOD 0:  no samples");
+    req("LA-2.1");
     reg_write(la(C_ADDR_LA_PERIOD), u32(0));
     reg_write(la(C_ADDR_LA_ARM), x"00000000");
     wait for 50*PERIOD;

@@ -2,8 +2,8 @@
 -- atc_lemo.pdf).  Default UART and BAUD periods (10 clocks).
 --   0-400 ns:   the strobes, UCLK and the timestamp, as after reset
 --   POKE C:     destination H on tiles 0-3 and marker 0 (SYNC:  the timestamp restarts), 25 clocks;
---               CONFIG_H phase 3;  the poke's own mask selects tiles 0 and 1
---   LEMO A:     destination G on all tiles, 12 clocks;  a 15 ns glitch (too short to be seen as an edge),
+--               CONFIG_H phase 3;  the poke's own mask selects tile 1
+--   LEMO A:     destination G on all tiles, 10 clocks (one UART period);  a 15 ns glitch (too short to be seen as an edge),
 --               then two rising edges, each one pulse
 library ieee;
 use ieee.std_logic_1164.all;
@@ -74,9 +74,9 @@ begin
     wr(C_ADDR_ATC_CONFIG_H,      x"00000003");
     wr(C_ADDR_ATC_DST_POKE_C,    x"001903C6");    -- 25 clocks | tiles 0-3 | marker 0 | H
     wr(C_ADDR_ATC_CONFIG_G,      x"00000000");
-    wr(C_ADDR_ATC_DST_LEMO_A,    x"000CFFC1");    -- 12 clocks | all tiles | G
+    wr(C_ADDR_ATC_DST_LEMO_A,    x"000AFFC1");    -- 10 clocks | all tiles | G
     wait for 200 ns;
-    wr(C_ADDR_ATC_POKE_C,        x"00000003");    -- this poke:  tiles 0 and 1
+    wr(C_ADDR_ATC_POKE_C,        x"00000002");    -- this poke:  tile 1
     wait;
   end process;
 
