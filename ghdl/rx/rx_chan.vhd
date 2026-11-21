@@ -60,7 +60,7 @@ architecture behavioral of rx_chan is
   signal sample_en : std_logic;
 
   -- FSM
-  type rx_state_t is (IDLE, FIRST, DATA, STOP);
+  type rx_state_t is (IDLE, START, DATA, STOP);
   signal state      : rx_state_t;
 
   -- shift register for incoming bits and count
@@ -75,7 +75,7 @@ architecture behavioral of rx_chan is
   signal frame_err  : std_logic;
   signal noisy      : std_logic;  -- majority vote non-unanimous and sample enable
 
-  signal start      : std_logic;
+  signal start_flag : std_logic;
   signal update     : std_logic;
 
 begin
@@ -199,10 +199,10 @@ begin
       case state is
         when IDLE =>
           if (sample_en = '1') and (rx_vote = '0') and ((rx_dissent = '0') or (cfg_flags(0) = '1')) then
-            state   <= FIRST;
+            state   <= START;
             bit_counter := 0;
           end if;
-        when FIRST =>
+        when START =>
           if sample_en = '1' then
             state   <= DATA;
             bit_counter := 1;
@@ -230,12 +230,12 @@ begin
       DATA_O      <= (others => '0');
       TIMESTAMP_O <= (others => '0');
       valid       <= '0';
-      start <= '0';
+      start_flag <= '0';
       update <= '0';
       frame_err <= '0';
       lost        <= '0';
     elsif rising_edge(clk) then
-      start <= '0';
+      start_flag <= '0';
       update <= '0';
       frame_err <= '0';
       lost <= '0';
@@ -247,11 +247,11 @@ begin
 
       case state is
         when IDLE => null;
-        when FIRST | DATA =>
+        when START | DATA =>
           if sample_en = '1' then
             shift_reg <= rx_vote & shift_reg(C_UART_DATA_WIDTH-1 downto 1);
-            if (state = FIRST) then
-              start <= '1';
+            if (state = START) then
+              start_flag <= '1';
             end if;
           end if;
         when STOP =>
@@ -279,7 +279,7 @@ begin
     2      => valid,
     3      => READY_I,
 
-    4      => start,
+    4      => start_flag,
     5      => update,
     6      => lost,
     7      => frame_err,

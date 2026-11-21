@@ -126,7 +126,7 @@ begin
   -- (status bits:  rx_chan.vhd, end of file)
   output_process : process
     type names_t is array (0 to 3) of string(1 to 5);
-    constant STATE : names_t := ("IDLE ", "FIRST", "DATA ", "STOP ");
+    constant STATE : names_t := ("IDLE ", "START", "DATA ", "STOP ");
   begin
     wait until status(10)='1';
     wait for 11 ns;
