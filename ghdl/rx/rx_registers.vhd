@@ -19,6 +19,10 @@ use work.register_map.all;
 --
 
 entity rx_registers is
+  generic (
+    -- counter saturation value (smaller is useful for testing)
+    constant C_COUNT_MAX : unsigned(C_COUNT_BITS-1 downto 0) := work.common.C_COUNT_MAX
+  );
   port (
     -- clock and active-high reset
     CLK_I               : in std_logic;
