@@ -42,6 +42,9 @@ TX-1.1   sim+hw  The channels of the mask send their own word;  the others stay 
 TX-1.2   sim+hw  All 40 channels can send at once, each its own word.
 TX-1.3   sim+hw  Back-to-back packets are sent in order, with no word dropped or repeated;  the next packet is
                  read while the UARTs send.
+TX-1.4   sim+hw  With DELAY 0 and packets arriving in time, all 40 UARTs send back to back:  each frame starts
+                 right after the previous stop bit (40 words every 66 bit periods, 6060 packets/ms at the
+                 default bit period of 10 clocks).
 TX-2     The UART frames are as configured.
 TX-2.1   sim+hw  A frame is a start bit, the 64 data bits least significant first, and a stop bit, one bit per
                  BAUD period.
@@ -50,8 +53,9 @@ TX-2.3   sim     PHASE moves the bit edges within the BAUD period.
 TX-3     The TX unit can be monitored.
 TX-3.1   sim+hw  STARTS and BEATS count each channel's frames and hand-overs (equal in normal operation);
                  ZERO_CNTS clears them.
-TX-3.2   sim+hw  LOOK shows the word last loaded for the selected channel.
+TX-3.2   sim+hw  LOOK shows the selected UART's word in the output buffer (the current or last packet).
 TX-3.3   sim     The status registers show the channel and buffer states.
+TX-3.4   sim+hw  The counters stop at 0xFFFF:  they do not wrap.
 
 RX       RX unit
 RX-1     Every word received reaches the stream once, intact, with its header and timestamp.
@@ -60,11 +64,20 @@ RX-1.2   sim+hw  Words on several channels at once come out in channel order, in
 RX-1.3   sim+hw  Every data bit arrives as sent.
 RX-1.4   sim+hw  The header carries the word type (WORD_TYPE_LUT, by data bits 1-0), the PACMAN id and the
                  channel id.
+RX-1.5   sim+hw  Each packet ends with a trailer:  EOP_HEADER with the PACMAN id in bits 15-8, the number of
+                 words in the packet, and a zero fragment;  only that last fragment carries LAST.
+RX-1.6   sim     A word's timestamp is latched at its stop bit's sample point.
 RX-2     The receiver copes with real lines.
-RX-2.1   sim     A start bit at any phase of the BAUD period is received (MODE 1).
+RX-2.1   sim+hw  MODE 1 samples PHASE after the start bit's falling edge:  a start bit at any phase of the BAUD
+                 period is received, and the PHASEs that are off the bit edges do not depend on that phase.
 RX-2.2   sim     A glitch shorter than a bit is outvoted, and counted as noise.
 RX-2.3   sim     A bad stop bit is a frame error:  counted, no word.
 RX-2.4   sim+hw  MODE 0 turns a channel off;  INPUT selects the line (idle, PISO, loopback, test pattern).
+RX-2.5   sim+hw  MODE 2 samples at PHASE in the BAUD period, whatever the phase of the start bit:  the word is
+                 received intact, without noise, at every PHASE off the bit edges;  on them, noise is counted.
+RX-2.6   sim     A start bit sampled with dissent (two of three samples low) starts a frame only with
+                 ACCEPT_DISSENT set.
+RX-2.7   sim     With more than one INPUT bit set, the line is held high:  nothing is received.
 RX-3     The stream is cut into DMA packets as configured, and congestion is accounted for.
 RX-3.1   sim     When the stream stalls, waiting words are held;  a further word on a channel still holding one
                  is lost, and counted.
@@ -72,6 +85,10 @@ RX-3.2   sim+hw  BUFFER_CONFIG's maximum closes a packet after that many words.
 RX-3.3   sim+hw  BUFFER_CONFIG's timeout lets later words join the open packet, then closes it.
 RX-3.4   sim     A packet closed by the maximum lets the next one resume the sweep at the following channel:
                  busy low channels do not starve the higher ones.
+RX-3.5   sim+hw  All 40 UARTs receiving back-to-back frames lose no word while the stream is ready, also at one
+                 word per packet.
+RX-3.6   sim     TIMEOUT 0 is no timeout, MAX_WORDS 0 no maximum;  with both 0 a packet never closes, so at least
+                 one must be set.
 RX-4     The extra channels add their words when enabled.
 RX-4.1   sim+hw  Heartbeat:  a word every HEARTBEAT_CONFIG clocks (HEADER_A, timestamp, zero data).
 RX-4.2   sim     Rollover:  a word when the timestamp equals ROLLOVER_CONFIG (HEADER_B).
@@ -85,6 +102,7 @@ RX-6.1   sim+hw  The counters (STARTS, BEATS, UPDATES, LOST, FRAME_ERR, NOISE) c
 RX-6.2   sim+hw  LOOK shows the last word received on the selected channel.
 RX-6.3   sim     The status registers show the channel and buffer states.
 RX-6.4   sim     FIFO_CNT shows the FIFO count, FIFO_MAX its maximum since ZERO_CNTS.
+RX-6.5   sim+hw  The counters stop at 0xFFFF:  they do not wrap.
 
 ATC      Timing unit
 ATC-1    The clocks and the timestamp run as configured.
@@ -100,5 +118,47 @@ ATC-3    The G and H outputs are shaped as configured.
 ATC-3.1  sim     CONFIG_G and CONFIG_H set the phase of the outputs within the UART period, and invert tiles.
 ATC-4    The LEMO inputs give one stimulus per clean edge.
 ATC-4.1  sim     A rising edge held two clocks or more is one stimulus;  glitches and bounces are not.
+ATC-4.2  sim     CONFIG_INPUT inverts each LEMO input on its own:  its falling edge is then the stimulus, and its
+                 rising edge is not.
 ATC-5    The counters count, and are controlled by their commands.
 ATC-5.1  sim+hw  READ latches the edges and the integral of the chosen signal;  START, STOP and CLEAR act on all.
+
+ADC      ADC unit
+ADC-1    The ADC unit shows the ADC pins, or its emulator.
+ADC-1.1  sim+hw  STATUS reads 0x00000ADC.
+ADC-1.2  sim     MUX_SELECT chooses the ADC pins (0) or the emulator (1);  LOOK shows the choice.
+ADC-1.3  sim+hw  The emulator steps by STEP every PERIOD clocks within MIN to MAX, wrapping at either end;  PERIOD 0
+                 holds.
+ADC-1.4  sim     CONFIG bit 0 drives ADC_EN.
+ADC-2    The comparator follows the signal with hysteresis.
+ADC-2.1  sim+hw  CMP_LEVEL goes high at CMP_THRESH + CMP_SWING and low at CMP_THRESH - CMP_SWING, the thresholds
+                 clipped to 0x000-0xFFF.
+ADC-3    The capture records the signal around its trigger.
+ADC-3.1  sim+hw  One sample every PERIOD clocks (none for PERIOD 0):  data, overflow and comparator from the same
+                 clock, read out in time order.
+ADC-3.2  sim+hw  POST samples follow the trigger;  the samples before it wrap around the buffer.
+ADC-3.3  sim+hw  The trigger is FORCE, an edge of the chosen sample bit, or CROSS_TRIGGER_I (TRIG bit 10);  its
+                 timestamp is recorded, and CROSS_TRIGGER_O pulses once.
+ADC-3.4  sim+hw  With acquisition disabled (MODE bit 1 clear) nothing is written;  the trigger and its timestamp
+                 as usual.
+
+LA       Logic analyzer unit
+LA-1     The lanes carry the signals selected.
+LA-1.1   sim     Each lane carries the source its MUX_SELECT chooses (PISO or POSI of the tile its TILE register
+                 names, G and H, ATC, RX and TX status), zero for a tile out of range or an unused select.
+LA-2     The capture records the lanes around its trigger.
+LA-2.1   sim+hw  One sample every PERIOD clocks (none for PERIOD 0), free running or locked to BAUD at PHASE;
+                 every lane from the same clock;  read out in time order (START, NEXT, DATA).
+LA-2.2   sim+hw  POST samples follow the trigger;  the samples before it wrap around the buffer.
+LA-2.3   sim     The trigger is FORCE (any clock, the triggering sample the next one), an edge of the chosen
+                 sample bit, or CROSS_TRIGGER_I (TRIG bit 10, never missed between samples);  one per ARM;  its
+                 timestamp is recorded, and CROSS_TRIGGER_O pulses once.
+LA-2.4   sim+hw  With acquisition disabled (MODE bit 1 clear) nothing is written;  the trigger and its timestamp
+                 as usual.
+
+MON      Monitors in the system (Timing unit, LA, ADC)
+MON-1    The monitors trigger each other, and record the timing unit's events.
+MON-1.1  sim+hw  An ATC marker triggers the LA on its sample bit, and is recorded there once.
+MON-1.2  sim+hw  Each monitor's trigger reaches the other's capture, with the same trigger timestamp;  with both
+                 cross triggers enabled, each fires once per ARM.
+MON-1.3  sim+hw  The LA with acquisition disabled still passes its trigger on.
