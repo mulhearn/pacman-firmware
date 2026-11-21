@@ -41,7 +41,7 @@ use work.common.all;
 --     192-bit TRAILER reporting the number of 192-bit words streamed
 --     (not including the TRAILER), and set LAST bit on the final
 --     fragment of the trailer.  Return to IDLE state after TRAILER is
---     streamed.  In IDLE with no valid data the resume point returns
+--     streamed.  In IDLE with no valid data the turn returns
 --     to channel 0, so a burst on all channels at once comes out in
 --     channel order.
 --
@@ -132,8 +132,6 @@ architecture behavioral of rx_buffer is
   -- turn and frag counters:
   signal frag   : integer range 0 to C_RX_FRAGS_PER_TURN-1 := 0;
   signal turn   : integer range 0 to (C_RX_NUM_CHAN)       := 0;
-  -- first turn of the next packet:  the channel whose turn a full packet cut short
-  signal resume : integer range 0 to (C_RX_NUM_CHAN-1)     := 0;
 
   signal chan_select : std_logic_vector(C_SELECT_WIDTH-1 downto 0) := (others => '0');
   signal header      : std_logic_vector(C_RX_AXIS_WIDTH-1 downto 0);
@@ -232,7 +230,7 @@ begin
     end if;
   end process;
 
-  -- turn and frag counters, and the resume point:
+  -- turn and frag counters:
   -- only STREAM state uses turn counter
   -- only STREAM and TRAILER states use frag counter
   process(clk, rst)
@@ -240,7 +238,6 @@ begin
     if rst = '1' then
       turn   <= 0;
       frag   <= 0;
-      resume <= 0;
     elsif rising_edge(clk) then
       case state is
         when STREAM =>
@@ -249,26 +246,17 @@ begin
               frag <= frag + 1;
             else
               frag <= 0;
-              -- a full packet ends with this turn, whose channel was not buffered:
-              -- the next packet starts with it (after the last channel:  a full sweep)
-              if packet_full = '1' then
-                if turn < C_RX_NUM_CHAN then
-                  resume <= turn;
-                else
-                  resume <= 0;
-                end if;
-              end if;
-              -- turn = C_RX_NUM_CHAN is used to stream last channel...
-              if turn < C_RX_NUM_CHAN then
-                turn <= turn + 1;
-              else
+              -- turn = C_RX_NUM_CHAN streams the last channel, then the sweep wraps.
+              -- A full packet holds the turn, so the next packet starts with its channel.
+              if turn = C_RX_NUM_CHAN then
                 turn <= 0;
+              elsif packet_full = '0' then
+                turn <= turn + 1;
               end if;
             end if;
           end if;
 
         when TRAILER =>
-          turn <= resume;
           if busy = '0' then
             if frag < C_RX_FRAGS_PER_TURN-1 then
               frag <= frag + 1;
@@ -279,17 +267,13 @@ begin
 
         when IDLE =>
           frag <= 0;
-          if valid_channel = '1' then
-            turn <= resume;
-          else
-            turn   <= 0;
-            resume <= 0;
+          if valid_channel = '0' then
+            turn <= 0;
           end if;
 
         when WAIT_STATE =>
-          frag   <= 0;
-          turn   <= 0;
-          resume <= 0;
+          frag <= 0;
+          turn <= 0;
       end case;
     end if;
   end process;
